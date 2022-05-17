@@ -886,7 +886,7 @@ function main()
 		updateIni = inicfg.load(nil, update_path)
 		if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
 			if tonumber(updateIni.info.version) > script_version then 
-				sampAddChatMessage(tag .. " Доступно обновление. Для обновление введите /upat", -1)
+				sampAddChatMessage(tag .. " Доступно обновление. Для обновление перейдите в меню -> «Настройки» -> «Обновить»", -1)
 			end
 		end
 	end)
