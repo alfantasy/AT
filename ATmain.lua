@@ -3902,7 +3902,7 @@ function imgui.OnDrawFrame()
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
 							sampAddChatMessage(tag .. " Основной скрипт закачен и обновлен. ")
 							sampAddChatMessage(tag .. " Выполняю перезагрузку скрипта")
-							reloadScripts()
+							thisScript():reload()
 						end
 					end)
 				end)	
@@ -3950,7 +3950,7 @@ function imgui.OnDrawFrame()
 				end)
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Содержит: работу с мероприятиями, автомут - мат и оск, админ-стата")
+			imgui.TextQuestion('(?)', u8"Содержит: трейсер пуль, WallHack, Infinite Run, Блокнот")
 			if imgui.Button(u8"Обновление плагина дополнительных функций №3") then  
 				lua_thread.create(function()
 					showNotification(tag .. " - Update","Начинаю загрузку плагина доп.функций!")
@@ -3965,7 +3965,7 @@ function imgui.OnDrawFrame()
 				end)
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Содержит: трейсер пуль, WallHack, Infinite Run, Блокнот")
+			imgui.TextQuestion('(?)', u8"Содержит: административный чат")
 			if imgui.Button(u8"Обновление библиотеки TAB-Scoreboard") then  
 				lua_thread.create(function()
 					showNotification(tag .. " - Update","Начинаю загрузку \nбиблиотеку TAB-Scoreboard")
