@@ -3895,76 +3895,88 @@ function imgui.OnDrawFrame()
 			imgui.Text(u8" version: " .. script_version_text  .. " | number GitHub: " .. script_version)
 			imgui.Separator()
 			if imgui.Button(u8"Обновление основного скрипта") then  
-				showNotification(tag .. " - Update","Начинаю загрузку основного скрипта!")
-				wait(500)
-				downloadUrlToFile(script_url, script_path, function(id, status)
-					if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-						sampAddChatMessage(tag .. " Основной скрипт закачен и обновлен. ")
-						sampAddChatMessage(tag .. " Выполняю перезагрузку скрипта")
-						thisScript():reload()
-					end
-				end)
+				lua_thread.create(function()
+					showNotification(tag .. " - Update","Начинаю загрузку основного скрипта!")
+					wait(500)
+					downloadUrlToFile(script_url, script_path, function(id, status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. " Основной скрипт закачен и обновлен. ")
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скрипта")
+							thisScript():reload()
+						end
+					end)
+				end)	
 			end	
 			imgui.SameLine()
 			if imgui.Button(u8"Обновление плагина за репорты") then  
-				showNotification(tag .. " - Update","Начинаю загрузку плагина за репорты!")
-				wait(500)
-				downloadUrlToFile(report_url, report_path, function(id, status)
-					if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-						sampAddChatMessage(tag .. ' Плагин "ATReport" закачен и обновлен. ')
-						sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
-						reloadScripts()
-					end
+				lua_thread.create(function()
+					showNotification(tag .. " - Update","Начинаю загрузку плагина за репорты!")
+					wait(500)
+					downloadUrlToFile(report_url, report_path, function(id, status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATReport" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
+							reloadScripts()
+						end
+					end)
 				end)
 			end	
 			if imgui.Button(u8"Обновление плагина за доп.функций №1") then  
-				showNotification(tag .. " - Update",'Начинаю загрузку плагина за автомут')
-				wait(500)
-				downloadUrlToFile(mute_url, mute_path, function(id, status)
-					if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-						sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен и обновлен. ')
-						sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
-						reloadScripts()
-					end
+				lua_thread.create(function()
+					showNotification(tag .. " - Update",'Начинаю загрузку плагина за автомут')
+					wait(500)
+					downloadUrlToFile(mute_url, mute_path, function(id, status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
+							reloadScripts()
+						end
+					end)
 				end)
 			end	
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8"Содержит: работу с мероприятиями, автомут - мат и оск, админ-стата")
 			if imgui.Button(u8"Обновление плагина вспомогательных функций №2") then  
-				showNotification(tag .. " - Update","Начинаю загрузку плагина \nвспомогательных функций!")
-				wait(500)
-				downloadUrlToFile(pl1_url, pl1_path, function(id, status)
-					if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-						sampAddChatMessage(tag .. ' Плагин "ATother" закачен и обновлен. ')
-						sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
-						reloadScripts()
-					end
+				lua_thread.create(function()
+					showNotification(tag .. " - Update","Начинаю загрузку плагина \nвспомогательных функций!")
+					wait(500)
+					downloadUrlToFile(pl1_url, pl1_path, function(id, status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATother" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
+							reloadScripts()
+						end
+					end)
 				end)
 			end	
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8"Содержит: работу с мероприятиями, автомут - мат и оск, админ-стата")
 			if imgui.Button(u8"Обновление плагина дополнительных функций №3") then  
-				showNotification(tag .. " - Update","Начинаю загрузку плагина доп.функций!")
-				wait(500)
-				downloadUrlToFile(pl2_url, pl2_path, function(id, status)
-					if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-						sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен и обновлен. ')
-						sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
-						reloadScripts()
-					end
+				lua_thread.create(function()
+					showNotification(tag .. " - Update","Начинаю загрузку плагина доп.функций!")
+					wait(500)
+					downloadUrlToFile(pl2_url, pl2_path, function(id, status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
+							reloadScripts()
+						end
+					end)
 				end)
 			end	
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8"Содержит: трейсер пуль, WallHack, Infinite Run, Блокнот")
 			if imgui.Button(u8"Обновление библиотеки TAB-Scoreboard") then  
-				showNotification(tag .. " - Update","Начинаю загрузку \nбиблиотеку TAB-Scoreboard")
-				wait(500)
-				downloadUrlToFile(scoreboard_url, scoreboard_path, function(id, status)
-					if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-						sampAddChatMessage(tag .. ' Библиотека "TAB-Scoreboard" закачена и обновлена. ')
-						sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
-						reloadScripts()
-					end
+				lua_thread.create(function()
+					showNotification(tag .. " - Update","Начинаю загрузку \nбиблиотеку TAB-Scoreboard")
+					wait(500)
+					downloadUrlToFile(scoreboard_url, scoreboard_path, function(id, status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Библиотека "TAB-Scoreboard" закачена и обновлена. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
+							reloadScripts()
+						end
+					end)
 				end)
 			end	
 		end	
