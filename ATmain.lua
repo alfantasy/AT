@@ -3902,7 +3902,7 @@ function imgui.OnDrawFrame()
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
 							sampAddChatMessage(tag .. " Основной скрипт закачен и обновлен. ")
 							sampAddChatMessage(tag .. " Выполняю перезагрузку скрипта")
-							thisScript():reload()
+							reloadScripts()
 						end
 					end)
 				end)	
