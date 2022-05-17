@@ -24,6 +24,14 @@ function imgui.BeforeDrawFrame()
 	end	
 end 	
 
+function getMyNick()
+    local result, id = sampGetPlayerIdByCharHandle(playerPed)
+    if result then
+        local nick = sampGetPlayerNickname(id)
+        return nick
+    end
+end
+
 imgui.ToggleButton = require('imgui_addons').ToggleButton
 
 local cfg = inicfg.load({
@@ -34,6 +42,22 @@ local cfg = inicfg.load({
         admin_state = false,
         posX = 1000,
         posY = 800,
+        show_mute_day = false,
+        show_mute_now = false,
+        show_report_day = false,
+        show_report_now = false,
+        show_jail_day = false,
+        show_jail_now = false,
+        show_ban_day = false,
+        show_ban_now = false,
+        show_kick_day = false,
+        show_kick_now = false,
+        show_online_day = false,
+        show_online_now = false,
+        show_afk_day = false,
+        show_afk_now = false,
+        show_nick_id = false, 
+        show_time = false, 
     },
 	static = {
 		dayReport = 0,
@@ -42,6 +66,10 @@ local cfg = inicfg.load({
 		online = 0,
 		afk = 0,
 		full = 0,
+        dayMute = 0,
+        dayJail = 0,
+        dayBan = 0,
+        dayKick = 0,
 	}
 }, directIni)
 inicfg.save(cfg, directIni)
@@ -53,6 +81,10 @@ local sessionFull = imgui.ImInt(0)
 local dayFull = imgui.ImInt(cfg.static.full)
 local nowTime = os.date("%H:%M:%S", os.time())
 local LsessionReport = 0
+local LsessionMute = 0 
+local LsessionBan = 0 
+local LsessionKick = 0 
+local LsessionJail = 0 
 
 local ini = {
     admin_state = imgui.ImBool(cfg.settings.admin_state),
@@ -61,6 +93,22 @@ local ini = {
     automute_osk = imgui.ImBool(cfg.settings.automute_osk),
     open_mp = imgui.ImBuffer(516), 
     mp_prize = imgui.ImBuffer(524),
+    show_mute_day = imgui.ImBool(cfg.settings.show_mute_day), 
+    show_mute_now = imgui.ImBool(cfg.settings.show_mute_now),
+    show_ban_day = imgui.ImBool(cfg.settings.show_ban_day), 
+    show_ban_now = imgui.ImBool(cfg.settings.show_ban_now),
+    show_jail_day = imgui.ImBool(cfg.settings.show_jail_day), 
+    show_jail_now = imgui.ImBool(cfg.settings.show_jail_now),
+    show_kick_day = imgui.ImBool(cfg.settings.show_kick_day), 
+    show_kick_now = imgui.ImBool(cfg.settings.show_kick_now),
+    show_nick_id = imgui.ImBool(cfg.settings.show_nick_id), 
+    show_afk_day = imgui.ImBool(cfg.settings.show_afk_day), 
+    show_afk_now = imgui.ImBool(cfg.settings.show_afk_now),
+    show_online_day = imgui.ImBool(cfg.settings.show_online_day), 
+    show_online_now = imgui.ImBool(cfg.settings.show_online_now),
+    show_report_day = imgui.ImBool(cfg.settings.show_report_day), 
+    show_report_now = imgui.ImBool(cfg.settings.show_report_now),
+    show_time = imgui.ImBool(cfg.settings.show_time)
 }
 
 local onscene = { "блять", "сука", "хуй", "нахуй" } -- основная сцена мата
@@ -168,6 +216,47 @@ function sampev.onServerMessage(color, text)
 		return true
 	end	
 
+    if text:find("Администратор .+ заткнул%(.+%) игрока .+ на .+ секунд. Причина: .+") then  
+        amd_nick = text:match('Администратор (.+) заткнул%(.+%) игрока .+ на .+ секунд. Причина: .+') 
+        if amd_nick:find(getMyNick()) then
+            cfg.static.dayMute = cfg.static.dayMute + 1 
+            sampAddChatMessage("plus", -1)
+            LsessionMute = LsessionMute + 1 
+            save()
+        end
+        return true 
+    end 
+
+    if text:find("Администратор .+ посадил%(.+%) игрока .+ в тюрьму на .+ секунд. Причина: .+") then  
+        amd_nick = text:match('Администратор (.+) посадил%(.+%) игрока .+ в тюрьму на .+ секунд. Причина: .+') 
+        if amd_nick:find(getMyNick()) then
+            cfg.static.dayJail = cfg.static.dayJail + 1 
+            LsessionJail = LsessionKick + 1 
+            save()
+        end 
+        return true 
+    end 
+    
+    if text:find("Администратор .+ забанил%(.+%) игрока .+ на .+ дней. Причина: .+") then  
+        amd_nick = text:match('Администратор (.+) забанил%(.+%) игрока .+ на .+ дней. Причина: .+') 
+        if amd_nick:find(getMyNick()) then
+            cfg.static.dayBan = cfg.static.dayBan + 1 
+            LsessionBan = LsessionKick + 1 
+            save()
+        end  
+        return true 
+    end 
+
+    if text:find("Администратор .+ кикнул игрока .+. Причина: .+") then  
+        amd_nick = text:match('Администратор (.+) кикнул игрока .+. Причина: .+') 
+        if amd_nick:find(getMyNick()) then
+            cfg.static.dayKick = cfg.static.dayKick + 1 
+            LsessionKick = LsessionKick + 1 
+            save()
+        end 
+        return true 
+    end 
+
     if check_mat ~= nil and check_mat_id ~= nil and ini.automute_mat.v then
 		local string_os = string.split(check_mat, " ")
 		for i, value in ipairs(onscene) do
@@ -231,6 +320,10 @@ function main()
 		end
 		file_read_1:close()
 	end
+
+    sampRegisterChatCommand("textcmd", function()
+        sampAddChatMessage("Администатор "..getMyNick().." заткнул%(%-а%) игрока .+ на %d+ секунд. Причина: .+", -1)
+    end)
 
 	sampRegisterChatCommand("chip", chip)
 
@@ -460,14 +553,6 @@ function string.split(inputstr, sep)
     return t
 end
 
-function getMyNick()
-    local result, id = sampGetPlayerIdByCharHandle(playerPed)
-    if result then
-        local nick = sampGetPlayerNickname(id)
-        return nick
-    end
-end
-
 function getMyId()
     local result, id = sampGetPlayerIdByCharHandle(playerPed)
     if result then
@@ -478,16 +563,16 @@ end
 function get_clock(time)
     local timezone_offset = 86400 - os.date('%H', 0) * 3600
     if tonumber(time) >= 86400 then onDay = true else onDay = false end
-    return os.date((onDay and math.floor(time / 86400)..' ' or '')..'%H:%M:%S', time + timezone_offset)
+    return os.date((onDay and math.floor(time / 86400)..'д ' or '')..'%H:%M:%S', time + timezone_offset)
 end
 
 function time()
 	startTime = os.time()
     while true do
         wait(1000)
+        nowTime = os.date("%H:%M:%S", os.time()) 
         if sampGetGamestate() == 3 then 								
-	        nowTime = os.date("%H:%M:%S", os.time()) 			
-
+	        			
 	        sessionOnline.v = sessionOnline.v + 1 							
 	        sessionFull.v = os.time() - startTime 					
 	        sessionAfk.v = sessionFull.v - sessionOnline.v		
@@ -1017,21 +1102,103 @@ function EXPORTS.autoMP()
         cfg.settings.mp_tp = ini.mp_tp.v
         save() 
     end	
-end    
+end     
 
 function EXPORTS.AdminState()
     imgui.Text(fa.ICON_ADDRESS_BOOK .. u8" Админ-стата") 
-    imgui.SameLine() 
-    if imgui.Button(fa.ICON_FA_COGS .. "##AdminStateSettings") then 
-        changePosition = true
-        sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
-    end	
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
     if imgui.ToggleButton('##AdminState', ini.admin_state) then 
         cfg.settings.admin_state = ini.admin_state.v
         save()
     end
+end    
+
+function EXPORTS.AdminStateCheckbox()
+    if imgui.Button(fa.ICON_FA_COGS .. u8" Изменение положения") then  
+        changePosition = true
+        sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
+    end    
+    if imgui.Checkbox(u8'Показ никнейма и ID', ini.show_nick_id) then  
+        cfg.settings.show_nick_id = ini.show_nick_id.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ времени', ini.show_time) then  
+        cfg.settings.show_time_id = ini.show_time.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ онлайна за день', ini.show_online_day) then  
+        cfg.settings.show_online_day = ini.show_online_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ онлайна за сеанс', ini.show_online_now) then  
+        cfg.settings.show_online_now = ini.show_online_now.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ AFK за день', ini.show_afk_day) then  
+        cfg.settings.show_afk_day = ini.show_afk_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ AFK за сеанс', ini.show_afk_now) then  
+        cfg.settings.show_afk_now = ini.show_afk_now.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ репортов за день', ini.show_report_day) then  
+        cfg.settings.show_report_day = ini.show_report_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ репортов за сеанс', ini.show_report_now) then  
+        cfg.settings.show_report_now = ini.show_report_now.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ мутов за день', ini.show_mute_day) then  
+        cfg.settings.show_mute_day = ini.show_mute_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ мутов за сеанс', ini.show_mute_now) then  
+        cfg.settings.show_mute_now = ini.show_mute_now.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ киков за день', ini.show_kick_day) then  
+        cfg.settings.show_kick_day = ini.show_kick_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ киков за сеанс', ini.show_kick_now) then  
+        cfg.settings.show_kick_now = ini.show_kick_now.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ джайлов за день', ini.show_jail_day) then  
+        cfg.settings.show_jail_day = ini.show_jail_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ джайлов за сеанс', ini.show_jail_now) then  
+        cfg.settings.show_jail_now = ini.show_jail_now.v  
+        save() 
+    end    
+    if imgui.Checkbox(u8'Показ банов за день', ini.show_ban_day) then  
+        cfg.settings.show_ban_day = ini.show_ban_day.v  
+        save() 
+    end    
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
+    if imgui.Checkbox(u8'Показ банов за сеанс', ini.show_ban_now) then  
+        cfg.settings.show_ban_now = ini.show_ban_now.v  
+        save() 
+    end    
 end    
 
 function imgui.OnDrawFrame()
@@ -1044,18 +1211,33 @@ function imgui.OnDrawFrame()
 
         imgui.Begin(u8'Статистика', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize + imgui.WindowFlags.NoTitleBar)
 
-        imgui.Text(getMyNick() .. " || ID: " ..  getMyId())
-        imgui.Text(u8"Онлайн за день: " .. get_clock(cfg.static.online))
-        imgui.Text(u8"Онлайн за сеанс: " .. get_clock(sessionOnline.v))
-        imgui.Text(u8"AFK за день: " .. get_clock(cfg.static.afk))
-        imgui.Text(u8"AFK за сеанс: " .. get_clock(sessionAfk.v))
-        imgui.Text(u8"Репортов за день: " .. cfg.static.dayReport)
-        imgui.Text(u8"Репортов за сеанс: " .. LsessionReport)
-        imgui.CenterText(u8(os.date("%d.%m.%y | %H:%M:%S", os.time())))
+        if ini.show_nick_id.v then imgui.Text(getMyNick() .. " || ID: " ..  getMyId()) end
+        if ini.show_online_day.v then imgui.Text(u8"Онлайн за день: " .. get_clock(cfg.static.online)) end 
+        if ini.show_online_now.v then imgui.Text(u8"Онлайн за сеанс: " .. get_clock(sessionOnline.v)) end
+        if ini.show_afk_day.v then imgui.Text(u8"AFK за день: " .. get_clock(cfg.static.afk)) end
+        if ini.show_afk_now.v then imgui.Text(u8"AFK за сеанс: " .. get_clock(sessionAfk.v)) end
+        if ini.show_report_day.v then imgui.Text(u8"Репортов за день: " .. cfg.static.dayReport) end
+        if ini.show_report_now.v then imgui.Text(u8"Репортов за сеанс: " .. LsessionReport) end
+        if ini.show_ban_day.v then imgui.Text(u8"Баны за день: " .. cfg.static.dayBan) end
+        if ini.show_ban_now.v then imgui.Text(u8"Баны за сеанс: " .. LsessionBan) end
+        if ini.show_mute_day.v then imgui.Text(u8"Муты за день: " .. cfg.static.dayMute) end
+        if ini.show_mute_now.v then imgui.Text(u8"Муты за сеанс: " .. LsessionMute) end
+        if ini.show_jail_day.v then imgui.Text(u8"Джаилы за день: " .. cfg.static.dayJail) end
+        if ini.show_jail_now.v then imgui.Text(u8"Джаилы за сеанс: " .. LsessionJail) end
+        if ini.show_kick_day.v then imgui.Text(u8"Кики за день: " .. cfg.static.dayKick) end
+        if ini.show_kick_now.v then imgui.Text(u8"Кики за сеанс: " .. LsessionKick) end
+        if ini.show_time.v then imgui.CenterText(u8(os.date("%d.%m.%y | %H:%M:%S", os.time()))) end
         imgui.End()
     end    
 
 end    
+
+function onScriptTerminate(script, quitGame)
+	if script == thisScript() then 
+		if inicfg.save(cfg, directIni) then sampfuncsLog('{00FF00}AdminTool: {FFFFFF}Ваш онлайн сохранён!') end
+	end
+end
+
 
 function EXPORTS.OffScript()
     imgui.Process = false

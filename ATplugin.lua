@@ -259,7 +259,7 @@ function EXPORTS.ActiveATChat()
     imgui.Combo("##Position", admin_chat_lines.centered, {u8"По левый край.", u8"По центру.", u8"По правый край."})
     imgui.PushItemWidth(50)
     imgui.Text(u8'Размер шрифта')
-    if imgui.SliderInt("##sizeAcFont", lem.int.adminFont, 10, 20) then
+    if imgui.SliderInt("##sizeAcFont", lem.int.adminFont, 1, 20) then
         font_ac = renderCreateFont("Arial", tonumber(lem.int.adminFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
         plre.achat.Font = lem.int.adminFont.v
         save()

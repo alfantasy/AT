@@ -130,7 +130,6 @@ local defTable = inicfg.load({
         showMyBullet = false,  
         infinite_run = false, 
         wallhack = false,
-        admin_state = false,
     }
 }, directIni)
 inicfg.save(defTable, directIni)
@@ -581,11 +580,9 @@ function EXPORTS.ActiveMenu()
 end        
 
 function EXPORTS.InfiniteRun()
-    imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 200)
     imgui.Text(fa.ICON_BATTERY_FULL .. u8" Infinite Run") 
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 50)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
     if imgui.ToggleButton('##InfiniteRun', nel.check.infinite_run) then 
         if nel.check.infinite_run.v then  
             showNotification("AdminTool", "Включен Infinite Run")
@@ -637,14 +634,14 @@ function EXPORTS.ActiveWH()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 50)
     if imgui.ToggleButton('##WallHack', nel.check.wallhack) then 
         defTable.set.wallhack = nel.check.wallhack.v
-        if control_wallhack then 
-            showNotification("AdminTool", "Выключен WallHack")
-            control_wallhack = false 
-            nameTagOff()
-        else 
+        if nel.check.wallhack.v then 
             showNotification("AdminTool", "Включен WallHack")
             nameTagOn()
             control_wallhack = true
+        else 
+            showNotification("AdminTool", "Выключен WallHack")
+            control_wallhack = false
+            nameTagOff()
         end	
     end
 end    
