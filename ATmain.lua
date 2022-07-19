@@ -4,31 +4,381 @@ script_description('Скрипт для облегчения работы администраторам') -- описание с
 script_properties('work-in-pause')
 
 require "lib.moonloader" -- подключение основной библиотеки mooloader
-local ffi = require "ffi" -- cпец структура
-local dlstatus = require('moonloader').download_status
-local font_admin_chat = require ("moonloader").font_flag -- шрифт для админ-чата
-local vkeys = require "vkeys" -- регистр для кнопок
-local imgui = require 'imgui' -- регистр imgui окон
-local encoding = require 'encoding' -- дешифровка форматов
-local inicfg = require 'inicfg' -- работа с ini
-local sampev = require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
-local mem = require "memory" -- библиотека, отвечающие за чтение памяти, и её факторы
-local tab_board	=  import ('lib/scoreboard.lua') -- регистр для scoreboard
-local notfy	= import 'lib/lib_imgui_notf.lua'
-local rep_res, rep_pl = pcall(import, "ATreport.lua")
-local plugin_res, plugin = pcall(import, "module/ATother.lua")
-local plre_res, plre = pcall(import, "module/ATplugin.lua")
-local plugin2_res, plugin2 = pcall(import, "module/ATautomute.lua")
-local cjson = require"cjson"
-local effil = require"effil"
-local fa = require 'faicons'
+local ffi 					= require "ffi" -- cпец структура
+local dlstatus 				= require('moonloader').download_status
+local font_admin_chat 		= require ("moonloader").font_flag -- шрифт для админ-чата
+local vkeys 				= require "vkeys" -- регистр для кнопок
+local imgui 				= require 'imgui' -- регистр imgui окон
+local encoding 				= require 'encoding' -- дешифровка форматов
+local inicfg 				= require 'inicfg' -- работа с ini
+local sampev 				= require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
+local mem 					= require "memory" -- библиотека, отвечающие за чтение памяти, и её факторы
+local tab_board				= import ('lib/scoreboard.lua') -- регистр для scoreboard
+local notfy					= import 'lib/lib_imgui_notf.lua'
+local rep_res, rep_pl 		= pcall(import, "ATreport.lua")
+local plugin_res, plugin 	= pcall(import, "module/ATother.lua")
+local plre_res, plre 	 	= pcall(import, "module/ATplugin.lua")
+local plugin2_res, plugin2  = pcall(import, "module/ATautomute.lua")
+local cjson 				= require "cjson"
+local effil 				= require "effil"
+local fa 					= require 'faicons'
+
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
 encoding.default = 'CP1251' -- смена кодировки на CP1251
 u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
 
+ffi.cdef[[
+struct stKillEntry
+{
+	char					szKiller[25];
+	char					szVictim[25];
+	uint32_t				clKillerColor; // D3DCOLOR
+	uint32_t				clVictimColor; // D3DCOLOR
+	uint8_t					byteType;
+} __attribute__ ((packed));
+
+struct stKillInfo
+{
+	int						iEnabled;
+	struct stKillEntry		killEntry[5];
+	int 					iLongestNickLength;
+	int 					iOffsetX;
+	int 					iOffsetY;
+	void			    	*pD3DFont; // ID3DXFont
+	void		    		*pWeaponFont1; // ID3DXFont
+	void		   	    	*pWeaponFont2; // ID3DXFont
+	void					*pSprite;
+	void					*pD3DDevice;
+	int 					iAuxFontInited;
+	void 		    		*pAuxFont1; // ID3DXFont
+	void 			    	*pAuxFont2; // ID3DXFont
+} __attribute__ ((packed));
+]]
+
+colours = {
+	-- The existing colours from San Andreas
+	"0x080808FF", "0xF5F5F5FF", "0x2A77A1FF", "0x840410FF", "0x263739FF", "0x86446EFF", "0xD78E10FF", "0x4C75B7FF", "0xBDBEC6FF", "0x5E7072FF",
+	"0x46597AFF", "0x656A79FF", "0x5D7E8DFF", "0x58595AFF", "0xD6DAD6FF", "0x9CA1A3FF", "0x335F3FFF", "0x730E1AFF", "0x7B0A2AFF", "0x9F9D94FF",
+	"0x3B4E78FF", "0x732E3EFF", "0x691E3BFF", "0x96918CFF", "0x515459FF", "0x3F3E45FF", "0xA5A9A7FF", "0x635C5AFF", "0x3D4A68FF", "0x979592FF",
+	"0x421F21FF", "0x5F272BFF", "0x8494ABFF", "0x767B7CFF", "0x646464FF", "0x5A5752FF", "0x252527FF", "0x2D3A35FF", "0x93A396FF", "0x6D7A88FF",
+	"0x221918FF", "0x6F675FFF", "0x7C1C2AFF", "0x5F0A15FF", "0x193826FF", "0x5D1B20FF", "0x9D9872FF", "0x7A7560FF", "0x989586FF", "0xADB0B0FF",
+	"0x848988FF", "0x304F45FF", "0x4D6268FF", "0x162248FF", "0x272F4BFF", "0x7D6256FF", "0x9EA4ABFF", "0x9C8D71FF", "0x6D1822FF", "0x4E6881FF",
+	"0x9C9C98FF", "0x917347FF", "0x661C26FF", "0x949D9FFF", "0xA4A7A5FF", "0x8E8C46FF", "0x341A1EFF", "0x6A7A8CFF", "0xAAAD8EFF", "0xAB988FFF",
+	"0x851F2EFF", "0x6F8297FF", "0x585853FF", "0x9AA790FF", "0x601A23FF", "0x20202CFF", "0xA4A096FF", "0xAA9D84FF", "0x78222BFF", "0x0E316DFF",
+	"0x722A3FFF", "0x7B715EFF", "0x741D28FF", "0x1E2E32FF", "0x4D322FFF", "0x7C1B44FF", "0x2E5B20FF", "0x395A83FF", "0x6D2837FF", "0xA7A28FFF",
+	"0xAFB1B1FF", "0x364155FF", "0x6D6C6EFF", "0x0F6A89FF", "0x204B6BFF", "0x2B3E57FF", "0x9B9F9DFF", "0x6C8495FF", "0x4D8495FF", "0xAE9B7FFF",
+	"0x406C8FFF", "0x1F253BFF", "0xAB9276FF", "0x134573FF", "0x96816CFF", "0x64686AFF", "0x105082FF", "0xA19983FF", "0x385694FF", "0x525661FF",
+	"0x7F6956FF", "0x8C929AFF", "0x596E87FF", "0x473532FF", "0x44624FFF", "0x730A27FF", "0x223457FF", "0x640D1BFF", "0xA3ADC6FF", "0x695853FF",
+	"0x9B8B80FF", "0x620B1CFF", "0x5B5D5EFF", "0x624428FF", "0x731827FF", "0x1B376DFF", "0xEC6AAEFF", "0x000000FF",
+	-- SA-MP extended colours (0.3x)
+	"0x177517FF", "0x210606FF", "0x125478FF", "0x452A0DFF", "0x571E1EFF", "0x010701FF", "0x25225AFF", "0x2C89AAFF", "0x8A4DBDFF", "0x35963AFF",
+	"0xB7B7B7FF", "0x464C8DFF", "0x84888CFF", "0x817867FF", "0x817A26FF", "0x6A506FFF", "0x583E6FFF", "0x8CB972FF", "0x824F78FF", "0x6D276AFF",
+	"0x1E1D13FF", "0x1E1306FF", "0x1F2518FF", "0x2C4531FF", "0x1E4C99FF", "0x2E5F43FF", "0x1E9948FF", "0x1E9999FF", "0x999976FF", "0x7C8499FF",
+	"0x992E1EFF", "0x2C1E08FF", "0x142407FF", "0x993E4DFF", "0x1E4C99FF", "0x198181FF", "0x1A292AFF", "0x16616FFF", "0x1B6687FF", "0x6C3F99FF",
+	"0x481A0EFF", "0x7A7399FF", "0x746D99FF", "0x53387EFF", "0x222407FF", "0x3E190CFF", "0x46210EFF", "0x991E1EFF", "0x8D4C8DFF", "0x805B80FF",
+	"0x7B3E7EFF", "0x3C1737FF", "0x733517FF", "0x781818FF", "0x83341AFF", "0x8E2F1CFF", "0x7E3E53FF", "0x7C6D7CFF", "0x020C02FF", "0x072407FF",
+	"0x163012FF", "0x16301BFF", "0x642B4FFF", "0x368452FF", "0x999590FF", "0x818D96FF", "0x99991EFF", "0x7F994CFF", "0x839292FF", "0x788222FF",
+	"0x2B3C99FF", "0x3A3A0BFF", "0x8A794EFF", "0x0E1F49FF", "0x15371CFF", "0x15273AFF", "0x375775FF", "0x060820FF", "0x071326FF", "0x20394BFF",
+	"0x2C5089FF", "0x15426CFF", "0x103250FF", "0x241663FF", "0x692015FF", "0x8C8D94FF", "0x516013FF", "0x090F02FF", "0x8C573AFF", "0x52888EFF",
+	"0x995C52FF", "0x99581EFF", "0x993A63FF", "0x998F4EFF", "0x99311EFF", "0x0D1842FF", "0x521E1EFF", "0x42420DFF", "0x4C991EFF", "0x082A1DFF",
+	"0x96821DFF", "0x197F19FF", "0x3B141FFF", "0x745217FF", "0x893F8DFF", "0x7E1A6CFF", "0x0B370BFF", "0x27450DFF", "0x071F24FF", "0x784573FF",
+	"0x8A653AFF", "0x732617FF", "0x319490FF", "0x56941DFF", "0x59163DFF", "0x1B8A2FFF", "0x38160BFF", "0x041804FF", "0x355D8EFF", "0x2E3F5BFF",
+	"0x561A28FF", "0x4E0E27FF", "0x706C67FF", "0x3B3E42FF", "0x2E2D33FF", "0x7B7E7DFF", "0x4A4442FF", "0x28344EFF"
+	}
+
+local mcolor -- локальная переменная для регистрации рандомного цвета
+
+local player_info = {} -- инфа о челике
+local player_to_streamed = {} -- инфа о преследуемым
+local text_remenu = { "Очки:", "Здоровье:", "Броня:", "ХП машины:", "Скорость:", "Ping:", "Патроны:", "Выстрелы:", "Время выстрелов:", "Время АФК:", "P.Loss:", "VIP:", "Passive Мод:", "Turbo:", "Коллизия:" }
+local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
+local control_tab_playerid = -1 -- в табе
+local ip_player = nil -- ip игрока
+local control_recon_playernick -- ник
+local next_recon_playerid = nil -- следующий ид
+local control_recon = false -- контролирование рекона
+local control_info_load = false -- контролирование загрузки инфы
+local right_re_menu = true -- ременю справа
+local mouse_cursor = true -- равен ли курсор правде
+local check_cmd_re = false -- контроль команды о слежке
+local accept_load = false -- загрузка рекона
+local tool_re
+
+local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280) -- захват позиции костей
+local chat_logger_text = { } -- текст логгера
+local accept_load_clog = false -- принятие переменной логгера
+
+local script_version = 3 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "12.2" -- текстовая версия
+local script_path = thisScript().path  -- патч
+local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
+local report_path = getWorkingDirectory() .. "ATreport.lua"
+local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATreport.lua"
+local mute_path = getWorkingDirectory() .. "\\module\\ATautomute.lua"
+local mute_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATautomute.lua"
+local pl1_path = getWorkingDirectory() .. "\\module\\ATother.lua"
+local pl1_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATother.lua" 
+local pl2_path = getWorkingDirectory() .. "\\module\\ATplugin.lua"
+local pl2_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATplugin.lua" 
+
+local update_path = getWorkingDirectory() .. '/upat.ini' -- основной патч
+local update_url = "https://raw.githubusercontent.com/alfantasy/AT/main/upat.ini" -- загрузка патча
+local font_fa_url = "https://raw.githubusercontent.com/alfantasy/AdminTool/main/fontawesome-webfont.ttf"
+local font_fa_path = getWorkingDirectory() .. '\\resource\\font\\fontawesome-webfont.ttf'
+local scoreboard_url = 'https://raw.githubusercontent.com/alfantasy/AT/main/scoreboard.lua'
+local scoreboard_path = getWorkingDirectory() .. '\\lib\\scoreboard.lua'
+
+local directIni = "AdminTool\\settings.ini" -- создание специального файла, отвечающего за настройки.
+local massivIni = "AdminTool\\texts.ini"
+
+local textcfg = inicfg.load({
+	flood_text = {},
+	flood_name = {},
+	makeadmin_text = {},
+	makeadmin_name = {}
+}, massivIni)
+inicfg.save(textcfg, massivIni)
+
+function TextSave() 
+	inicfg.save(textcfg, massivIni)
+end	
+
+local ATcfg = inicfg.load({
+	setting = {
+		Push_Report = false,
+		Chat_Logger = false,
+		Chat_Logger_osk = false,
+		ATAlogin = false,
+		translate_cmd = false,
+		AT_CTAB = false,
+		ATHelloAdm = "",
+		ATAdminPass = "",
+		prefix_adm = "",
+		prefix_STadm = "",
+		prefix_Madm = "",
+		prefix_ZGAadm = "",
+		prefix_GAadm = "",
+		prefix_Helper = "",
+		prefix_Moderator = "",
+		prefix_PGAadm = "",
+		ATColor = "",
+		ATColor_admins = "{FFFFFF}",
+		styleImgui = 14,
+		admFont = 10,
+		good_game_prefix = false,
+		recon_menu = false,
+		show_admins = false,
+		acX = 0,
+		acY = 0,
+	},
+	keys = {
+		ATWHkeys = "None",
+		ATTool =  "F3",
+		ATOnline = "None",
+		ATReportAns = "None",
+		ATReportRP = "None",
+		ATReportRP1 = "None",
+		ATReportRP2 = "None",
+		P_Log = "None",
+		ATRecon = "None",
+		Re_menu = "None",
+		ATStartForm = "None",
+	},
+}, directIni)
+inicfg.save(ATcfg, directIni)
+
+local render = {
+	acpos = false, 
+	acX = 0,
+	acY = 0
+}
+
+function save()
+    inicfg.save(ATcfg, directIni)
+end
+
+function imgui.Link(link)
+	if status_hovered then
+		local p = imgui.GetCursorScreenPos()
+		imgui.TextColored(imgui.ImVec4(0, 0.5, 1, 1), link)
+		imgui.GetWindowDrawList():AddLine(imgui.ImVec2(p.x, p.y + imgui.CalcTextSize(link).y), imgui.ImVec2(p.x + imgui.CalcTextSize(link).x, p.y + imgui.CalcTextSize(link).y), imgui.GetColorU32(imgui.ImVec4(0, 0.5, 1, 1)))
+	else
+		imgui.TextColored(imgui.ImVec4(0, 0.3, 0.8, 1), link)
+	end
+	if imgui.IsItemClicked() then os.execute('explorer '..link)
+	elseif imgui.IsItemHovered() then
+		status_hovered = true else status_hovered = false
+	end
+end
+
+function showNotification(handle, text_not)
+	notfy.addNotify("{87CEEB}" .. handle, text_not, 2, 1, 6)
+end
+
+function imgui.BeforeDrawFrame()
+	if fa_font == nil then  
+		local font_config = imgui.ImFontConfig()
+		font_config.MergeMode = true 
+		fa_font = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fontawesome-webfont.ttf', 14.0, font_config, fa_glyph_ranges)
+	end	
+end 	
+
+----- Введенные локальные переменные, которые отвечают за imgui окно и/или относятся к нему -------
+imgui.ToggleButton = require('imgui_addons').ToggleButton
+imgui.Spinner = require('imgui_addons').Spinner
+imgui.BufferingBar = require('imgui_addons').BufferingBar
+local ATToolsMenu = imgui.ImBool(false)
+local ATChatLogger = imgui.ImBool(false)
+local ATre_menu = imgui.ImBool(false)
+local chat_logger = imgui.ImBuffer(10000)
+local chat_find = imgui.ImBuffer(256)
+local btn_size = imgui.ImVec2(-0.1, 0)
+local notev = imgui.ImBuffer(1024)
+local colorsImGui = {
+					u8"Черная", -- 0
+					u8"Серо-черный", -- 1
+					u8"Белая", -- 2
+					u8"Sky Blue", -- 3
+					u8"Синий", -- 4
+					u8"Темно-голубой", -- 5
+					u8"Красный", -- 6
+					u8"Темно-красный", -- 7
+					u8"Коричневый", -- 8
+					u8"Фиолетовый", -- 9
+					u8"Фиолетовая v2", -- 10
+					u8"Салатовый", -- 11
+					u8"Бело-зеленая", -- 12
+					u8"Жёлто-белая", -- 13
+					u8"Основная тема"} -- 14
+					
 local tag = "{00BFFF} [AT] " -- локальная переменная, которая регистрирует тэг AT
 
-local admins = {}
+local admins = {}	
+					
+local menuSelect = 0
+local combo_select = imgui.ImInt(0) -- отвечает за комбо-штучки
+local sw1, sh1 = getScreenResolution() -- отвечает за ширину и длину, короче говоря - размер окна.
+local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
+
+local elm = {
+	checkbox = {
+		god_mode = imgui.ImBool(false),
+		clist_adm = imgui.ImBool(false),
+		open_pm = imgui.ImBool(false),
+		take_report = imgui.ImBool(false),
+		push_report = imgui.ImBool(ATcfg.setting.Push_Report),
+		chat_logger = imgui.ImBool(ATcfg.setting.Chat_Logger),
+		translate_cmd = imgui.ImBool(ATcfg.setting.translate_cmd),
+		custom_tab = imgui.ImBool(ATcfg.setting.AT_CTAB),
+		autoalogin = imgui.ImBool(ATcfg.setting.ATAlogin),
+		good_game_prefix = imgui.ImBool(ATcfg.setting.good_game_prefix),
+		atrecon = imgui.ImBool(ATcfg.setting.recon_menu),
+		show_admins = imgui.ImBool(ATcfg.setting.show_admins),
+	},
+	int = {
+		styleImgui = imgui.ImInt(ATcfg.setting.styleImgui),
+		admFont = imgui.ImInt(ATcfg.setting.admFont),
+	},
+	input = {
+       ATAdminPass = imgui.ImBuffer(tostring(ATcfg.setting.ATAdminPass), 50),
+	   prefix_Madm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Madm), 50),
+	   prefix_GAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_GAadm), 50),
+	   prefix_STadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_STadm), 50),
+	   prefix_ZGAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_ZGAadm), 50),
+	   prefix_Helper = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Helper), 50),
+	   prefix_Moderator = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Moderator), 50),
+	   prefix_adm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_adm), 50),
+	   prefix_PGAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_PGAadm), 50),
+	   ATColor = imgui.ImBuffer(tostring(ATcfg.setting.ATColor), 50),
+	   ATHelloAdm = imgui.ImBuffer(tostring(ATcfg.setting.ATHelloAdm), 50),
+	   ATColor_admins = imgui.ImBuffer(tostring(ATcfg.setting.ATColor_admins), 50),
+	   fld_name = imgui.ImBuffer(256),
+	   fld_text = imgui.ImBuffer(65536),
+	   adm_name = imgui.ImBuffer(200),
+	   adm_text = imgui.ImBuffer(65535),
+	},
+	ac = {
+		X = ATcfg.setting.acX,
+		Y = ATcfg.setting.acY, 
+	}
+}	
+
+local font_ac = renderCreateFont("Arial", tonumber(elm.int.admFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
+-- local r_nick, id_rep, rep_text -- строчки от репорта
+
+------ Введенные локальные переменная, отвечающие за перевод символов, или остальных свойств чата -----------
+local russian_characters = {
+    [168] = 'Ё', [184] = 'ё', [192] = 'А', [193] = 'Б', [194] = 'В', [195] = 'Г', [196] = 'Д', [197] = 'Е', [198] = 'Ж', [199] = 'З', [200] = 'И', [201] = 'Й', [202] = 'К', [203] = 'Л', [204] = 'М', [205] = 'Н', [206] = 'О', [207] = 'П', [208] = 'Р', [209] = 'С', [210] = 'Т', [211] = 'У', [212] = 'Ф', [213] = 'Х', [214] = 'Ц', [215] = 'Ч', [216] = 'Ш', [217] = 'Щ', [218] = 'Ъ', [219] = 'Ы', [220] = 'Ь', [221] = 'Э', [222] = 'Ю', [223] = 'Я', [224] = 'а', [225] = 'б', [226] = 'в', [227] = 'г', [228] = 'д', [229] = 'е', [230] = 'ж', [231] = 'з', [232] = 'и', [233] = 'й', [234] = 'к', [235] = 'л', [236] = 'м', [237] = 'н', [238] = 'о', [239] = 'п', [240] = 'р', [241] = 'с', [242] = 'т', [243] = 'у', [244] = 'ф', [245] = 'х', [246] = 'ц', [247] = 'ч', [248] = 'ш', [249] = 'щ', [250] = 'ъ', [251] = 'ы', [252] = 'ь', [253] = 'э', [254] = 'ю', [255] = 'я',
+} 
+local english_translate = {
+	["q"] = "й",
+	["w"] = "ц",
+	["e"] = "у",
+	["r"] = "к",
+	["t"] = "е",
+	["y"] = "н",
+	["u"] = "г",
+	["i"] = "ш",
+	["o"] = "щ",
+	["p"] = "з",
+	["["] = "х",
+	["]"] = "ъ",
+	["a"] = "ф",
+	["s"] = "ы",
+	["d"] = "в",
+	["f"] = "а",
+	["g"] = "п",
+	["h"] = "р",
+	["j"] = "о",
+	["k"] = "л",
+	["l"] = "д",
+	[";"] = "ж",
+	["'"] = "э",
+	["z"] = "я",
+	["x"] = "ч",
+	["c"] = "с",
+	["v"] = "м",
+	["b"] = "и",
+	["n"] = "ь",
+	["m"] = "ь",
+	[","] = "б",
+	["."] = "ю"
+}
+
+local translate = {
+	["й"] = "q",
+	["ц"] = "w",
+	["у"] = "e",
+	["к"] = "r",
+	["е"] = "t",
+	["н"] = "y",
+	["г"] = "u",
+	["ш"] = "i",
+	["щ"] = "o",
+	["з"] = "p",
+	["х"] = "[",
+	["ъ"] = "]",
+	["ф"] = "a",
+	["ы"] = "s",
+	["в"] = "d",
+	["а"] = "f",
+	["п"] = "g",
+	["р"] = "h",
+	["о"] = "j",
+	["л"] = "k",
+	["д"] = "l",
+	["ж"] = ";",
+	["э"] = "'",
+	["я"] = "z",
+	["ч"] = "x",
+	["с"] = "c",
+	["м"] = "v",
+	["и"] = "b",
+	["т"] = "n",
+	["ь"] = "m",
+	["б"] = ",",
+	["ю"] = "."
+}
 
 function showFlood()
 	imgui.Text(u8"Данные кнопки отвечают за мгновенную отправу флуда.") 
@@ -38,6 +388,7 @@ function showFlood()
 	imgui.Text(u8"Нажмите NumPad3 и произойдет автоматическая выдача за онлайн")
 	imgui.Text('  ')
 	imgui.Separator()
+	imgui.Text('  ')
 	if imgui.Button(u8"Мероприятия /join", imgui.ImVec2(200,0)) then 
 		imgui.OpenPopup('joinmp')
 	end 
@@ -48,6 +399,7 @@ function showFlood()
 	if imgui.Button(u8"Флуд про GangWar", imgui.ImVec2(200,0)) then 
 		imgui.OpenPopup('floodgw')
 	end 
+	imgui.SameLine()
 	if imgui.Button(u8'Напоминание цветов к /mess') then
 		sampAddChatMessage(tag .. "0 - {FFFFFF}белый, 1 - {000000}черный, 2 - {008000}зеленый, 3 - {80FF00}светло-зеленый")
 		sampAddChatMessage(tag .. "4 - {FF0000}красный, 5 - {0000FF}синий, 6 - {FDFF00}желтый, 7 - {FF9000}оранжевый")
@@ -55,8 +407,27 @@ function showFlood()
 		sampAddChatMessage(tag .. "11 - {2C9197}темно-зеленый, 12 - {DDB201}золотой, 13 - {B8B6B6}серый, 14 - {FFEE8A}светло-желтый")
 		sampAddChatMessage(tag .. "15 - {FF9DB6}розовый, 16 - {BE8A01}коричневый, 17 - {E6284E}темно-розовый")
 	end
-	
-	
+	imgui.Text('  ')
+	imgui.Separator()
+	imgui.Text('  ')
+	if imgui.Button(u8"Свои флуды", imgui.ImVec2(200,0)) then  
+		imgui.OpenPopup('yoursmp')
+	end	
+	imgui.SameLine()
+	if imgui.Button(u8"Редактор флудов", imgui.ImVec2(200,0)) then  
+		imgui.OpenPopup('editfloods') 
+	end	
+	imgui.Text('  ')
+	imgui.Separator()
+	imgui.Text('  ')
+	if imgui.CollapsingHeader(u8'Помощь по созданию флуда / вспомогалка') then 
+		imgui.Text(u8"При создании флуда, помните, что строчки отделяются при помощи Enter")
+		imgui.Text(u8"В создании каждой строчки должен участвовать цвет /mess (от 0 до 17)")
+		imgui.Text(u8"Пример: ")
+		imgui.Text(u8" 4 == ИНФОРМАЦИЯ РДС ==")
+		imgui.Text(u8" 6 Замучили читеры? Пишите в репорт!")
+		imgui.Text(u8" 4 == ИНФОРМАЦИЯ РДС ==")
+	end
 	if imgui.BeginPopup('floodgw') then 
 		if imgui.Button(u8"Aztecas vs Ballas") then  
 			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
@@ -280,7 +651,7 @@ function showFlood()
 			sampSendChat("/delcarall ")
 			sampSendChat("/spawncars 15 ")
 			local tag = "{00BFFF} [AT]" -- локальная переменная, которая регистрирует тэг AT
-			sampAddChatMessage(tag .. " Респавн автомобильного транспорта начался. ")
+			showNotification(tag, "Респавн т/с начался")
 		end
 	    if imgui.Button(u8'Квесты') then
 		    sampSendChat("/mess 8 =================| Квесты NPC |=================")
@@ -403,320 +774,167 @@ function showFlood()
 		end	
 	imgui.EndPopup()
 	end	
+	if imgui.BeginPopup('yoursmp') then  
+		if #textcfg.flood_name > 0 then  
+			for key_bind, name_bind in pairs(textcfg.flood_name) do  
+				if imgui.Button(name_bind.. '##'..key_bind) then  
+					play_flood(key_bind)
+				end	
+			end	
+		else 
+			imgui.Text(u8"Пусто!")
+			if imgui.Button(u8"Создать!") then  
+				imgui.OpenPopup(u8'CreateFlood')	 
+			end	
+		end	
+		if imgui.BeginPopupModal(u8'CreateFlood', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+			imgui.BeginChild("##EditFlood", imgui.ImVec2(600, 225), true)
+			imgui.Text(u8'Название флуда:'); imgui.SameLine()
+			imgui.PushItemWidth(130)
+			imgui.InputText("##name_flood", elm.input.fld_name)
+			imgui.PopItemWidth()
+			imgui.PushItemWidth(100)
+			imgui.Separator()
+			imgui.Text(u8'Текст бинда:')
+			imgui.PushItemWidth(300)
+			imgui.InputTextMultiline("##text_flood", elm.input.fld_text, imgui.ImVec2(-1, 110))
+			imgui.PopItemWidth()
+			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+			if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+				elm.input.fld_name.v, elm.input.fld_text.v = '', ''
+				imgui.CloseCurrentPopup()
+			end
+			imgui.SameLine()
+			if #elm.input.fld_name.v > 0 and #elm.input.fld_text.v > 0 then
+				imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+				if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+					if not EditOldBind then
+						local refresh_text = elm.input.fld_text.v:gsub("\n", "~")
+						table.insert(textcfg.flood_name, elm.input.fld_name.v)
+						table.insert(textcfg.flood_text, refresh_text)
+						if TextSave() then
+							sampAddChatMessage(tag .. 'Флуд"' ..u8:decode(elm.input.fld_name.v).. '" успешно создан!', -1)
+							elm.input.fld_name.v, elm.input.fld_text.v = '', ''
+						end
+							imgui.CloseCurrentPopup()
+						else
+							local refresh_text = elm.input.fld_text.v:gsub("\n", "~")
+							table.insert(textcfg.flood_name, getpos, elm.input.fld_name.v)
+							table.insert(textcfg.flood_text, getpos, refresh_text)
+							table.remove(textcfg.flood_name, getpos + 1)
+							table.remove(textcfg.flood_text, getpos + 1)
+						if TextSave() then
+							sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(elm.input.fld_name.v).. '" успешно отредактирован!', -1)
+							elm.input.fld_name.v, elm.input.fld_text.v = '', '', 2500
+						end
+						EditOldBind = false
+						imgui.CloseCurrentPopup()
+					end
+				end
+			end
+			imgui.EndChild()
+			imgui.EndPopup()
+		end	
+		imgui.EndPopup()
+	end	
+	if imgui.BeginPopupModal(u8'editfloods', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+		imgui.BeginChild("##EditFloods", imgui.ImVec2(600, 225), true)
+		if #textcfg.flood_name > 0 then
+			for key_bind, name_bind in pairs(textcfg.flood_name) do
+			imgui.Button(name_bind..'##'..key_bind, imgui.ImVec2(270, 22))
+			imgui.SameLine()
+			if imgui.Button(u8'Редактировать##'..key_bind, imgui.ImVec2(100, 22)) then
+				EditOldBind = true
+				getpos = key_bind
+				local returnwrapped = tostring(textcfg.flood_text[key_bind]):gsub('~', '\n')
+				elm.input.fld_text.v = returnwrapped
+				elm.input.fld_name.v = tostring(textcfg.flood_name[key_bind])
+				imgui.OpenPopup(u8'CreateFlood')
+			end
+			imgui.SameLine()
+			if imgui.Button(u8'Удалить##'..key_bind, imgui.ImVec2(60, 22)) then
+				sampAddChatMessage(tag .. 'Бинд "' ..u8:decode(textcfg.flood_name[key_bind])..'" удален!', -1)
+				table.remove(textcfg.flood_name, key_bind)
+				table.remove(textcfg.flood_text, key_bind)
+				TextSave()
+			end
+		end
+		if imgui.Button(u8"Создать!") then  
+			imgui.OpenPopup(u8'CreateFlood')	 
+		end	
+		else
+			imgui.Text(u8('Здесь пока пусто :('))
+			if imgui.Button(u8"Создать!") then  
+				imgui.OpenPopup(u8'CreateFlood')	 
+			end	
+		end
+		if imgui.BeginPopupModal(u8'CreateFlood', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+			imgui.BeginChild("##EditFlood", imgui.ImVec2(600, 225), true)
+			imgui.Text(u8'Название флуда:'); imgui.SameLine()
+			imgui.PushItemWidth(130)
+			imgui.InputText("##name_flood1", elm.input.fld_name)
+			imgui.PopItemWidth()
+			imgui.PushItemWidth(100)
+			imgui.Separator()
+			imgui.Text(u8'Текст бинда:')
+			imgui.PushItemWidth(300)
+			imgui.InputTextMultiline("##text_flood1", elm.input.fld_text, imgui.ImVec2(-1, 110))
+			imgui.PopItemWidth()
+	
+			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+			if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+				elm.input.fld_name.v, elm.input.fld_text.v = '', ''
+				imgui.CloseCurrentPopup()
+			end
+			imgui.SameLine()
+			if #elm.input.fld_name.v > 0 and #elm.input.fld_text.v > 0 then
+				imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+				if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+					if not EditOldBind then
+						local refresh_text = elm.input.fld_text.v:gsub("\n", "~")
+						table.insert(textcfg.flood_name, elm.input.fld_name.v)
+						table.insert(textcfg.flood_text, refresh_text)
+						if TextSave() then
+							sampAddChatMessage(tag .. 'Флуд"' ..u8:decode(elm.input.fld_name.v ).. '" успешно создан!', -1)
+							elm.input.fld_name.v, elm.input.fld_text.v = '', ''
+						end
+							imgui.CloseCurrentPopup()
+						else
+							local refresh_text = elm.input.fld_text.v:gsub("\n", "~")
+							table.insert(textcfg.flood_name, getpos, elm.input.fld_name.v)
+							table.insert(textcfg.flood_text, getpos, refresh_text)
+							table.remove(textcfg.flood_name, getpos + 1)
+							table.remove(textcfg.flood_text, getpos + 1)
+						if TextSave() then
+							sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(elm.input.fld_name.v).. '" успешно отредактирован!', -1)
+							elm.input.fld_name.v, elm.input.fld_text.v = '', '', 2500
+						end
+						EditOldBind = false
+						imgui.CloseCurrentPopup()
+					end
+				end
+			end
+			imgui.EndChild()
+			imgui.EndPopup()
+		end	
+		imgui.EndChild()
+		if imgui.Button(u8"Закрыть") then  
+			imgui.CloseCurrentPopup()
+		end	
+		imgui.EndPopup()
+	end	
 end	
 
-ffi.cdef[[
-struct stKillEntry
-{
-	char					szKiller[25];
-	char					szVictim[25];
-	uint32_t				clKillerColor; // D3DCOLOR
-	uint32_t				clVictimColor; // D3DCOLOR
-	uint8_t					byteType;
-} __attribute__ ((packed));
-
-struct stKillInfo
-{
-	int						iEnabled;
-	struct stKillEntry		killEntry[5];
-	int 					iLongestNickLength;
-	int 					iOffsetX;
-	int 					iOffsetY;
-	void			    	*pD3DFont; // ID3DXFont
-	void		    		*pWeaponFont1; // ID3DXFont
-	void		   	    	*pWeaponFont2; // ID3DXFont
-	void					*pSprite;
-	void					*pD3DDevice;
-	int 					iAuxFontInited;
-	void 		    		*pAuxFont1; // ID3DXFont
-	void 			    	*pAuxFont2; // ID3DXFont
-} __attribute__ ((packed));
-]]
-
-colours = {
-	-- The existing colours from San Andreas
-	"0x080808FF", "0xF5F5F5FF", "0x2A77A1FF", "0x840410FF", "0x263739FF", "0x86446EFF", "0xD78E10FF", "0x4C75B7FF", "0xBDBEC6FF", "0x5E7072FF",
-	"0x46597AFF", "0x656A79FF", "0x5D7E8DFF", "0x58595AFF", "0xD6DAD6FF", "0x9CA1A3FF", "0x335F3FFF", "0x730E1AFF", "0x7B0A2AFF", "0x9F9D94FF",
-	"0x3B4E78FF", "0x732E3EFF", "0x691E3BFF", "0x96918CFF", "0x515459FF", "0x3F3E45FF", "0xA5A9A7FF", "0x635C5AFF", "0x3D4A68FF", "0x979592FF",
-	"0x421F21FF", "0x5F272BFF", "0x8494ABFF", "0x767B7CFF", "0x646464FF", "0x5A5752FF", "0x252527FF", "0x2D3A35FF", "0x93A396FF", "0x6D7A88FF",
-	"0x221918FF", "0x6F675FFF", "0x7C1C2AFF", "0x5F0A15FF", "0x193826FF", "0x5D1B20FF", "0x9D9872FF", "0x7A7560FF", "0x989586FF", "0xADB0B0FF",
-	"0x848988FF", "0x304F45FF", "0x4D6268FF", "0x162248FF", "0x272F4BFF", "0x7D6256FF", "0x9EA4ABFF", "0x9C8D71FF", "0x6D1822FF", "0x4E6881FF",
-	"0x9C9C98FF", "0x917347FF", "0x661C26FF", "0x949D9FFF", "0xA4A7A5FF", "0x8E8C46FF", "0x341A1EFF", "0x6A7A8CFF", "0xAAAD8EFF", "0xAB988FFF",
-	"0x851F2EFF", "0x6F8297FF", "0x585853FF", "0x9AA790FF", "0x601A23FF", "0x20202CFF", "0xA4A096FF", "0xAA9D84FF", "0x78222BFF", "0x0E316DFF",
-	"0x722A3FFF", "0x7B715EFF", "0x741D28FF", "0x1E2E32FF", "0x4D322FFF", "0x7C1B44FF", "0x2E5B20FF", "0x395A83FF", "0x6D2837FF", "0xA7A28FFF",
-	"0xAFB1B1FF", "0x364155FF", "0x6D6C6EFF", "0x0F6A89FF", "0x204B6BFF", "0x2B3E57FF", "0x9B9F9DFF", "0x6C8495FF", "0x4D8495FF", "0xAE9B7FFF",
-	"0x406C8FFF", "0x1F253BFF", "0xAB9276FF", "0x134573FF", "0x96816CFF", "0x64686AFF", "0x105082FF", "0xA19983FF", "0x385694FF", "0x525661FF",
-	"0x7F6956FF", "0x8C929AFF", "0x596E87FF", "0x473532FF", "0x44624FFF", "0x730A27FF", "0x223457FF", "0x640D1BFF", "0xA3ADC6FF", "0x695853FF",
-	"0x9B8B80FF", "0x620B1CFF", "0x5B5D5EFF", "0x624428FF", "0x731827FF", "0x1B376DFF", "0xEC6AAEFF", "0x000000FF",
-	-- SA-MP extended colours (0.3x)
-	"0x177517FF", "0x210606FF", "0x125478FF", "0x452A0DFF", "0x571E1EFF", "0x010701FF", "0x25225AFF", "0x2C89AAFF", "0x8A4DBDFF", "0x35963AFF",
-	"0xB7B7B7FF", "0x464C8DFF", "0x84888CFF", "0x817867FF", "0x817A26FF", "0x6A506FFF", "0x583E6FFF", "0x8CB972FF", "0x824F78FF", "0x6D276AFF",
-	"0x1E1D13FF", "0x1E1306FF", "0x1F2518FF", "0x2C4531FF", "0x1E4C99FF", "0x2E5F43FF", "0x1E9948FF", "0x1E9999FF", "0x999976FF", "0x7C8499FF",
-	"0x992E1EFF", "0x2C1E08FF", "0x142407FF", "0x993E4DFF", "0x1E4C99FF", "0x198181FF", "0x1A292AFF", "0x16616FFF", "0x1B6687FF", "0x6C3F99FF",
-	"0x481A0EFF", "0x7A7399FF", "0x746D99FF", "0x53387EFF", "0x222407FF", "0x3E190CFF", "0x46210EFF", "0x991E1EFF", "0x8D4C8DFF", "0x805B80FF",
-	"0x7B3E7EFF", "0x3C1737FF", "0x733517FF", "0x781818FF", "0x83341AFF", "0x8E2F1CFF", "0x7E3E53FF", "0x7C6D7CFF", "0x020C02FF", "0x072407FF",
-	"0x163012FF", "0x16301BFF", "0x642B4FFF", "0x368452FF", "0x999590FF", "0x818D96FF", "0x99991EFF", "0x7F994CFF", "0x839292FF", "0x788222FF",
-	"0x2B3C99FF", "0x3A3A0BFF", "0x8A794EFF", "0x0E1F49FF", "0x15371CFF", "0x15273AFF", "0x375775FF", "0x060820FF", "0x071326FF", "0x20394BFF",
-	"0x2C5089FF", "0x15426CFF", "0x103250FF", "0x241663FF", "0x692015FF", "0x8C8D94FF", "0x516013FF", "0x090F02FF", "0x8C573AFF", "0x52888EFF",
-	"0x995C52FF", "0x99581EFF", "0x993A63FF", "0x998F4EFF", "0x99311EFF", "0x0D1842FF", "0x521E1EFF", "0x42420DFF", "0x4C991EFF", "0x082A1DFF",
-	"0x96821DFF", "0x197F19FF", "0x3B141FFF", "0x745217FF", "0x893F8DFF", "0x7E1A6CFF", "0x0B370BFF", "0x27450DFF", "0x071F24FF", "0x784573FF",
-	"0x8A653AFF", "0x732617FF", "0x319490FF", "0x56941DFF", "0x59163DFF", "0x1B8A2FFF", "0x38160BFF", "0x041804FF", "0x355D8EFF", "0x2E3F5BFF",
-	"0x561A28FF", "0x4E0E27FF", "0x706C67FF", "0x3B3E42FF", "0x2E2D33FF", "0x7B7E7DFF", "0x4A4442FF", "0x28344EFF"
-	}
-
-local mcolor -- локальная переменная для регистрации рандомного цвета
-
-local player_info = {} -- инфа о челике
-local player_to_streamed = {} -- инфа о преследуемым
-local text_remenu = { "Очки:", "Здоровье:", "Броня:", "ХП машины:", "Скорость:", "Ping:", "Патроны:", "Выстрелы:", "Время выстрелов:", "Время АФК:", "P.Loss:", "VIP:", "Passive Мод:", "Turbo:", "Коллизия:" }
-local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
-local control_tab_playerid = -1 -- в табе
-local ip_player = nil -- ip игрока
-local control_recon_playernick -- ник
-local next_recon_playerid = nil -- следующий ид
-local control_recon = false -- контролирование рекона
-local control_info_load = false -- контролирование загрузки инфы
-local right_re_menu = true -- ременю справа
-local mouse_cursor = true -- равен ли курсор правде
-local check_cmd_re = false -- контроль команды о слежке
-local accept_load = false -- загрузка рекона
-local tool_re
-
-local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280) -- захват позиции костей
-local chat_logger_text = { } -- текст логгера
-local accept_load_clog = false -- принятие переменной логгера
-
-local script_version = 2 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "12.1" -- текстовая версия
-local script_path = thisScript().path  -- патч
-local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
-local report_path = getWorkingDirectory() .. "ATreport.lua"
-local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATreport.lua"
-local mute_path = getWorkingDirectory() .. "\\module\\ATautomute.lua"
-local mute_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATautomute.lua"
-local pl1_path = getWorkingDirectory() .. "\\module\\ATother.lua"
-local pl1_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATother.lua" 
-local pl2_path = getWorkingDirectory() .. "\\module\\ATplugin.lua"
-local pl2_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATplugin.lua" 
-
-local update_path = getWorkingDirectory() .. '/upat.ini' -- основной патч
-local update_url = "https://raw.githubusercontent.com/alfantasy/AT/main/upat.ini" -- загрузка патча
-local font_fa_url = "https://raw.githubusercontent.com/alfantasy/AdminTool/main/fontawesome-webfont.ttf"
-local font_fa_path = getWorkingDirectory() .. '\\resource\\font\\fontawesome-webfont.ttf'
-local scoreboard_url = 'https://raw.githubusercontent.com/alfantasy/AT/main/scoreboard.lua'
-local scoreboard_path = getWorkingDirectory() .. '\\lib\\scoreboard.lua'
-
-
-local directIni = "AdminTool\\settings.ini" -- создание специального файла, отвечающего за настройки.
-local ATcfg = inicfg.load({
-	setting = {
-		Push_Report = false,
-		Chat_Logger = false,
-		Chat_Logger_osk = false,
-		ATAlogin = false,
-		translate_cmd = false,
-		AT_CTAB = false,
-		ATHelloAdm = "",
-		ATAdminPass = "",
-		prefix_adm = "",
-		prefix_STadm = "",
-		prefix_Madm = "",
-		prefix_ZGAadm = "",
-		prefix_GAadm = "",
-		prefix_Helper = "",
-		prefix_Moderator = "",
-		prefix_PGAadm = "",
-		ATColor = "",
-		ATColor_admins = "{FFFFFF}",
-		styleImgui = 14,
-		admFont = 10,
-		good_game_prefix = false,
-		recon_menu = false,
-		show_admins = false,
-		acX = 0,
-		acY = 0,
-	},
-	keys = {
-		ATWHkeys = "None",
-		ATTool =  "F3",
-		ATOnline = "None",
-		ATReportAns = "None",
-		ATReportRP = "None",
-		ATReportRP1 = "None",
-		ATReportRP2 = "None",
-		P_Log = "None",
-		ATRecon = "None",
-		Re_menu = "None",
-		ATStartForm = "None",
-	}
-}, directIni)
-inicfg.save(ATcfg, directIni)
-
-local render = {
-	acpos = false, 
-	acX = 0,
-	acY = 0
-}
-
-function save()
-    inicfg.save(ATcfg, directIni)
-end
-
-function imgui.Link(link)
-	if status_hovered then
-		local p = imgui.GetCursorScreenPos()
-		imgui.TextColored(imgui.ImVec4(0, 0.5, 1, 1), link)
-		imgui.GetWindowDrawList():AddLine(imgui.ImVec2(p.x, p.y + imgui.CalcTextSize(link).y), imgui.ImVec2(p.x + imgui.CalcTextSize(link).x, p.y + imgui.CalcTextSize(link).y), imgui.GetColorU32(imgui.ImVec4(0, 0.5, 1, 1)))
-	else
-		imgui.TextColored(imgui.ImVec4(0, 0.3, 0.8, 1), link)
-	end
-	if imgui.IsItemClicked() then os.execute('explorer '..link)
-	elseif imgui.IsItemHovered() then
-		status_hovered = true else status_hovered = false
-	end
-end
-
-function showNotification(handle, text_not)
-	notfy.addNotify("{87CEEB}" .. handle, text_not, 2, 1, 6)
-end
-
-function imgui.BeforeDrawFrame()
-	if fa_font == nil then  
-		local font_config = imgui.ImFontConfig()
-		font_config.MergeMode = true 
-		fa_font = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fontawesome-webfont.ttf', 14.0, font_config, fa_glyph_ranges)
-	end	
-end 	
-
------ Введенные локальные переменные, которые отвечают за imgui окно и/или относятся к нему -------
-imgui.ToggleButton = require('imgui_addons').ToggleButton
-imgui.Spinner = require('imgui_addons').Spinner
-imgui.BufferingBar = require('imgui_addons').BufferingBar
-local ATToolsMenu = imgui.ImBool(false)
-local ATChatLogger = imgui.ImBool(false)
-local ATre_menu = imgui.ImBool(false)
-local chat_logger = imgui.ImBuffer(10000)
-local chat_find = imgui.ImBuffer(256)
-local btn_size = imgui.ImVec2(-0.1, 0)
-local notev = imgui.ImBuffer(1024)
-local colorsImGui = {
-					u8"Черная", -- 0
-					u8"Серо-черный", -- 1
-					u8"Белая", -- 2
-					u8"Sky Blue", -- 3
-					u8"Синий", -- 4
-					u8"Темно-голубой", -- 5
-					u8"Красный", -- 6
-					u8"Темно-красный", -- 7
-					u8"Коричневый", -- 8
-					u8"Фиолетовый", -- 9
-					u8"Фиолетовая v2", -- 10
-					u8"Салатовый", -- 11
-					u8"Бело-зеленая", -- 12
-					u8"Жёлто-белая", -- 13
-					u8"Основная тема"} -- 14
-					
-					
-					
-					
-local menuSelect = 0
-local combo_select = imgui.ImInt(0) -- отвечает за комбо-штучки
-local sw1, sh1 = getScreenResolution() -- отвечает за ширину и длину, короче говоря - размер окна.
-local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
-local font = renderCreateFont("Arial", 11, font_admin_chat.BOLD + font_admin_chat.SHADOW)
-
-local elm = {
-	checkbox = {
-		god_mode = imgui.ImBool(false),
-		clist_adm = imgui.ImBool(false),
-		open_pm = imgui.ImBool(false),
-		take_report = imgui.ImBool(false),
-		push_report = imgui.ImBool(ATcfg.setting.Push_Report),
-		chat_logger = imgui.ImBool(ATcfg.setting.Chat_Logger),
-		translate_cmd = imgui.ImBool(ATcfg.setting.translate_cmd),
-		custom_tab = imgui.ImBool(ATcfg.setting.AT_CTAB),
-		autoalogin = imgui.ImBool(ATcfg.setting.ATAlogin),
-		good_game_prefix = imgui.ImBool(ATcfg.setting.good_game_prefix),
-		atrecon = imgui.ImBool(ATcfg.setting.recon_menu),
-		show_admins = imgui.ImBool(ATcfg.setting.show_admins),
-	},
-	int = {
-		styleImgui = imgui.ImInt(ATcfg.setting.styleImgui),
-		admFont = imgui.ImInt(ATcfg.setting.admFont),
-	},
-	input = {
-       ATAdminPass = imgui.ImBuffer(tostring(ATcfg.setting.ATAdminPass), 50),
-	   prefix_Madm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Madm), 50),
-	   prefix_GAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_GAadm), 50),
-	   prefix_STadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_STadm), 50),
-	   prefix_ZGAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_ZGAadm), 50),
-	   prefix_Helper = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Helper), 50),
-	   prefix_Moderator = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Moderator), 50),
-	   prefix_adm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_adm), 50),
-	   prefix_PGAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_PGAadm), 50),
-	   ATColor = imgui.ImBuffer(tostring(ATcfg.setting.ATColor), 50),
-	   ATHelloAdm = imgui.ImBuffer(tostring(ATcfg.setting.ATHelloAdm), 50),
-	   ATColor_admins = imgui.ImBuffer(tostring(ATcfg.setting.ATColor_admins), 50),
-	},
-	ac = {
-		X = ATcfg.setting.acX,
-		Y = ATcfg.setting.acY, 
-	}
-}	
-
-function explode_argb(argb)
-    local a = bit.band(bit.rshift(argb, 24), 0xFF)
-    local r = bit.band(bit.rshift(argb, 16), 0xFF)
-    local g = bit.band(bit.rshift(argb, 8), 0xFF)
-    local b = bit.band(argb, 0xFF)
-    return a, r, g, b
-end
-
-local font_ac = renderCreateFont("Arial", tonumber(elm.int.admFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
-local lc_lvl, lc_adm, lc_color, lc_nick, lc_id, lc_text -- строчки административного чата
-local ip_1 -- перехват ип
--- local r_nick, id_rep, rep_text -- строчки от репорта
-local adm_nick, adm_id, adm_lvl
-
------- Введенные локальные переменная, отвечающие за перевод символов, или остальных свойств чата -----------
-local russian_characters = {
-    [168] = 'Ё', [184] = 'ё', [192] = 'А', [193] = 'Б', [194] = 'В', [195] = 'Г', [196] = 'Д', [197] = 'Е', [198] = 'Ж', [199] = 'З', [200] = 'И', [201] = 'Й', [202] = 'К', [203] = 'Л', [204] = 'М', [205] = 'Н', [206] = 'О', [207] = 'П', [208] = 'Р', [209] = 'С', [210] = 'Т', [211] = 'У', [212] = 'Ф', [213] = 'Х', [214] = 'Ц', [215] = 'Ч', [216] = 'Ш', [217] = 'Щ', [218] = 'Ъ', [219] = 'Ы', [220] = 'Ь', [221] = 'Э', [222] = 'Ю', [223] = 'Я', [224] = 'а', [225] = 'б', [226] = 'в', [227] = 'г', [228] = 'д', [229] = 'е', [230] = 'ж', [231] = 'з', [232] = 'и', [233] = 'й', [234] = 'к', [235] = 'л', [236] = 'м', [237] = 'н', [238] = 'о', [239] = 'п', [240] = 'р', [241] = 'с', [242] = 'т', [243] = 'у', [244] = 'ф', [245] = 'х', [246] = 'ц', [247] = 'ч', [248] = 'ш', [249] = 'щ', [250] = 'ъ', [251] = 'ы', [252] = 'ь', [253] = 'э', [254] = 'ю', [255] = 'я',
-} 
-
-local translate = {
-	["й"] = "q",
-	["ц"] = "w",
-	["у"] = "e",
-	["к"] = "r",
-	["е"] = "t",
-	["н"] = "y",
-	["г"] = "u",
-	["ш"] = "i",
-	["щ"] = "o",
-	["з"] = "p",
-	["х"] = "[",
-	["ъ"] = "]",
-	["ф"] = "a",
-	["ы"] = "s",
-	["в"] = "d",
-	["а"] = "f",
-	["п"] = "g",
-	["р"] = "h",
-	["о"] = "j",
-	["л"] = "k",
-	["д"] = "l",
-	["ж"] = ";",
-	["э"] = "'",
-	["я"] = "z",
-	["ч"] = "x",
-	["с"] = "c",
-	["м"] = "v",
-	["и"] = "b",
-	["т"] = "n",
-	["ь"] = "m",
-	["б"] = ",",
-	["ю"] = "."
-}
+function play_flood(num)
+	lua_thread.create(function()
+		if num ~= -1 then
+			for bp in textcfg.flood_text[num]:gmatch('[^~]+') do
+				sampSendChat("/mess " .. u8:decode(tostring(bp)))
+			end
+			num = -1
+		end
+	end)
+end	
 
 function sampev.onShowDialog(id, style, title, button1, button2, text)
 	if title == "Mobile" then -- сюда айди нужного диалога
@@ -790,8 +1008,6 @@ function sampev.onServerMessage(color, text)
     chatlog:write(chatTime .. text .. "\n")
     chatlog:flush()
 	chatlog:close()
-	lc_lvl, lc_adm, lc_color, lc_nick, lc_id, lc_text = text:match("%[A%-(%d+)%] %((.+){(.+)}%) (.+)%[(%d+)%]: {FFFFFF}(.+)")
-
 	if text:find("Вы отключили мигание вашего никнейма") then  
 		elm.checkbox.clist_adm.v = false 
 	elseif text:find("Ваш никнейм теперь мигает разными цветами!")	then 
@@ -819,7 +1035,6 @@ function sampev.onServerMessage(color, text)
 		return true 
 	end	
 
-
 	local check_string = string.match(text, "[^%s]+")
 	local check_string_2 = string.match(text, "[^%s]+")
 
@@ -846,7 +1061,7 @@ function sampev.onServerMessage(color, text)
 	end
 	if text == "Игрок не в сети" and recon_to_player then
 		recon_to_player = false
-		sampAddChatMessage(tag .. " Игрок не в сети.")
+		showNotification(tag, "Игрок не в сети!")
 		sampSendChat("/reoff")
 	end
 end
@@ -894,8 +1109,6 @@ function main()
     if not doesDirectoryExist(chatlogDirectory) then
         createDirectory(getWorkingDirectory() .. "\\config\\AdminTool\\chatlog")
     end
-
-	
 	if not doesDirectoryExist(getWorkingDirectory() .. "/config/AdminTool") then
 		createDirectory(getWorkingDirectory() .. "/config/AdminTool")
 	end
@@ -993,6 +1206,7 @@ function main()
 	sampRegisterChatCommand("nm2", cmd_nm2)
 	sampRegisterChatCommand("ia", cmd_ia)
 	sampRegisterChatCommand("rz", cmd_rz)
+	sampRegisterChatCommand("zs", cmd_zs)
 	------- Команды исключительно для мутов -------
 
 	------- Команды исключительно для мутов репорта -------
@@ -1081,14 +1295,13 @@ function main()
                     if ip1 then
                         sampSendChat("/banip " .. ip1 .. " 999 Реклама иного проекта")
                     else
-						sampAddChatMessage(tag .. " Try again | Эта ошибка означает.. ", -1)
-						sampAddChatMessage(tag .. " ..что скрипт не видит строчки IP, либо не нашел её", -1)
+						showNotification(tag, "Попробуйте ещё раз! \n IP не был захвачен")
                     end
                 else
-                    sampAddChatMessage(tag .. " Игрок не подключён!", -1)
+					showNotification(tag, "Игрок не подключен!")
                 end
             else
-                sampAddChatMessage(tag .. ' Вы не ввели ид!', -1)
+				showNotification(tag, "Используйте /brekl [PlayerID]")
             end
         end)
     end)
@@ -1116,6 +1329,7 @@ function main()
 	sampRegisterChatCommand("aia", cmd_aia)
 	sampRegisterChatCommand("akl", cmd_akl)
 	sampRegisterChatCommand("arz", cmd_arz)
+	sampRegisterChatCommand("azs", cmd_azs)
 	------- Команды исключительно для мутов в оффлайне -------
 
 	------- Команды исключительно для джайлов в оффлайне -------
@@ -1198,12 +1412,8 @@ function main()
 	sampAddChatMessage(tag .. " Скрипт был инициализирован! Для проверки введите /tool")
 	------------------ Показ запуска скрипта, указ автора и функций -------------------------
 
-	-- просмотр ID -- 
 	_, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	nick = sampGetPlayerNickname(id)
-
-	thread = lua_thread.create_suspended(thread_function)
-	-- введение смены темы на imgui окно
 
 	renderadmin:run()
 
@@ -1228,7 +1438,7 @@ function main()
 		if elm.checkbox.autoalogin.v == true then
 			lua_thread.create(function()
 				if sampGetCurrentDialogId() == 1227 and elm.input.ATAdminPass.v and sampIsDialogActive() then
-        		    sampSendDialogResponse(1227, 1, _, elm.input.ATAdminPass.v)
+        		    sampSendDialogResponse(1227, 1, _, u8:decode(elm.input.ATAdminPass.v))
 					sampCloseCurrentDialogWithButton(1227, 1)
 				end
 			end)
@@ -1245,7 +1455,7 @@ function main()
 		end
 		-- введенный ключ клавиши по выдаче за online
 
-		if isKeyDown(strToIdKeys(ATcfg.keys.ATTool)) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) then
+		if isKeyJustPressed(strToIdKeys(ATcfg.keys.ATTool)) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) then
 			wait(100)
 			ATToolsMenu.v = not ATToolsMenu.v
 			imgui.Process = ATToolsMenu.v
@@ -1335,15 +1545,13 @@ function main()
 		end
 
 		if not ATToolsMenu.v and not ATre_menu.v and not ATChatLogger.v then 
-		 	imgui.ShowCursor = false 
-			imgui.Process = false
+			imgui.Process = false 
+			imgui.ShowCursor = false
 		end	
 
-		if(isKeyDown(VK_T) and wasKeyPressed(VK_T))then
-			if(not sampIsChatInputActive() and not sampIsDialogActive())then
-				sampSetChatInputEnabled(true)
-			end
-		end
+		if ATToolsMenu.v then  
+			sampSetChatInputEnabled(false)
+		end	
 
 		if sampGetDialogCaption() == "{ff8587}Администрация проекта (онлайн)" and elm.checkbox.show_admins.v then 
 			sampCloseCurrentDialogWithButton(0)
@@ -1385,7 +1593,6 @@ function tpcord(coords)
 	setCharCoordinates(PLAYER_PED, x, y, z)
 end  
 -- телепортация по координатам
-
 
 function delch(arg)
 	notfy.addNotify("{87CEEB}AdminTool", 'Визуальная очистка чата началась', 2, 1, 6)
@@ -1495,7 +1702,14 @@ function renderAdmins()
 	end
 end
 
--- функции к муту
+function cmd_zs(arg)
+	if #arg > 0 then 
+		sampSendChat("/mute " .. arg .. " 600 " .. " Злоуп.символами ")
+	else 
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
+	end
+end
+
 
 function cmd_fd1(arg)
 	if #arg > 0 then 
@@ -1685,7 +1899,7 @@ end
 
 function cmd_oa(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 2500 " .. " Оскорбление/Унижение адм ")
+		sampSendChat("/mute " .. arg .. " 2500 " .. " Оск/Униж.администрации  ")
 	else 
 		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
@@ -1747,7 +1961,6 @@ function cmd_rz(arg)
 	end
 end	
 ------- Функции, относящиеся к мутам -------
-
 
 ------- Функции, относящиеся к мутам за репорт -------
 function cmd_rup(arg)
@@ -1936,7 +2149,7 @@ end
 
 function cmd_roa(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 2500 " .. " Оскорбление/Унижение адм ")
+		sampSendChat("/rmute " .. arg .. " 2500 " .. " Оск/Униж.администрации  ")
 	else 
 		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
@@ -1981,13 +2194,7 @@ function cmd_rrz(arg)
 		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end	
-
-
 ------- Функции, относящиеся к мутам за репорт -------
-
-
-
-
 
 ------- Функции, относящиеся к джайлам -------
 function cmd_sk(arg)
@@ -2142,7 +2349,6 @@ function cmd_jcw(arg)
 	end
 end
 ------- Функции, относящиеся к джайлам -------
-
 
 ------- Функции, относящиеся к банам -------
 function cmd_hl(arg)
@@ -2381,6 +2587,14 @@ end
 ------- Функции, относящиеся к джайлам в оффлайне -------
 
 ------- Функции, относящиеся к мутам в оффлайне -------
+function cmd_azs(arg)
+	if #arg > 0 then  
+		sampSendChat("/muteakk"  .. arg .. " 600 " .. " Злоуп.символами")
+	else  
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
+	end 
+end		
+
 function cmd_afd(arg)
 	if #arg > 0 then
 		sampSendChat("/muteakk " .. arg .. " 120 " .. " Спам/Флуд")
@@ -2439,7 +2653,7 @@ end
 
 function cmd_aoa(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 2500 " .. " Оскорбление/Унижение администрации ")
+		sampSendChat("/muteakk " .. arg .. " 2500 " .. " Оск/Униж.администрации ")
 	else 
 		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
@@ -2484,7 +2698,6 @@ function cmd_arz(arg)
 		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end	
-
 ------- Функции, относящиеся к мутам в оффлайне -------
 
 ------- Функции, относящиеся к кикам -------
@@ -2529,9 +2742,7 @@ function cmd_cafk(arg)
 end
 ------- Функции, относящиеся к кикам -------
 
-
 -------- Функции, относящиеся к банам в оффлайне -----------
-
 function cmd_amenk(arg)
 	if #arg > 0 then
 		sampSendChat("/banakk " .. arg .. " 7 " .. " Ник, содержающий запрещенные слова ")
@@ -2643,7 +2854,6 @@ end
 -------- Функции, относящиеся к банам в оффлайне -----------
 
 ------ Функции, используемые в вспомогательных случаях -------
-
 function cmd_u(arg)
 	sampSendChat("/unmute " .. arg)
 end  
@@ -2702,12 +2912,8 @@ function  getFileName()
     end
 end
 ------------------- Раздел отвечающий за чтение/запись ChatLogger ------------------------
-
-
 ------------------ Функции, отвечающие за перевод символов --------------------------------
 function sampev.onSendChat(message)
-
-
 	local id; trans_cmd = message:match("[^%s]+")
 	if elm.checkbox.translate_cmd.v then
 		if trans_cmd:find("%.(.+)") ~= nil  then
@@ -2715,7 +2921,19 @@ function sampev.onSendChat(message)
 			sampSendChat("/" .. RusToEng(trans_cmd))
 		end
 	end
+end
 
+function EngToRus(text)
+    result = text == '' and nil or ''
+    if result then
+        for i = 0, #text do
+            letter = string.sub(text, i, i)
+            if letter then
+                result = (letter:find('[A-Z/{/}/</>]') and string.upper(english_translate[string.rlower(letter)]) or letter:find('[a-z/,]') and english_translate[letter] or letter)..result
+            end
+        end
+    end
+    return result and result:reverse() or result
 end
 
 function RusToEng(text)
@@ -2797,16 +3015,15 @@ end
 	local a = bit.band(rgba, 0xFF)
 	return a, r, g, b
 end
+function explode_argb(argb)
+    local a = bit.band(bit.rshift(argb, 24), 0xFF)
+    local r = bit.band(bit.rshift(argb, 16), 0xFF)
+    local g = bit.band(bit.rshift(argb, 8), 0xFF)
+    local b = bit.band(argb, 0xFF)
+    return a, r, g, b
+end
 ------ Функции, отвечающие за RGB-color ----------
 
-function convert3Dto2D(x, y, z)
-	local result, wposX, wposY, wposZ, w, h = convert3DCoordsToScreenEx(x, y, z, true, true)
-	local fullX = readMemory(0xC17044, 4, false)
-	local fullY = readMemory(0xC17048, 4, false)
-	wposX = wposX * (640.0 / fullX)
-	wposY = wposY * (448.0 / fullY)
-	return result, wposX, wposY
-end
 ------------- Функции, отвечающие за привязку/отвязку клавиш -----------------
 function getDownKeys()
     local curkeys = ""
@@ -2930,7 +3147,6 @@ function sampev.onShowTextDraw(id, data)
 		return false  
 	end	
 end
-
 
 function sampev.onSendCommand(command)
 	local id = string.match(command, "/re (%d+)")
@@ -3065,6 +3281,7 @@ function imgui.OnDrawFrame()
 
 	if not ATToolsMenu.v and not ATre_menu.v and not ATChatLogger.v then 
 		imgui.Process = false 
+		imgui.ShowCursor = false
 	end	
 
 	if elm.int.styleImgui.v == 0 then
@@ -3168,6 +3385,9 @@ function imgui.OnDrawFrame()
 		if imgui.Button(fa.ICON_FA_LIST..(u8' Спец.функции'), imgui.ImVec2(123, 0)) then
             menuSelect = 8
         end
+		if imgui.Button(fa.ICON_CALCULATOR..(u8' Биндер'), imgui.ImVec2(123,0)) then  
+			menuSelect = 13
+		end	
         if imgui.Button(fa.ICON_FA_COGS..(u8' Настройки'), imgui.ImVec2(123, 0)) then
             menuSelect = 10
         end
@@ -3193,14 +3413,17 @@ function imgui.OnDrawFrame()
             imgui.TextColoredRGB(u8(helloText))
         end
 		if menuSelect == 1 then 
-			imgui.Text(fa.ICON_REPLY .. u8" Пароль от админки")
+			imgui.Text(fa.ICON_REPLY .. u8" Пароль от админки ")
 			imgui.SameLine()
 			if imgui.InputText("", elm.input.ATAdminPass, imgui.InputTextFlags.Password) then 
-				ATcfg.setting.ATAdminPass = elm.input.ATAdminPass.v 
+				ATcfg.setting.ATAdminPass = elm.input.ATAdminPass.v
 				save() 
 			end	
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8'При вводе, пароль автоматически сохраняется в конфиг\nПри интерфейсе и вводе, будут показываться *********')	
+			if imgui.Button(fa.ICON_REFRESH .. u8"  Обновить ##REFRESHTHISPASSWORD") then  
+				elm.input.ATAdminPass.v = ' '
+			end	
 			imgui.Separator()
 			imgui.TextColoredRGB(fa.ICON_USER_CIRCLE .. u8' Бессмертие {808080}(/agm)')
 			imgui.SameLine()
@@ -3326,6 +3549,7 @@ function imgui.OnDrawFrame()
 			end	
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8"Рендерит /admins отдельно, автоматически закрывая диалог\n Функция находится на стадии тестирования/разработки. \nДля вывода рендера, необходимо прописывать /admins (ВРЕМЕННО)")
+			
 			if imgui.BeginPopup("adminshow") then   
 				if imgui.Button(u8"Изменение положения рендера") then  
 					render.acX = elm.ac.X; render.acY = elm.ac.Y
@@ -3349,9 +3573,11 @@ function imgui.OnDrawFrame()
 			end	
 		end	
 		if menuSelect == 2 then 
+			imgui.Text("")
 			imgui.Text(u8"Зажатые кнопки: ")
 			imgui.SameLine()
 			imgui.Text(getDownKeysText())
+			imgui.Text("")
 			imgui.Separator()
 			imgui.Text(u8"Открытие интерфейса (/tool): ")
 			imgui.SameLine()
@@ -3702,6 +3928,8 @@ function imgui.OnDrawFrame()
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/rz - розжиг межнац.розни")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
+					imgui.Text(u8"/rs - злоупотребление символами")
+					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/ror - мут за оск род в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/cp - /cp10 - капс/оффтоп в репорт x1-x10")
@@ -3715,6 +3943,7 @@ function imgui.OnDrawFrame()
 					imgui.Text(u8"/rkl - клевета на адм в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/rrz - розжиг межнац.розни в репорт")
+					
 				end
 			end 
 			imgui.Text("")
@@ -3890,9 +4119,14 @@ function imgui.OnDrawFrame()
 				imgui.Text(u8"/prf1 - /prf8 - выдача префиксов")
 				imgui.Text(u8"1 - Хелпер, 2 - Модератор, 3 - Мл.админ, 4 - Админ, 5 - Ст.админ, 6 - ПГА, \n7 - ЗГА, 8 - ГА")
 			end	
+			if imgui.Button(u8"Панель высшей администрации") then  
+				menuSelect = 14 
+			end	
 		end	
 		if menuSelect == 11 then  
+			imgui.Text(u8" Ниже можно обновить AdminTool, включая его плагины и основной скрипт.")
 			imgui.Text(u8" version: " .. script_version_text  .. " | number GitHub: " .. script_version)
+			imgui.Text(" ")
 			imgui.Separator()
 			if imgui.Button(u8"Обновление основного скрипта") then  
 				lua_thread.create(function()
@@ -3979,6 +4213,44 @@ function imgui.OnDrawFrame()
 					end)
 				end)
 			end	
+			if imgui.Button(u8"Обновление всего пакета AT") then  
+				lua_thread.create(function()
+					downloadUrlToFile(script_url, script_path, function(id,status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. "Основной скрипт готов!")
+						end	
+					end)	
+					wait(500)
+					downloadUrlToFile(report_url, report_path, function(id,status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATReport" закачен')
+						end	
+					end)	
+					wait(500)
+					downloadUrlToFile(mute_url, mute_path, function(id,status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен ')
+						end	
+					end)	
+					wait(500)
+					downloadUrlToFile(pl1_url, pl1_path, function(id,status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATother" закачен ')
+						end	
+					end)	
+					wait(500)
+					downloadUrlToFile(pl2_url, pl2_path, function(id,status)
+						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+							sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен ')
+						end	
+					end)	
+					wait(500)
+					sampAddChatMessage(tag .. "Обновлен весь основной пакет AdminTool! Выполняю перезагрузку!")
+					reloadScripts()
+				end)	
+			end	
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8"Содержит: все скрипты пакета AT, кроме шрифтов и библиотек")
 		end	
 		if menuSelect == 12 then  
 			plugin2.AdminState()
@@ -3986,6 +4258,102 @@ function imgui.OnDrawFrame()
 			imgui.TextQuestion('(?)', u8'Выводит окошко вашей адмиинстративной статистики :3\nПрочие настройки административной статистики ниже')	
 			imgui.Separator()
 			plugin2.AdminStateCheckbox()
+		end	
+		if menuSelect == 13 then  
+			rep_pl.ActiveBinder()
+		end	
+		if menuSelect == 14 then  
+			if imgui.Button(u8"Выдача повышений/снятий") then  
+				imgui.OpenPopup(u8'OpenMakeAdmin')
+			end	
+			if imgui.BeginPopupModal(u8'OpenMakeAdmin', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then  
+				imgui.BeginChild("##MakeAdmin", imgui.ImVec2(600, 225), true)
+				imgui.Text(u8"При создании бинда выдачи по MakeAdmin, учтите, что пишится все в столбик. \nНеобходим ник и уровень.")
+				imgui.Text(u8"Пример:")
+				imgui.Text(u8"alfantasyz 18\nalfantasyz 0")
+				imgui.Separator()
+				if #textcfg.makeadmin_name > 0 then  
+					for key_bind, name_bind in pairs(textcfg.makeadmin_name) do  
+						if imgui.Button(name_bind.. '##'..key_bind) then  
+							play_makeadmin(key_bind)
+						end	
+						imgui.SameLine()
+						if imgui.Button(u8'Редактировать##'..key_bind, imgui.ImVec2(100, 22)) then
+							EditOldBind = true
+							getpos = key_bind
+							local returnwrapped = tostring(textcfg.makeadmin_text[key_bind]):gsub('~', '\n')
+							elm.input.adm_text.v = returnwrapped
+							elm.input.adm_name.v = tostring(textcfg.makeadmin_name[key_bind])
+							imgui.OpenPopup(u8'EditMakeAdmin')
+						end
+						imgui.SameLine()
+						if imgui.Button(u8'Удалить##'..key_bind, imgui.ImVec2(60, 22)) then
+							sampAddChatMessage(tag .. 'MakeAdmin "' ..u8:decode(textcfg.makeadmin_name[key_bind])..'" удален!', -1)
+							table.remove(textcfg.makeadmin_name, key_bind)
+							table.remove(textcfg.makeadmin_text, key_bind)
+							TextSave()
+						end
+					end	
+				else 
+					imgui.Text(u8"Пусто!")
+				end	
+				if imgui.Button(u8"Создать!") then  
+					imgui.OpenPopup(u8'EditMakeAdmin')	 
+				end	
+				if imgui.BeginPopupModal(u8'EditMakeAdmin', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+					imgui.BeginChild("##EdMakeAdmin", imgui.ImVec2(600, 225), true)
+					imgui.Text(u8'Название MakeAdmin:'); imgui.SameLine()
+					imgui.PushItemWidth(130)
+					imgui.InputText("##name_adm", elm.input.adm_name)
+					imgui.PopItemWidth()
+					imgui.PushItemWidth(100)
+					imgui.Separator()
+					imgui.Text(u8'Текст MakeAdmin:')
+					imgui.PushItemWidth(300)
+					imgui.InputTextMultiline("##text_adm", elm.input.adm_text, imgui.ImVec2(-1, 110))
+					imgui.PopItemWidth()
+					imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+					if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+						elm.input.adm_name.v, elm.input.adm_text.v = '', ''
+						imgui.CloseCurrentPopup()
+					end
+					imgui.SameLine()
+					if #elm.input.adm_name.v > 0 and #elm.input.adm_text.v > 0 then
+						imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+						if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+							if not EditOld then
+								local refresh_text = elm.input.adm_text.v:gsub("\n", "~")
+								table.insert(textcfg.makeadmin_name, elm.input.adm_name.v)
+								table.insert(textcfg.makeadmin_text, refresh_text)
+								if TextSave() then
+									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" успешно создан!', -1)
+									elm.input.adm_name.v, elm.input.adm_text.v = '', ''
+								end
+									imgui.CloseCurrentPopup()
+								else
+									local refresh_text = elm.input.adm_text.v:gsub("\n", "~")
+									table.insert(textcfg.makeadmin_name, getpos, elm.input.adm_name.v)
+									table.insert(textcfg.makeadmin_text, getpos, refresh_text)
+									table.remove(textcfg.makeadmin_name, getpos + 1)
+									table.remove(textcfg.makeadmin_text, getpos + 1)
+								if TextSave() then
+									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" успешно отредактирован!', -1)
+									elm.input.adm_name.v, elm.input.adm_text.v = '', ''
+								end
+								EditOld = false
+								imgui.CloseCurrentPopup()
+							end
+						end
+					end
+					imgui.EndChild()
+					imgui.EndPopup()
+				end	
+				imgui.EndChild()
+				if imgui.Button(u8"Close") then  
+					imgui.CloseCurrentPopup()
+				end	
+				imgui.EndPopup()
+			end	
 		end	
 		imgui.EndChild()
 		imgui.End()
@@ -4001,9 +4369,9 @@ function imgui.OnDrawFrame()
 				imgui.Begin(u8"Чат-логгер", ATChatLogger)
 				if elm.checkbox.chat_logger.v then
 					if accept_load_clog then
-						imgui.InputText(u8"Поиск.", chat_find)
+						imgui.InputText(u8"Поиск строки", chat_find)
 						if chat_find.v == "" then
-							imgui.Text(u8'Начните вводить текст\n')
+							imgui.Text(u8'Предложение/Слово не было введено. Введите пожалуйста.\n')
 						else
 							for key, v in pairs(chat_logger_text) do
 								if v:find(u8:decode(chat_find.v)) ~= nil then
@@ -4251,9 +4619,6 @@ function imgui.OnDrawFrame()
 						if imgui.Button(u8"Помеха игрокам", btn_size) then  
 							sampSendChat("/jail " .. control_recon_playerid .. " 300 Серьезная помеха игрокам")
 						end
-						if imgui.Button(u8"Паркур мод", btn_size) then  
-							sampSendChat("/jail " .. control_recon_playerid .. " 900 Использование паркур мода")
-						end
 						if imgui.Button(u8"Car in /trade", btn_size) then  
 							sampSendChat("/jail " .. control_recon_playerid .. " 300 DB/Car in /trade")
 						end
@@ -4270,7 +4635,7 @@ function imgui.OnDrawFrame()
 							sampSendChat("/jail " .. control_recon_playerid .. " 600 Исп. запрещенных команд на /gw")
 						end
 						imgui.Separator()
-						if imgui.Button(u8"Назад. ##1", btn_size) then
+						if imgui.Button(u8"Назад ##1", btn_size) then
 							tool_re = 0
 						end
 					elseif tool_re == 2 then
@@ -4278,11 +4643,6 @@ function imgui.OnDrawFrame()
 							sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 							sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
 							sampSendChat("/iban " .. control_recon_playerid .. " 7 Использование читерского скрипта/ПО")
-						end
-						if imgui.Button(u8"Обход бана", btn_size) then
-							sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
-							sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
-							sampSendChat("/iban " .. control_recon_playerid .. " 7 Обход прошлого бана")
 						end
 						if imgui.Button(u8"Плагиат никнейма администратора", btn_size) then
 							sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
@@ -4300,7 +4660,7 @@ function imgui.OnDrawFrame()
 							sampSendChat("/ban " .. control_recon_playerid .. " 3 Оскорбление/Унижение/Мат в хелпере")
 						end
 						imgui.Separator()
-						if imgui.Button(u8"Назад. ##2", btn_size) then
+						if imgui.Button(u8"Назад ##2", btn_size) then
 							tool_re = 0
 						end
 					elseif tool_re == 3 then
@@ -4316,8 +4676,11 @@ function imgui.OnDrawFrame()
 						if imgui.Button("Nick 2/3", btn_size) then
 							sampSendChat("/kick " .. control_recon_playerid .. " Nick 2/3")
 						end
+						if imgui.Button("Nick 3/3", btn_size) then
+							sampSendChat("/kick " .. control_recon_playerid .. " Nick 3/3")
+						end
 						imgui.Separator()
-						if imgui.Button(u8"Назад. ##3", btn_size) then
+						if imgui.Button(u8"Назад ##3", btn_size) then
 							tool_re = 0
 						end
 					end
@@ -4418,9 +4781,9 @@ function blackred()
     style.WindowPadding = imgui.ImVec2(8, 8)
     style.WindowRounding = 6
     style.ChildWindowRounding = 5
-    style.FramePadding = imgui.ImVec2(5, 3)
+    style.FramePadding = imgui.ImVec2(4, 3)
     style.FrameRounding = 3.0
-    style.ItemSpacing = imgui.ImVec2(5, 4)
+    style.ItemSpacing = imgui.ImVec2(4, 4)
     style.ItemInnerSpacing = imgui.ImVec2(4, 4)
     style.IndentSpacing = 21
     style.ScrollbarSize = 10.0
@@ -5340,3 +5703,14 @@ function yellow_green()
 	colors[clr.TextSelectedBg] = ImVec4(0.25, 0.73, 0.00, 1.00); 
 	colors[clr.ModalWindowDarkening] = ImVec4(0.26, 0.26, 0.26, 0.60); 
 end
+
+function play_makeadmin(num)
+	lua_thread.create(function()
+		if num ~= -1 then
+			for bp in textcfg.makeadmin_text[num]:gmatch('[^~]+') do
+				sampSendChat("/makeadmin " .. u8:decode(tostring(bp)))
+			end
+			num = -1
+		end
+	end)
+end	

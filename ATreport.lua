@@ -10,26 +10,49 @@ local directIni = "AdminTool\\reports.ini"
 local ATrep = inicfg.load({
     main = {
         good_game_prefix = false,
-    }
+		posX = 0,
+		posY = 0,
+    },
+	bind_name = {},
+	bind_text = {},
+	bind_delay = {},
 }, directIni)
 inicfg.save(ATrep, directIni)
 
 local sw2, sh2 = getScreenResolution()
 
+local fa = require 'faicons'
+local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
+function imgui.BeforeDrawFrame()
+	if fa_font == nil then  
+		local font_config = imgui.ImFontConfig()
+		font_config.MergeMode = true 
+		fa_font = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fontawesome-webfont.ttf', 14.0, font_config, fa_glyph_ranges)
+	end	
+end 
+
 function save() 
     inicfg.save(ATrep, directIni)
 end    
 
+local report_ans = 0
+local check_ans = 0
+
 local rep = { 
     imgui = imgui.ImBool(false),
+	window_ans = imgui.ImBool(false),
+	binder_delay = imgui.ImInt(2500),
+	binder_text = imgui.ImBuffer(65536),
+	binder_name = imgui.ImBuffer(256),
     text = imgui.ImBuffer(4096),
     report = imgui.ImBool(false),
-    ggp = imgui.ImBool(ATrep.main.good_game_prefix)
+    ggp = imgui.ImBool(ATrep.main.good_game_prefix),
+	posX = ATrep.main.posX,
+	posY = ATrep.main.posY
 }
 
 local questions = {
     ["reporton"] = {
-
         [u8"Начало работы по жалобе"] = "Начал(а) работу по вашей жалобе!",
 		[u8"Иду помогать"] = "Уважаемый игрок, сейчас помогу вам!",
 		[u8"Нет такой инфы у админов"] = "Данную информацию узнавайте в интернете.",
@@ -47,6 +70,11 @@ local questions = {
 		[u8"Игрок наказан"] = "Данный игрок наказан",
 		[u8"Проверим"] = "Проверим",
 		[u8"ГМ не работает"] = "GodMode (ГодМод) на сервере не работает",
+		[u8"Нет набора"] = "В данный момент набор в администрацию не проходит.",
+		[u8"Сейчас сниму наказание"] = "Сейчас сниму вам наказание.",
+		[u8"Баг будет исправлен"] = "Данный баг скоро будет исправлен.",
+		[u8"Ошибка будет исправлена"] = "Данный ошибка скоро будет исправлена.",
+		[u8"Приветствие"] = "Добрый день, уважаемый игрок.",
         [u8"Разрешено"] = "Разрешено",
 		[u8"Никак"] = "Никак",
 		[u8"Да"] = "Да",
@@ -111,7 +139,6 @@ local questions = {
 		[u8"Продать бизнес"] = "/biz > Продать бизнес государству",
 		[u8"Меню бизнесмена"] = "Введите /biz ",
 		[u8"Меню клуба"] = "Введите /clubpanel ",
-
 	},
 	["HelpDefault"] = {
 		[u8"IP RDS 01"] = "46.174.52.246:7777",
@@ -140,9 +167,11 @@ local questions = {
 		[u8"Если игрок застрял"] = "/kill | /tp | /spawn",
 		[u8"Как попасть на дерби/пабг"] = "/join | Есть внутриигровые команды, следите за чатом",
 		[u8"Виртуальный мир"] = "/dt 0-990 / Виртуальный мир",
-        [u8"Прогресс миссий/квестов"] = "/quests | /dquest | /bquest"
+        [u8"Прогресс миссий/квестов"] = "/quests | /dquest | /bquest",
+		[u8"Спросите у игроков"] = "Спросите у игроков."
 	},
 	["HelpSkins"] = {
+		[u8"Сайт со скинами"] = " https://gtaxmods.com/skins-id.html.",
 		[u8"Копы"] = "65-267, 280-286, 288, 300-304, 306, 307, 309-311",
 		[u8"Балласы"] = "102-104",
 		[u8"Грув"] = "105-107",
@@ -268,8 +297,6 @@ function main()
 
     while true do
         wait(0)
-
-		imgui.Process = true
 
         if isKeyDown(109) and sampIsDialogActive() then 
 			local string = string.sub(sampGetCurrentDialogEditboxText(), 0, string.len(sampGetCurrentDialogEditboxText()) - 1)
@@ -633,17 +660,11 @@ function main()
 			sampSetChatInputText(string.gsub(sampGetChatInputText(), "/gvk", "https://vk.com/dmdriftgta"))
 		end
 
-        if sampGetCurrentDialogId() == 2349 then
-			rep.imgui.v = true
-			imgui.Process = rep.imgui.v
-		else 
-			rep.imgui.v = false
-			imgui.Process = false
+		if sampGetCurrentDialogId() == 2352 then  
+			sampCloseCurrentDialogWithButton(1)
 		end
     end
 end
-
-
 
 function color1() -- функция, выполняющая рандомнизацию и вывод рандомного цвета с помощью специального os.time()
 	mcolor = "{"
@@ -1062,11 +1083,25 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
             nick_rep = text:match("Игрок: {......}(%S+)")
             text_rep = text:match("Жалоба:\n{......}(.*)\n\n{......}")	
 			pid_rep = sampGetPlayerIdByNickname(nick_rep)
+			rep_text = u8:encode(text_rep)
         end
+		if not rep.imgui.v then  
+			rep.imgui.v = true  
+			imgui.Process = true
+		end
+	else  
+		rep.imgui.v = false  
+		imgui.Process = false
+		imgui.ShowCursor = false
     end
 end
 
 function imgui.OnDrawFrame()
+
+	if not rep.imgui.v then  
+		imgui.Process = false  
+		imgui.ShowCursor = false  
+	end
 
     local ATcfg2 = inicfg.load({
         setting = {
@@ -1107,427 +1142,742 @@ function imgui.OnDrawFrame()
 	end
 
     if rep.imgui.v then 
-		
+
         imgui.SetNextWindowPos(imgui.ImVec2((sw2 / 2) - 500 , (sh2 / 2) + 40), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(550, 285), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8"Ответы на репорты", false, rep.imgui)
+        imgui.SetNextWindowSize(imgui.ImVec2(550, 305), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8"Ответы на репорты", rep.imgui)
         local btn_size = imgui.ImVec2(-0.1, 0)
 
-		imgui.Separator()
-
-        if imgui.Checkbox(u8"Пожелание в ответе", rep.ggp) then 
-            ATrep.main.good_game_prefix = rep.ggp.v 
-            save() 
-        end
-        imgui.SameLine()
-        imgui.TextQuestion('(?)', u8'Автоматически при ответе через кнопочки будет желать приятной игры!')	
-        imgui.BeginChild('##Select Setting', imgui.ImVec2(210, 225), true)
-
-        if imgui.Selectable(u8"Свой ответ", report_ans == 11) then report_ans = 11 end
-        if imgui.Selectable(u8"Жалобы на что-то/кого-то", report_ans == 1) then report_ans = 1 end
-        if imgui.Selectable(u8"Вопросы по командам, /help", report_ans == 2) then report_ans = 2 end
-        if imgui.Selectable(u8"Помощь по банде/семье", report_ans == 3) then report_ans = 3 end
-        if imgui.Selectable(u8"Помощь по телепортации", report_ans == 4) then report_ans = 4 end
-		if imgui.Selectable(u8"Помощь по бизнесам", report_ans == 12) then report_ans = 12 end
-        if imgui.Selectable(u8"Помощь по продаже/покупке", report_ans == 5) then report_ans = 5 end
-        if imgui.Selectable(u8"Помощь по настройкам", report_ans == 9) then report_ans = 9 end
-        if imgui.Selectable(u8"Помощь по домам", report_ans == 10) then report_ans = 10 end
-        if imgui.Selectable(u8"Деньги, передача и т.д.", report_ans == 6) then report_ans = 6 end
-        if imgui.Selectable(u8"Скины", report_ans == 8) then report_ans = 8 end
-        if imgui.Selectable(u8"Остальные вопросы", report_ans == 7) then report_ans = 7 end
-
-        imgui.EndChild()
-
-        imgui.SameLine()
-
-        imgui.BeginChild("##ReportWindow", imgui.ImVec2(280, 225), true)
-            if report_ans == 1 then 
-                for key, v in pairs(questions) do
-                    if key == "reporton" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                            end
-                        end
-                    end
-                end
-            end       
-            if report_ans == 2 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpCmd" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end   
-            if report_ans == 3 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpGangFamilyMafia" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-            if report_ans == 4 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpTP" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-            if report_ans == 5 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpSellBuy" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-            if report_ans == 6 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpMoneys" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                        local settext = '{FFFFFF}' .. v_2
-                                        sampSendDialogResponse(2349, 1, 0)
-                                        sampSendDialogResponse(2350, 1, 0)
-                                        wait(200)
-                                        sampSendDialogResponse(2351, 1, 0, settext)
-                                        wait(200)
-                                        sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-            if report_ans == 7 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpDefault" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end     
-            if report_ans == 8 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpSkins" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-
-            if report_ans == 9 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpSettings" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-            if report_ans == 10 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpHouses" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-			if report_ans == 12 then 
-                for key, v in pairs(questions) do
-                    if key == "HelpBuz" then
-                        for key_2, v_2 in pairs(questions[key]) do
-                            if imgui.Button(key_2, btn_size) then
-                                if not rep.ggp.v then
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                else
-                                    lua_thread.create(function()
-                                    local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-                                    sampSendDialogResponse(2349, 1, 0)
-                                    sampSendDialogResponse(2350, 1, 0)
-                                    wait(200)
-                                    sampSendDialogResponse(2351, 1, 0, settext)
-                                    wait(200)
-                                    sampCloseCurrentDialogWithButton(13)
-                                    end)
-                                end
-                             end
-                         end
-                    end
-                end
-            end    
-            if report_ans == 11 then 
-               -- imgui.Text(u8"Игрок: " .. nick_rep .. " [" .. pid_rep .. "]: " .. text_rep)
-                imgui.Separator()
-                imgui.Text(u8"Введите свой ответ")
-                imgui.InputText(u8"##Ответ", rep.text)
-                imgui.Separator()
-                if imgui.Button(u8"Ответить") then  
-                    if not rep.ggp.v then 
-                        lua_thread.create(function()
-                            sampSendDialogResponse(2349, 1, 0)
-                            sampSendDialogResponse(2350, 1, 0)
-                            wait(200)
-                            local settext2 = '{FFFFFF}' .. rep.text.v
-                            sampSendDialogResponse(2351, 1, 0, u8:decode(settext2))	
-                            wait(200)
-                            sampCloseCurrentDialogWithButton(13)
-                            rep.report.v = false	
-                        end)
-                    else 
-                        lua_thread.create(function()
-                            sampSendDialogResponse(2349, 1, 0)
-                            sampSendDialogResponse(2350, 1, 0)
-                            wait(200)
-                            local settext2 = '{FFFFFF}' .. rep.text.v 
-                            sampSendDialogResponse(2351, 1, 0, u8:decode(settext2) .. color1() .. ' // Приятной игры на сервере RDS <3')	
-                            wait(200)
-                            sampCloseCurrentDialogWithButton(13)
-                            rep.report.v = false	
-                        end)
-                    end	
-                end		
-                imgui.Separator()
-                if imgui.Button(u8"Очистить текст") then  
-                    rep.text.v = ""
-                end
-            end 
-        imgui.EndChild()
+		if report_ans == 0 then  
+			imgui.Text(u8" Вы можете ответить на соответствующий репорт ниже! \nВы можете ввести свой ответ, либо воспользоваться вариантами ответов от AT")
+			--imgui.Text(u8(nick_rep .. " [" .. pid_rep .. "]: " .. u8:decode(rep_text)))
+			if imgui.Button(fa.ICON_CHECK .. u8" Передать жалобу ##SEND") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Передам ваш репорт! ' .. color1() .. 'Удачной игры!')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					wait(200)
+					sampSendChat("/a " .. nick_rep .. "[" .. pid_rep .. "] | " .. text_rep)
+				end)	
+			end
+			imgui.Separator()
+			imgui.InputText(u8"##Ответ", rep.text)
+			imgui.SameLine() 
+			if imgui.Button(fa.ICON_REFRESH .. ("##RefreshText//RemoveText")) then  
+				rep.text.v = "" 
+			end	
+			if #rep.text.v > 0 then
+				imgui.SameLine() 
+				if imgui.Button(fa.ICON_FA_SAVE .. ("##SaveReport")) then  
+					imgui.OpenPopup(u8'Биндер')
+				end	
+			end	
+			if imgui.BeginPopupModal(u8'Биндер', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+				imgui.BeginChild("##EditBinder", imgui.ImVec2(600, 225), true)
+				imgui.Text(u8'Название бинда:'); imgui.SameLine()
+				imgui.PushItemWidth(130)
+				imgui.InputText("##rep.binder_name", rep.binder_name)
+				imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+				if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+					rep.binder_name.v = ''
+					imgui.CloseCurrentPopup()
+				end
+				imgui.SameLine()
+				if #rep.binder_name.v > 0 then
+					imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+					if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+						if not EditOldBind then
+							local refresh_text = rep.text.v:gsub("\n", "~")
+							table.insert(ATrep.bind_name, rep.binder_name.v)
+							table.insert(ATrep.bind_text, refresh_text)
+							if save() then
+								sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно создан!', -1)
+								rep.binder_name.v, rep.text.v = '', ''
+							end
+								imgui.CloseCurrentPopup()
+							else
+								local refresh_text = rep.text.v:gsub("\n", "~")
+								table.insert(ATrep.bind_name, getpos, rep.binder_name.v)
+								table.insert(ATrep.bind_text, getpos, refresh_text)
+								table.remove(ATrep.bind_name, getpos + 1)
+								table.remove(ATrep.bind_text, getpos + 1)
+							if save() then
+								sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно отредактирован!', -1)
+								rep.binder_name.v, rep.text.v = '', ''
+							end
+							EditOldBind = false
+							imgui.CloseCurrentPopup()
+						end
+					end
+				end
+				imgui.EndChild()
+				imgui.EndPopup()
+			end	
+			if imgui.Button(u8"Ответить") then  
+				if not rep.ggp.v then 
+					lua_thread.create(function()
+						sampSendDialogResponse(2349, 1, 0)
+						sampSendDialogResponse(2350, 1, 0)
+						wait(200)
+						local settext2 = '{FFFFFF}' .. rep.text.v
+						sampSendDialogResponse(2351, 1, 0, u8:decode(settext2))	
+						wait(200)
+						sampCloseCurrentDialogWithButton(13)
+						rep.imgui.v = false
+					end)
+				else 
+					lua_thread.create(function()
+						sampSendDialogResponse(2349, 1, 0)
+						sampSendDialogResponse(2350, 1, 0)
+						wait(200)
+						local settext2 = '{FFFFFF}' .. rep.text.v 
+						sampSendDialogResponse(2351, 1, 0, u8:decode(settext2) .. color1() .. ' // Приятной игры на сервере RDS <3')	
+						wait(200)
+						sampCloseCurrentDialogWithButton(13)
+						rep.imgui.v = false
+					end)
+				end	
+			end		
+			imgui.Separator()
+			if imgui.Button(fa.ICON_QUESTION_CIRCLE .. u8" Ответы от AT") then  
+				report_ans = 1
+			end	
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8"Выводит ответы, которые зарегистрированы в AT разработчиками")
+			if imgui.Button(fa.ICON_FA_SAVE .. u8" Сохраненные ответы") then  
+				report_ans = 2
+			end	
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8"Выводит ответы, которые вы сохранили в /binder")
+			imgui.Separator()
+			if imgui.Checkbox(u8"Пожелание в ответе", rep.ggp) then 
+				ATrep.main.good_game_prefix = rep.ggp.v 
+				save() 
+			end
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8'Автоматически при ответе через кнопочки будет желать приятной игры!')	
+			imgui.SetCursorPosY(imgui.GetWindowWidth() - 295)
+			imgui.Separator()
+			imgui.SetCursorPosY(imgui.GetWindowWidth() - 270)
+			if imgui.Button(fa.ICON_WINDOW_CLOSE .. u8" Закрыть ##CLOSE") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 0, 0)
+					wait(200)
+					sampSendDialogResponse(2348, 0, 0)
+					rep.imgui.v = false  
+					imgui.ShowCursor = false
+				end)	
+			end	
+		end
+		if report_ans == 1 then  
+			imgui.BeginChild("##menuSecond", imgui.ImVec2(150, 275), true)
+			if imgui.Button(fa.ICON_OBJECT_GROUP .. u8" На кого-то/что-то", imgui.ImVec2(140, 0)) then  -- reporton key
+				check_ans = 1  
+			end	
+			if imgui.Button(fa.ICON_LIST .. u8" Команды (/help)", imgui.ImVec2(140, 0)) then  -- HelpCMD key
+				check_ans = 2 
+			end 	
+			if imgui.Button(fa.ICON_USERS .. u8" Банде/семья", imgui.ImVec2(140, 0)) then  -- HelpGangFamilyMafia key
+				check_ans = 3
+			end	
+			if imgui.Button(fa.ICON_MAP_MARKER .. u8" Телепорты", imgui.ImVec2(140, 0)) then  -- HelpTP key
+				check_ans = 4
+			end	
+			if imgui.Button(fa.ICON_SHOPPING_BAG .. u8" Бизнесы", imgui.ImVec2(140, 0)) then  -- HelpBuz key
+				check_ans = 5 
+			end	
+			if imgui.Button(fa.ICON_MONEY .. u8" Продажа/Покупка", imgui.ImVec2(140, 0)) then  -- HelpSellBuy key
+				check_ans = 6 
+			end	
+			if imgui.Button(fa.ICON_BOLT .. u8" Настройки", imgui.ImVec2(140, 0)) then  -- HelpSettings key
+				check_ans = 7
+			end	
+			if imgui.Button(fa.ICON_HOME .. u8" Дома", imgui.ImVec2(140, 0)) then  -- HelpHouses key
+				check_ans = 8 
+			end	
+			if imgui.Button(fa.ICON_MALE .. u8" Скины", imgui.ImVec2(140, 0)) then  -- HelpSkins key
+				check_ans = 9 
+			end	
+			if imgui.Button(fa.ICON_BARCODE .. u8" Остальные ответы", imgui.ImVec2(140, 0)) then  -- HelpDefault key
+				check_ans = 10
+			end	
+			imgui.Separator()
+			if imgui.Button(fa.ICON_BACKWARD .. u8" Назад") then  
+				report_ans = 0 
+			end	
+			imgui.EndChild()
+			imgui.SameLine()
+			imgui.BeginChild("##menuSelectable", imgui.ImVec2(390, 275), true)
+			if check_ans == 0 then  
+				imgui.Text(u8"Заготовленные/сохраненные ответы такого типа \nменяются только разработчиками")
+			end	
+			if check_ans == 1 then  
+				for key, v in pairs(questions) do
+					if key == "reporton" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							end
+						end
+					end
+				end
+			end	
+			if check_ans == 2 then 
+				for key, v in pairs(questions) do
+					if key == "HelpCmd" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 3 then  
+				for key, v in pairs(questions) do
+					if key == "HelpGangFamilyMafia" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 4 then  
+				for key, v in pairs(questions) do
+					if key == "HelpTP" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 6 then  
+				for key, v in pairs(questions) do
+					if key == "HelpSellBuy" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 6 then
+				for key, v in pairs(questions) do
+					if key == "HelpMoneys" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+										local settext = '{FFFFFF}' .. v_2
+										sampSendDialogResponse(2349, 1, 0)
+										sampSendDialogResponse(2350, 1, 0)
+										wait(200)
+										sampSendDialogResponse(2351, 1, 0, settext)
+										wait(200)
+										sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end  
+			end	
+			if check_ans == 10 then  
+				for key, v in pairs(questions) do
+					if key == "HelpDefault" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 9 then  
+				for key, v in pairs(questions) do
+					if key == "HelpSkins" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 7 then  
+				for key, v in pairs(questions) do
+					if key == "HelpSettings" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 8 then  
+				for key, v in pairs(questions) do
+					if key == "HelpHouses" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			if check_ans == 5 then  
+				for key, v in pairs(questions) do
+					if key == "HelpBuz" then
+						for key_2, v_2 in pairs(questions[key]) do
+							if imgui.Button(key_2, btn_size) then
+								if not rep.ggp.v then
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								else
+									lua_thread.create(function()
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									sampSendDialogResponse(2349, 1, 0)
+									sampSendDialogResponse(2350, 1, 0)
+									wait(200)
+									sampSendDialogResponse(2351, 1, 0, settext)
+									wait(200)
+									sampCloseCurrentDialogWithButton(13)
+									end)
+								end
+							 end
+						 end
+					end
+				end
+			end	
+			imgui.EndChild()
+		end	
+		if report_ans == 2 then  
+			if #ATrep.bind_name > 0 then  
+				for key_bind, name_bind in pairs(ATrep.bind_name) do  
+					if imgui.Button(name_bind.. '##'..key_bind) then  
+						play_bind_ans(key_bind)
+					end	
+				end	
+			else 
+				imgui.Text(u8"Пусто!")
+				if imgui.Button(u8"Создать!") then  
+					imgui.OpenPopup(u8'Биндер')	 
+				end	
+			end	
+			if imgui.BeginPopupModal(u8'Биндер', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+				imgui.BeginChild("##EditBinder", imgui.ImVec2(600, 225), true)
+				imgui.Text(u8'Название бинда:'); imgui.SameLine()
+				imgui.PushItemWidth(130)
+				imgui.InputText("##rep.binder_name", rep.binder_name)
+				imgui.PopItemWidth()
+				imgui.PushItemWidth(100)
+				imgui.Separator()
+				imgui.Text(u8'Текст бинда:')
+				imgui.PushItemWidth(300)
+				imgui.InputTextMultiline("##rep.binder_text", rep.binder_text, imgui.ImVec2(-1, 110))
+				imgui.PopItemWidth()
+	
+				imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+				if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+					rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+					imgui.CloseCurrentPopup()
+				end
+				imgui.SameLine()
+				if #rep.binder_name.v > 0 and #rep.binder_text.v > 0 then
+					imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+					if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+						if not EditOldBind then
+							local refresh_text = rep.binder_text.v:gsub("\n", "~")
+							table.insert(ATrep.bind_name, rep.binder_name.v)
+							table.insert(ATrep.bind_text, refresh_text)
+							table.insert(ATrep.bind_delay, rep.binder_delay.v)
+							if save() then
+								sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно создан!', -1)
+								rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+							end
+								imgui.CloseCurrentPopup()
+							else
+								local refresh_text = rep.binder_text.v:gsub("\n", "~")
+								table.insert(ATrep.bind_name, getpos, rep.binder_name.v)
+								table.insert(ATrep.bind_text, getpos, refresh_text)
+								table.insert(ATrep.bind_delay, getpos, rep.binder_delay.v)
+								table.remove(ATrep.bind_name, getpos + 1)
+								table.remove(ATrep.bind_text, getpos + 1)
+								table.remove(ATrep.bind_delay, getpos + 1)
+							if save() then
+								sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно отредактирован!', -1)
+								rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+							end
+							EditOldBind = false
+							imgui.CloseCurrentPopup()
+						end
+					end
+	
+				end
+				imgui.EndChild()
+				imgui.EndPopup()
+			end
+			imgui.Separator()
+			if imgui.Button(fa.ICON_BACKWARD .. u8" Назад") then  
+				report_ans = 0 
+			end	
+		end	
         imgui.End()
     end
 
+			-- if imgui.Button(u8'Местоположение окна') then
+			-- 	lua_thread.create(function()
+			-- 		rep.binder.v = false
+			-- 		rep.window_ans.v = true
+			-- 		showCursor(true, true)
+			-- 		checkCursor = true
+			-- 		sampSetCursorMode(4)
+			-- 		sampAddChatMessage(tag .. " Нажмите {69b2ff}SPACE{FFFFFF} чтобы сохранить позицию")
+			-- 		while checkCursor do
+			-- 			local cX, cY = getCursorPos()
+			-- 			rep.posX, rep.posY = cX, cY
+			-- 			if isKeyDown(32) then
+			-- 				sampSetCursorMode(0)
+			-- 				ATrep.main.posX, ATrep.main.posY = rep.posX, rep.posY
+			-- 				checkCursor = false
+			-- 				showCursor(false, false)
+			-- 				rep.binder.v = true
+			-- 				rep.window_ans.v = false
+			-- 				if save() then sampAddChatMessage(tag .. "Местоположение сохранено!", -1) end
+			-- 			end
+			-- 			wait(0)
+			-- 		end
+			-- 	end)
+			-- end
+		
+
+	-- if rep.window_ans.v then  
+
+	-- 	imgui.SetNextWindowPos(imgui.ImVec2(rep.posX, rep.posY), imgui.Cond.Always)
+	-- 	imgui.SetNextWindowSize(imgui.ImVec2(125, -1), imgui.Cond.Appearing)
+	-- 	imgui.Begin(u8"##window_ans", rep.window_ans, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)
+	-- 	if #ATrep.bind_name > 0 then  
+	-- 		for key_bind, name_bind in pairs(ATrep.bind_name) do  
+	-- 			if imgui.Button(name_bind.. '##'..key_bind) then  
+	-- 				play_bind(key_bind)
+	-- 			end	
+	-- 		end	
+	-- 	else 
+	-- 		imgui.Text(u8"Пусто!")
+	-- 		if imgui.Button(u8"Создать!") then  
+	-- 			imgui.OpenPopup(u8'Биндер')	 
+	-- 		end	
+	-- 	end	
+	-- 	if imgui.BeginPopupModal(u8'Биндер', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+	-- 		imgui.BeginChild("##EditBinder", imgui.ImVec2(600, 225), true)
+	-- 		imgui.Text(u8'Название бинда:'); imgui.SameLine()
+	-- 		imgui.PushItemWidth(130)
+	-- 		imgui.InputText("##rep.binder_name", rep.binder_name)
+	-- 		imgui.PopItemWidth()
+	-- 		imgui.PushItemWidth(100)
+	-- 		imgui.InputInt(u8("Задержка между строками в миллисекундах"), rep.binder_delay)
+	-- 		imgui.PopItemWidth()
+	-- 		if rep.binder_delay.v <= 0 then
+	-- 			rep.binder_delay.v = 1
+	-- 		elseif rep.binder_delay.v >= 60001 then
+	-- 			rep.binder_delay.v = 60000
+	-- 		end
+	-- 		imgui.Separator()
+	-- 		imgui.Text(u8'Текст бинда:')
+	-- 		imgui.PushItemWidth(300)
+	-- 		imgui.InputTextMultiline("##rep.binder_text", rep.binder_text, imgui.ImVec2(-1, 110))
+	-- 		imgui.PopItemWidth()
+
+	-- 		imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+	-- 		if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+	-- 			rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+	-- 			imgui.CloseCurrentPopup()
+	-- 		end
+	-- 		imgui.SameLine()
+	-- 		if #rep.binder_name.v > 0 and #rep.binder_text.v > 0 then
+	-- 			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+	-- 			if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+	-- 				if not EditOldBind then
+	-- 					local refresh_text = rep.binder_text.v:gsub("\n", "~")
+	-- 					table.insert(ATrep.bind_name, rep.binder_name.v)
+	-- 					table.insert(ATrep.bind_text, refresh_text)
+	-- 					table.insert(ATrep.bind_delay, rep.binder_delay.v)
+	-- 					if save() then
+	-- 						sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно создан!', -1)
+	-- 						rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+	-- 					end
+	-- 						if rep.window_ans.v then
+	-- 							lua_thread.create(function()
+	-- 								rep.window_ans.v = false
+	-- 								wait(0)
+	-- 								rep.window_ans.v = true
+	-- 							end)
+	-- 						end
+	-- 						imgui.CloseCurrentPopup()
+	-- 					else
+	-- 						local refresh_text = rep.binder_text.v:gsub("\n", "~")
+	-- 						table.insert(ATrep.bind_name, getpos, rep.binder_name.v)
+	-- 						table.insert(ATrep.bind_text, getpos, refresh_text)
+	-- 						table.insert(ATrep.bind_delay, getpos, rep.binder_delay.v)
+	-- 						table.remove(ATrep.bind_name, getpos + 1)
+	-- 						table.remove(ATrep.bind_text, getpos + 1)
+	-- 						table.remove(ATrep.bind_delay, getpos + 1)
+	-- 					if save() then
+	-- 						sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно отредактирован!', -1)
+	-- 						rep.binder_name.v, rep.binder_text.v, rep.rep.binder_delay.v = '', '', 2500
+	-- 					end
+	-- 					EditOldBind = false
+	-- 					imgui.CloseCurrentPopup()
+	-- 				end
+	-- 			end
+
+	-- 		end
+	-- 		imgui.EndChild()
+	-- 		imgui.EndPopup()
+	-- 	end
+	-- 	imgui.End()
+	-- end
+end
+
+function play_bind(num)
+	lua_thread.create(function()
+		if num ~= -1 then
+			for bp in ATrep.bind_text[num]:gmatch('[^~]+') do
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/ans  " ..u8:decode(tostring(bp)))
+				wait(200)
+				wait(ATrep.bind_delay[num])
+			end
+			num = -1
+		end
+	end)
+end
+
+function play_bind_ans(num)
+	lua_thread.create(function()
+		if num ~= -1 then
+			for bp in ATrep.bind_text[num]:gmatch('[^~]+') do
+				-- sampSendDialogResponse(2349, 1, 0)
+				-- sampSendDialogResponse(2350, 1, 0)
+				-- wait(200)
+				-- sampSendDialogResponse(2351, 1, 0, u8:decode(tostring(bp)))
+				-- wait(200)
+				-- sampCloseCurrentDialogWithButton(13)
+				sampAddChatMessage(u8:decode(tostring(bp)), -1)
+			end
+			num = -1
+		end
+	end)
 end
 
 function imgui.TextQuestion(label, description)
     imgui.TextDisabled(label)
-
     if imgui.IsItemHovered() then
         imgui.BeginTooltip()
             imgui.PushTextWrapPos(600)
@@ -2551,3 +2901,102 @@ function yellow_green()
 	colors[clr.TextSelectedBg] = ImVec4(0.25, 0.73, 0.00, 1.00); 
 	colors[clr.ModalWindowDarkening] = ImVec4(0.26, 0.26, 0.26, 0.60); 
 end
+
+function imgui.CenterText(text)
+    local width = imgui.GetWindowWidth()
+    local calc = imgui.CalcTextSize(text)
+    imgui.SetCursorPosX( width / 2 - calc.x / 2 )
+    imgui.Text(text)
+end
+
+function EXPORTS.ActiveBinder()
+	imgui.Text(u8"Здесь вы можете создать собственные ответы \nи взаимодействовать с ними в интерфейсе ответов на репорты!")
+	imgui.Text(u8'При нажатии на кнопку "Сохраненные ответы", ваши ответы там и будут! \nПриятной игры, дорогой администратор! <3')
+	imgui.Separator()
+	imgui.Text(" ")
+	imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 2)
+	if imgui.Button(u8'Создать') then
+		imgui.OpenPopup(u8'Биндер')
+	end
+	imgui.Text(" ")
+	imgui.Separator()
+
+	if #ATrep.bind_name > 0 then
+		for key_bind, name_bind in pairs(ATrep.bind_name) do
+		imgui.Button(name_bind..'##'..key_bind, imgui.ImVec2(270, 22))
+		imgui.SameLine()
+		if imgui.Button(u8'Редактировать##'..key_bind, imgui.ImVec2(100, 22)) then
+			EditOldBind = true
+			getpos = key_bind
+			local returnwrapped = tostring(ATrep.bind_text[key_bind]):gsub('~', '\n')
+			rep.binder_text.v = returnwrapped
+			rep.binder_name.v = tostring(ATrep.bind_name[key_bind])
+			rep.binder_delay.v = tostring(ATrep.bind_delay[key_bind])
+			imgui.OpenPopup(u8'Биндер')
+		end
+		imgui.SameLine()
+		if imgui.Button(u8'Удалить##'..key_bind, imgui.ImVec2(60, 22)) then
+			sampAddChatMessage(tag .. 'Бинд "' ..u8:decode(ATrep.bind_name[key_bind])..'" удален!', -1)
+			table.remove(ATrep.bind_name, key_bind)
+			table.remove(ATrep.bind_text, key_bind)
+			table.remove(ATrep.bind_delay, key_bind)
+			save()
+		end
+	end
+	else
+		imgui.Text(u8('Здесь пока пусто :('))
+	end
+	if imgui.BeginPopupModal(u8'Биндер', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
+		imgui.BeginChild("##EditBinder", imgui.ImVec2(600, 225), true)
+		imgui.Text(u8'Название бинда:'); imgui.SameLine()
+		imgui.PushItemWidth(130)
+		imgui.InputText("##binder_name", rep.binder_name)
+		imgui.PopItemWidth()
+		imgui.PushItemWidth(100)
+		imgui.Separator()
+		imgui.Text(u8'Текст бинда:')
+		imgui.PushItemWidth(300)
+		imgui.InputTextMultiline("##rep.binder_text", rep.binder_text, imgui.ImVec2(-1, 110))
+		imgui.PopItemWidth()
+
+		imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
+		if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
+			rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+			imgui.CloseCurrentPopup()
+		end
+		imgui.SameLine()
+		if #rep.binder_name.v > 0 and #rep.binder_text.v > 0 then
+			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
+			if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
+				if not EditOldBind then
+					local refresh_text = rep.binder_text.v:gsub("\n", "~")
+					table.insert(ATrep.bind_name, rep.binder_name.v)
+					table.insert(ATrep.bind_text, refresh_text)
+					table.insert(ATrep.bind_delay, rep.binder_delay.v)
+					if save() then
+						sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно создан!', -1)
+						rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+					end
+						imgui.CloseCurrentPopup()
+					else
+						local refresh_text = rep.binder_text.v:gsub("\n", "~")
+						table.insert(ATrep.bind_name, getpos, rep.binder_name.v)
+						table.insert(ATrep.bind_text, getpos, refresh_text)
+						table.insert(ATrep.bind_delay, getpos, rep.binder_delay.v)
+						table.remove(ATrep.bind_name, getpos + 1)
+						table.remove(ATrep.bind_text, getpos + 1)
+						table.remove(ATrep.bind_delay, getpos + 1)
+					if save() then
+						sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно отредактирован!', -1)
+						rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
+					end
+					EditOldBind = false
+					imgui.CloseCurrentPopup()
+				end
+			end
+
+		end
+		imgui.EndChild()
+		imgui.EndPopup()
+	end  
+end			
