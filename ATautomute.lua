@@ -87,11 +87,13 @@ local LsessionKick = 0
 local LsessionJail = 0 
 
 local ini = {
+    textrule = imgui.ImBuffer(65536),
     admin_state = imgui.ImBool(cfg.settings.admin_state),
     mp_tp = imgui.ImBool(cfg.settings.mp_tp),
     automute_mat = imgui.ImBool(cfg.settings.automute_mat),
     automute_osk = imgui.ImBool(cfg.settings.automute_osk),
     open_mp = imgui.ImBuffer(516), 
+    set_dt = imgui.ImBuffer(500),
     mp_prize = imgui.ImBuffer(524),
     show_mute_day = imgui.ImBool(cfg.settings.show_mute_day), 
     show_mute_now = imgui.ImBool(cfg.settings.show_mute_now),
@@ -113,16 +115,12 @@ local ini = {
 
 local onscene = { "блять", "сука", "хуй", "нахуй" } -- основная сцена мата
 local control_onscene = false -- контролирование сцены мата
-local log_onscene = { } -- лог сцены
-local date_onscene = {} -- дата сцены
 ------ Введенные локальные переменные, отвечающие за автомут ----------
 
 local onscene_2 = { "пидр", "лох", "гандон", "уебан" }
 local neosk = { "я лох" }
 local control_onscene_1 = false
 local control_onscene_2 = false
-local log_onscene_1 = { }
-local date_onscene_1 = {}
 
 function save() 
     inicfg.save(cfg, directIni)
@@ -220,7 +218,6 @@ function sampev.onServerMessage(color, text)
         amd_nick = text:match('Администратор (.+) заткнул%(.+%) игрока .+ на .+ секунд. Причина: .+') 
         if amd_nick:find(getMyNick()) then
             cfg.static.dayMute = cfg.static.dayMute + 1 
-            sampAddChatMessage("plus", -1)
             LsessionMute = LsessionMute + 1 
             save()
         end
@@ -241,7 +238,7 @@ function sampev.onServerMessage(color, text)
         amd_nick = text:match('Администратор (.+) забанил%(.+%) игрока .+ на .+ дней. Причина: .+') 
         if amd_nick:find(getMyNick()) then
             cfg.static.dayBan = cfg.static.dayBan + 1 
-            LsessionBan = LsessionKick + 1 
+            LsessionBan = LsessionBan + 1 
             save()
         end  
         return true 
@@ -321,10 +318,6 @@ function main()
 		file_read_1:close()
 	end
 
-    sampRegisterChatCommand("textcmd", function()
-        sampAddChatMessage("Администатор "..getMyNick().." заткнул%(%-а%) игрока .+ на %d+ секунд. Причина: .+", -1)
-    end)
-
 	sampRegisterChatCommand("chip", chip)
 
     sampRegisterChatCommand('s_osk', function(param)
@@ -333,17 +326,17 @@ function main()
 		end
 		for _, val in ipairs(onscene_2) do
 			if string.rlower(param) == val then
-				sampAddChatMessage(tag .. "Слово \"" .. val .. "\" уже присутствует в списке оскорблений/унижений.")
+				sampAddChatMessage(tag .. " Слово \"" .. val .. "\" уже присутствует в списке оскорблений/унижений.")
 				return false
 			end
 		end
+        local file_write_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "w"), 1
 		onscene_2[#onscene_2 + 1] = string.rlower(param)
-		local file_write_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "w"), 1
 		for _, val in ipairs(onscene_2) do
 			file_write_1:write(val .. "\n")
 		end
 		file_write_1:close()
-		sampAddChatMessage(tag .. "Слово \"" .. string.rlower(param) .. "\" успешно добавлено в список оскорблений/унижений.")
+		sampAddChatMessage(tag .. " Слово \"" .. string.rlower(param) .. "\" успешно добавлено в список оскорблений/унижений.")
 	end)
 
     sampRegisterChatCommand('d_osk', function(param)
@@ -351,8 +344,8 @@ function main()
 		if param == nil then
 			return false
 		end
+        local file_write_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "w"), 1
 		for i, val in ipairs(onscene_2) do
-			local file_write_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "w"), 1
 			if val == string.rlower(param) then
 				onscene_2[i] = nil
 				control_onscene_2 = true
@@ -360,13 +353,13 @@ function main()
 				file_write_1:write(val .. "\n")
 			end
 		end
+        file_write_1:close()
 		if control_onscene_2 then
-			sampAddChatMessage(tag .. "Слово \"" .. string.rlower(param) .. "\" было успешно удалено из списка оскорблений/унижений.")
+			sampAddChatMessage(tag .. " Слово \"" .. string.rlower(param) .. "\" было успешно удалено из списка оскорблений/унижений.")
 			control_onscene_2 = false
 		else
-			sampAddChatMessage(tag .. "Слова \"" .. string.rlower(param) .. "\" нет в списке оскорблений/унижений.")
+			sampAddChatMessage(tag .. " Слова \"" .. string.rlower(param) .. "\" нет в списке оскорблений/унижений.")
 		end
-		file_write_1:close()
 	end)
 
     local file_read, c_line = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\mat.txt", "r"), 1
@@ -386,7 +379,7 @@ function main()
 		end
 		for _, val in ipairs(onscene) do
 			if string.rlower(param) == val then
-				sampAddChatMessage(tag .. "Слово \"" .. val .. "\" уже присутствует в списке нецензурной брани.")
+				sampAddChatMessage(tag .. " Слово \"" .. val .. "\" уже присутствует в списке нецензурной брани.")
 				return false
 			end
 		end
@@ -396,7 +389,7 @@ function main()
 			file_write:write(val .. "\n")
 		end
 		file_write:close()
-		sampAddChatMessage(tag .. "Слово \"" .. string.rlower(param) .. "\" успешно добавлено в список нецензурной лексики.")
+		sampAddChatMessage(tag .. " Слово \"" .. string.rlower(param) .. "\" успешно добавлено в список нецензурной лексики.")
 	end)
 	sampRegisterChatCommand('d_mat', function(param) -- удаление мата
 		if param == nil then
@@ -413,10 +406,10 @@ function main()
 		end
 		file_write:close()
 		if control_onscene then
-			sampAddChatMessage(tag .. "Слово \"" .. string.rlower(param) .. "\" было успешно удалено из списка нецензурной брани.")
+			sampAddChatMessage(tag .. " Слово \"" .. string.rlower(param) .. "\" было успешно удалено из списка нецензурной брани.")
 			control_onscene = false
 		else
-			sampAddChatMessage(tag .. "Слова \"" .. string.rlower(param) .. "\" нет в списке нецензурщины.")
+			sampAddChatMessage(tag .. " Слова \"" .. string.rlower(param) .. "\" нет в списке нецензурщины.")
 		end
 	end)
 
@@ -426,6 +419,10 @@ function main()
         cfg.static.full = 0
 		cfg.static.afk = 0
 		cfg.static.dayReport = 0
+        cfg.static.dayKick = 0 
+        cfg.static.dayBan = 0  
+        cfg.static.dayJail = 0 
+        cfg.static.dayMute = 0 
 	  	dayFull.v = 0
 		save()
     end
@@ -439,7 +436,8 @@ function main()
 
         if not ini.admin_state.v then 
             ini.admin_state.v = false
-            imgui.ShowCursor = false 
+            imgui.ShowCursor = false  
+            imgui.Process = false
         end    
         
         isPos()
@@ -594,7 +592,7 @@ function isPos()
         cfg.settings.posX, cfg.settings.posY = mouseX, mouseY
         if isKeyJustPressed(49) then
             showCursor(false, false)
-            sampAddChatMessage(tag .. ' Сохранено.')
+            showNotification(tag, "Успешно сохранено")
             changePosition = false
             save()
         end
@@ -645,12 +643,13 @@ function EXPORTS.ActiveMP()
     end	
     imgui.SameLine()
     if imgui.Button(u8"Создать свое МП", imgui.ImVec2(200,0)) then 
-        imgui.OpenPopup('createmp')
+        imgui.OpenPopup(u8'Создание своего мероприятия')
     end	 
     if imgui.Button(u8"Заготовленные мероприятия", imgui.ImVec2(300,0)) then 
         imgui.OpenPopup('zagmp') 
     end 
     imgui.Separator()
+    imgui.Text("  ")
     imgui.CenterText(u8"Описание мероприятий")
     if imgui.CollapsingHeader(u8"Прятки") then 
         imgui.Text(u8"Первоначально собирается строй. Рассказываются правила.")
@@ -844,9 +843,9 @@ function EXPORTS.ActiveMP()
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
                     sampSendDialogResponse(16066, 1, 0)
-                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Поливалка")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем комадны")
@@ -880,9 +879,9 @@ function EXPORTS.ActiveMP()
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
                     sampSendDialogResponse(16066, 1, 0)
-                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Крылья смерти")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
@@ -928,9 +927,9 @@ function EXPORTS.ActiveMP()
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
                     sampSendDialogResponse(16066, 1, 0)
-                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "ЖилиУ")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
@@ -965,9 +964,9 @@ function EXPORTS.ActiveMP()
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
                     sampSendDialogResponse(16066, 1, 0)
-                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Развлекательное МП")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
@@ -1015,9 +1014,9 @@ function EXPORTS.ActiveMP()
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
                     sampSendDialogResponse(16066, 1, 0)
-                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Догони админа")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
@@ -1042,28 +1041,55 @@ function EXPORTS.ActiveMP()
         end	
     imgui.EndPopup()
     end	
-    if imgui.BeginPopup('createmp') then 
-        imgui.Text(u8"Название своего мероприятия:")
-        imgui.InputText(u8'', ini.open_mp)
-        if imgui.Button(u8'Вывод') then 
+    if imgui.BeginPopupModal(u8'Создание своего мероприятия', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then 
+        imgui.BeginChild("##CreateMP", imgui.ImVec2(600, 225), true)
+        imgui.Text(u8"Название своего мероприятия: ")
+        imgui.SameLine()
+        imgui.InputText(u8'##OpenThisMP', ini.open_mp)
+        imgui.Text(u8"Выбор виртуального мира (/dt): ")
+        imgui.SameLine()
+        imgui.InputText(u8'##SetDT', ini.set_dt)
+        imgui.Text(u8"Ниже можно задать свои правила для МП")
+        imgui.Text(u8"Учтите, что перенос строки обязателен, если ваши правила больше одной строки")
+        imgui.InputTextMultiline("##RuleText", ini.textrule, imgui.ImVec2(-1, 110))
+        if imgui.Button(u8'Создать/Открыть МП') then 
+            sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: " .. u8:decode(ini.open_mp.v))
             sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: " .. u8:decode(ini.open_mp.v))
             sampSendChat("/mp")
             sampSendDialogResponse(5343, 1, 14)
             sampSendDialogResponse(16066, 1, 0)
             sampSendDialogResponse(16066, 0, 0)
             sampSendDialogResponse(16066, 1, 1)
-            sampSendDialogResponse(16067, 1, 0, "359")
+            if #ini.set_dt > 0 then
+                sampSendDialogResponse(16067, 1, 0, ini.set_dt.v)
+            else  
+                sampSendDialogResponse(16067, 1, 0, "467")
+            end 
             sampSendDialogResponse(5343, 1, 0)
             sampSendDialogResponse(5344, 1, 0, u8:decode(ini.open_mp.v))
             sampSendChat("/mess 10 Чтобы попасть на мероприятие, введите /tpmp")
             showNotification("AdminTool - MP", "Мероприятие было создано.")
         end
+        imgui.SameLine()
+        if imgui.Button(u8"Вывести свои правила") then  
+            local refresh_text = ini.textrule.v:gsub("\n", "~")
+            lua_thread.create(function()
+                for bp in refresh_text:gmatch('[^~]+') do
+                    sampSendChat("/mess 6 " .. u8:decode(tostring(bp)))
+                 end
+            end)
+            ini.textrule.v = ""
+        end 
         imgui.Separator()
         if imgui.Button(u8'Стандарт.правила') then  
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s, баги, /flycar")
             sampSendChat("/mess 6 Следуем командам администратора, ДМ запрещено, если..")
             sampSendChat("/mess 6 ..это не предусмотрено мероприятием. Начинаем!")
         end
+        imgui.EndChild()
+        if imgui.Button(u8'Закрыть') then  
+            imgui.CloseCurrentPopup()
+        end 
     imgui.EndPopup()	
     end
     if imgui.BeginPopup('toolmp') then
@@ -1126,7 +1152,7 @@ function EXPORTS.AdminStateCheckbox()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ времени', ini.show_time) then  
-        cfg.settings.show_time_id = ini.show_time.v  
+        cfg.settings.show_time = ini.show_time.v  
         save() 
     end    
     if imgui.Checkbox(u8'Показ онлайна за день', ini.show_online_day) then  

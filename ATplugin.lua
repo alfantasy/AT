@@ -173,7 +173,7 @@ function main()
     render_warn = lua_thread.create_suspended(renderWarnings)
     loadAdminChat()
 	admin_chat:run()
-	sampAddChatMessage(tag .. "Подгрузка плагина дополнительных функций.")
+	sampAddChatMessage(tag .. " Подгрузка плагина дополнительных функций.")
 
     while true do
         wait(0)

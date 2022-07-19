@@ -299,7 +299,7 @@ function drawWallhack()
 	while true do
 		wait(10)
 		for i = 0, sampGetMaxPlayerId() do
-			if sampIsPlayerConnected(i) and control_wallhack then
+			if sampIsPlayerConnected(i) and (nel.check.wallhack.v or control_wallhack) then
 				local result, cped = sampGetCharHandleBySampPlayerId(i)
 				local color = sampGetPlayerColor(i)
 				local aa, rr, gg, bb = explode_argb(color)
@@ -643,6 +643,7 @@ function EXPORTS.ActiveWH()
             control_wallhack = false
             nameTagOff()
         end	
+        save()
     end
 end    
 
