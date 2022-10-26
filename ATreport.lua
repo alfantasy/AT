@@ -1,5 +1,4 @@
 require 'lib.moonloader'
-local vkeys = require "vkeys" -- регистр для кнопок
 local imgui = require 'imgui' -- регистр imgui окон
 local encoding = require 'encoding' -- дешифровка форматов
 local inicfg = require 'inicfg'
@@ -65,7 +64,7 @@ local questions = {
 		[u8"Игрок ничего не сделал"] = "Не вижу нарушений со стороны игрока",
 		[u8"Игрок чист"] = " Данный игрок чист",
 		[u8"Игрок не в сети"] = "Данный игрок не в сети",
-		[u8"Уточнение вопрос/репорт"] = "Уточните ваш вопрос/репорт",
+		[u8"Уточнение вопрос/репорт"] = "Уточните вашу жалобу/вопрос",
 		[u8"Уточнение ID"] = "Уточните ID нарушителя/читера в /report",
 		[u8"Игрок наказан"] = "Данный игрок наказан",
 		[u8"Проверим"] = "Проверим",
@@ -126,8 +125,6 @@ local questions = {
 		[u8"Как обменять валюту"] = "Чтобы обменять валюту, введите /trade, и подойдите к NPC Арману, стоит справа",
 		[u8"А как продать тачку"] = "/sellmycar IDPlayer Слот1-5 Сумма || /car -> Слот1-5 -> Продать государству",
         [u8"А как продать бизнес"] = "/biz > Продать бизнес государству",
-	},
-	["HelpMoneys"] = {
 		[u8"Как передать деньги"] = "/givemoney IDPlayer money",
 		[u8"Как передать очки"] = "/givescore IDPlayer score",
 		[u8"Как передать рубли"] = "/giverub IDPlayer rub | С Личного VIP (/help -> 7)",
@@ -300,26 +297,26 @@ function main()
 
         if isKeyDown(109) and sampIsDialogActive() then 
 			local string = string.sub(sampGetCurrentDialogEditboxText(), 0, string.len(sampGetCurrentDialogEditboxText()) - 1)
-			sampSetCurrentDialogEditboxText(string .. color1() .. "Приятного времяпрепровождения на сервере RDS!")
+			sampSetCurrentDialogEditboxText(string .. color() .. "Приятного времяпрепровождения на сервере RDS!")
 			wait(650)
 		end
 		-- введенный ключ клавиши по NumPad - (/ans)
 
 		if sampGetCurrentDialogEditboxText() == '/gvk' then 
 			local string = string.sub(sampGetCurrentDialogEditboxText(), 0, string.len(sampGetCurrentDialogEditboxText()) - 1)
-			sampSetCurrentDialogEditboxText(string .. color1() .. "https://vk.com/dmdriftgta")
+			sampSetCurrentDialogEditboxText(string .. color() .. "https://vk.com/dmdriftgta")
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.счет' or sampGetCurrentDialogEditboxText() == '/cxtn' then  
-			sampSetCurrentDialogEditboxText('{FFFFFF}/count time || /dmcount time' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/count time || /dmcount time' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.ц' or sampGetCurrentDialogEditboxText() == '/w' then  
-			sampSetCurrentDialogEditboxText(color1())
+			sampSetCurrentDialogEditboxText(color())
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.кар' or sampGetCurrentDialogEditboxText() == '/rfh' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/car' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/car' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.кпа' or sampGetCurrentDialogEditboxText() == '/rgf' then 
@@ -327,19 +324,19 @@ function main()
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.тюн' or sampGetCurrentDialogEditboxText() == '/n.y' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Т/С -> Тюнинг ' .. color1() .. ' | Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Т/С -> Тюнинг ' .. color() .. ' | Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.ган' or sampGetCurrentDialogEditboxText() == '/ufy' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Оружие ' .. color1() .. ' | Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Оружие ' .. color() .. ' | Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.дтт' or sampGetCurrentDialogEditboxText() == '/lnn' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/dt 0-990 / Виртуальный мир ' .. color1() .. ' | Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/dt 0-990 / Виртуальный мир ' .. color() .. ' | Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.пед' or sampGetCurrentDialogEditboxText() == '/gtl' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Предметы ' .. color1() .. ' | Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Предметы ' .. color() .. ' | Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.иск' or sampGetCurrentDialogEditboxText() == '/bcr' then 
@@ -347,63 +344,63 @@ function main()
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нз' or sampGetCurrentDialogEditboxText() == '/yp' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Не запрещено. '  .. color1() .. ' | Удачного времяпрепровожодения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Не запрещено. '  .. color() .. ' | Удачного времяпрепровожодения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.жда' or sampGetCurrentDialogEditboxText() == '/;lf' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Да. ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Да. ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.жне' or sampGetCurrentDialogEditboxText() == '/;yt' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Нет. ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Нет. ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нк' or sampGetCurrentDialogEditboxText() == '/yr' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Никак. ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Никак. ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.отф' or sampGetCurrentDialogEditboxText() == '/jna' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/familypanel ' .. color1() .. ' | Удачного времяпрепровождения ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/familypanel ' .. color() .. ' | Удачного времяпрепровождения ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.отб' or sampGetCurrentDialogEditboxText() == '/jn,' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Система банд ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/menu (/mm) - ALT/Y -> Система банд ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.пр' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Проверим. ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Проверим. ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.крб' or sampGetCurrentDialogEditboxText() == '/rh,' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Казино, работы, бизнес. ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Казино, работы, бизнес. ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.кмд' or sampGetCurrentDialogEditboxText() == '/rvl' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Казино, МП, достижения, работы, обмен очков на коины(/trade)' .. color1() .. ' | Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Казино, МП, достижения, работы, обмен очков на коины(/trade)' .. color() .. ' | Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.гм' or sampGetCurrentDialogEditboxText() == '/uv' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}GodMode (ГодМод) на сервере не работает. ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}GodMode (ГодМод) на сервере не работает. ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.рлг' or sampGetCurrentDialogEditboxText() == '/hku' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Попробуйте перезайти. '  .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Попробуйте перезайти. '  .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нвд' or sampGetCurrentDialogEditboxText() == '/ydl' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Не выдаем. ' .. color1() .. ' | Удачного времяпрепровожодения ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Не выдаем. ' .. color() .. ' | Удачного времяпрепровожодения ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.офф' or sampGetCurrentDialogEditboxText() == '/jaa' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Не оффтопьте. ' .. color1() .. ' | Удачного времяпрепровожодения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Не оффтопьте. ' .. color() .. ' | Удачного времяпрепровожодения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нез' or sampGetCurrentDialogEditboxText() == '/ytp' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Не знаем.' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Не знаем.' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.баг' or sampGetCurrentDialogEditboxText() == '/,fu' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}Скорей всего - это баг. ' .. color1() .. ' | Удачного времяпрепровождения ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Скорей всего - это баг. ' .. color() .. ' | Удачного времяпрепровождения ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '/smh' or sampGetCurrentDialogEditboxText() == '.ыьр' then 
@@ -423,71 +420,71 @@ function main()
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.кпт' or sampGetCurrentDialogEditboxText() == '/rgn' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Для того, чтобы начать капт, нужно ввести /capture | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Для того, чтобы начать капт, нужно ввести /capture | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.вп1' or sampGetCurrentDialogEditboxText() == '/dg1' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией Premuim VIP (/help -> 7) | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией Premuim VIP (/help -> 7) | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.вп2' or sampGetCurrentDialogEditboxText() == '/dg2' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией Diamond VIP (/help -> 7) | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией Diamond VIP (/help -> 7) | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.вп3' or sampGetCurrentDialogEditboxText() == '/dg3' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией Platinum VIP (/help -> 7) | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией Platinum VIP (/help -> 7) | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.вп4' or sampGetCurrentDialogEditboxText() == '/dg4' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией "Личный" VIP (/help -> 7) | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок с привелегией "Личный" VIP (/help -> 7) | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.падм' or sampGetCurrentDialogEditboxText() == '/gflv' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Ожидать набор, или же /help -> 17 пункт. | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Ожидать набор, или же /help -> 17 пункт. | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.копы' or sampGetCurrentDialogEditboxText() == '/rjgs' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}265-267, 280-286, 288, 300-304, 306, 307, 309-311 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}265-267, 280-286, 288, 300-304, 306, 307, 309-311 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.бал' or sampGetCurrentDialogEditboxText() == '/,fk' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}102-104| ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}102-104| ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.грув' or sampGetCurrentDialogEditboxText() == '/uhed' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}105-107 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}105-107 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.румф' or sampGetCurrentDialogEditboxText() == '/heva' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}111-113 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}111-113 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.вар' or sampGetCurrentDialogEditboxText() == '/dfh' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}114-116 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}114-116 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.триад' or sampGetCurrentDialogEditboxText() == '/nhbfl' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}117-188, 120 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}117-188, 120 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.ваг' or sampGetCurrentDialogEditboxText() == '/dfu' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}108-110 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}108-110 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.мф' or sampGetCurrentDialogEditboxText() == '/va' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}124-127 | ' .. color1() .. ' Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}124-127 | ' .. color() .. ' Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.спр' or sampGetCurrentDialogEditboxText() == '/cgh' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/mm -> Действия -> Сменить пароль | ' .. color1() .. '  Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/mm -> Действия -> Сменить пароль | ' .. color() .. '  Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.мсп' or sampGetCurrentDialogEditboxText() == '/vcg' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/mm -> Транспортное средство -> Тип транспорта| ' .. color1() .. '  Приятной игры! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/mm -> Транспортное средство -> Тип транспорта| ' .. color() .. '  Приятной игры! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.уид' or sampGetCurrentDialogEditboxText() == '/ebl' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Уточните ID нарушителя/читера в /report ' .. color1() .. ' | Удачного времяпрепровождения. ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Уточните ID нарушителя/читера в /report ' .. color() .. ' | Удачного времяпрепровождения. ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.стп' or sampGetCurrentDialogEditboxText() == '/cng' then
@@ -495,15 +492,15 @@ function main()
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.гвм' or sampGetCurrentDialogEditboxText() == '/udv' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Для перевода денег, необхдимо ввести /givemoney IDPlayer сумму | ' .. color1() .. ' Приятной игры!')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Для перевода денег, необхдимо ввести /givemoney IDPlayer сумму | ' .. color() .. ' Приятной игры!')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.гвс' or sampGetCurrentDialogEditboxText() == '/udc' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Для перевода очков, необходимо ввести /givescore IDPlayer сумму |' .. color1() .. ' С Diamond VIP.')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Для перевода очков, необходимо ввести /givescore IDPlayer сумму |' .. color() .. ' С Diamond VIP.')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.пм' or sampGetCurrentDialogEditboxText() == '/gv' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/sellmycar IDPlayer Слот(1-3) RDScoin (игроку), в гос: /car | ' .. color1() .. ' Приятной игры!')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/sellmycar IDPlayer Слот(1-3) RDScoin (игроку), в гос: /car | ' .. color() .. ' Приятной игры!')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.вуб' or sampGetCurrentDialogEditboxText() == '/de,' then
@@ -511,35 +508,35 @@ function main()
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.зч' or sampGetCurrentDialogEditboxText() == '/px' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Если вы застряли, введите /spawn | /kill, ' .. color1() .. ' но мы можем вам помочь! ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Если вы застряли, введите /spawn | /kill, ' .. color() .. ' но мы можем вам помочь! ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '/prk' or sampGetCurrentDialogEditboxText() == '.зкл' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/parkour - записатся на паркур | '  .. color1() ..  ' Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/parkour - записатся на паркур | '  .. color() ..  ' Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '/drb' or sampGetCurrentDialogEditboxText() == '.вки' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/derby - записатся на дерби | '  .. color1() ..  ' Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/derby - записатся на дерби | '  .. color() ..  ' Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.псв' or sampGetCurrentDialogEditboxText() == '/gcd' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/passive ' .. color1() ..  ' Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/passive ' .. color() ..  ' Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.инф' or sampGetCurrentDialogEditboxText() == '/bya' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно узнать в интернете. '  .. color1() ..  ' Приятной игры!')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно узнать в интернете. '  .. color() ..  ' Приятной игры!')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.ог' or sampGetCurrentDialogEditboxText() == '/ju' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Встать на пикап "Ограбление банка", после около ячеек нажимать на ALT и ехать на красный маркер на карте' .. color1() ..  ' Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Встать на пикап "Ограбление банка", после около ячеек нажимать на ALT и ехать на красный маркер на карте' .. color() ..  ' Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.ож' or sampGetCurrentDialogEditboxText() == '/j;' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Ожидайте. '  .. color1() ..  ' Приятного времяпрепровождения на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Ожидайте. '  .. color() ..  ' Приятного времяпрепровождения на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.цвет' or sampGetCurrentDialogEditboxText() == '/wdtn' then 
-			sampSetCurrentDialogEditboxText('{FFFFFF}https://colorscheme.ru/html-colors.html ' .. color1() .. ' Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}https://colorscheme.ru/html-colors.html ' .. color() .. ' Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.жба' or sampGetCurrentDialogEditboxText() == '/;,f' then
@@ -552,7 +549,7 @@ function main()
 
 		lua_thread.create(function()
 			if sampGetCurrentDialogEditboxText() == '.нч' or sampGetCurrentDialogEditboxText() == '/yx' then
-				sampSetCurrentDialogEditboxText('{FFFFFF}Начал(а) работу по вашей жалобе! ' .. color1() .. ' Приятной игры на сервере RDS. <3 ')
+				sampSetCurrentDialogEditboxText('{FFFFFF}Начал(а) работу по вашей жалобе! ' .. color() .. ' Приятной игры на сервере RDS. <3 ')
 				wait(1000)
 				sampSetChatInputEnabled(true)
 				sampSetChatInputText("/re " )
@@ -560,7 +557,7 @@ function main()
 		end)
 
 		if sampGetCurrentDialogEditboxText() == '.ич' or sampGetCurrentDialogEditboxText() == '/bx' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок чист. ' .. color1() .. ' Приятной игры на сервере RDS. <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок чист. ' .. color() .. ' Приятной игры на сервере RDS. <3 ')
 		end
 
 		lua_thread.create(function()
@@ -573,27 +570,27 @@ function main()
 		end)
 
 		if sampGetCurrentDialogEditboxText() == '.п7' or sampGetCurrentDialogEditboxText() == '/g7' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно найти в /help -> 7 пункт. | '  .. color1() ..  ' Приятной игры на RDS. <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно найти в /help -> 7 пункт. | '  .. color() ..  ' Приятной игры на RDS. <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.п13' or sampGetCurrentDialogEditboxText() == '/g13' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно найти в /help -> 13 пункт. | '  .. color1() ..  ' Приятной игры на RDS. <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно найти в /help -> 13 пункт. | '  .. color() ..  ' Приятной игры на RDS. <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.п8' or sampGetCurrentDialogEditboxText() == '/g8' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно найти в /help -> 8 пункт. | '  .. color1() ..  ' Приятной игры на RDS. <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данную информацию можно найти в /help -> 8 пункт. | '  .. color() ..  ' Приятной игры на RDS. <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нак' or sampGetCurrentDialogEditboxText() == '/yfr' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок наказан. | '  .. color1() ..  '  Приятной игры на RDS! <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок наказан. | '  .. color() ..  '  Приятной игры на RDS! <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нн' or sampGetCurrentDialogEditboxText() == '/yy' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Не вижу нарушений от игрока. | ' .. color1() .. ' Приятной игры на RDS <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Не вижу нарушений от игрока. | ' .. color() .. ' Приятной игры на RDS <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.нв' or sampGetCurrentDialogEditboxText() == '/yd' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок не в сети. | ' .. color1() .. ' Приятной игры на RDS. <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Данный игрок не в сети. | ' .. color() .. ' Приятной игры на RDS. <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.бк' or sampGetCurrentDialogEditboxText() == '/,r' then
@@ -601,47 +598,47 @@ function main()
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.тас' or sampGetCurrentDialogEditboxText() == '/nfc' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/tp -> Разное -> Автосалоны |' .. color1() .. '  Приятной игры на RDS. <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/tp -> Разное -> Автосалоны |' .. color() .. '  Приятной игры на RDS. <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.там' or sampGetCurrentDialogEditboxText() == '/nfv' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/tp -> Разное -> Автосалоны -> Автомастерская | ' .. color1() .. ' Приятной игры на RDS. <3 ')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/tp -> Разное -> Автосалоны -> Автомастерская | ' .. color() .. ' Приятной игры на RDS. <3 ')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.пгф' or sampGetCurrentDialogEditboxText() == '/gua' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/gleave (банда) || /fleave (семья)| ' .. color1() .. ' Приятной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/gleave (банда) || /fleave (семья)| ' .. color() .. ' Приятной игры на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.плм' or sampGetCurrentDialogEditboxText() == '/gkv' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/leave (покинуть мафию)| ' .. color1() .. ' Приятной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/leave (покинуть мафию)| ' .. color() .. ' Приятной игры на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.ут' or sampGetCurrentDialogEditboxText() == '/en' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Уточните ваш вопрос/репорт. ' .. color1() .. ' Удачной игры <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Уточните вашу жалобу/вопрос. ' .. color() .. ' Удачной игры <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.пгб' or sampGetCurrentDialogEditboxText() == '/gu,' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/ginvite (банда) || /finvite (семья) | ' .. color1() .. ' Удачной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/ginvite (банда) || /finvite (семья) | ' .. color() .. ' Удачной игры на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.угб' or sampGetCurrentDialogEditboxText() == '/eu,' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/guninvite (банда) || /funinvite (семья) | ' .. color1() .. ' Удачной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/guninvite (банда) || /funinvite (семья) | ' .. color() .. ' Удачной игры на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.гвр' or sampGetCurrentDialogEditboxText() == '/udh' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/giverub IDPlayer rub | С Личного (/help -> 7) | ' .. color1() .. ' Удачной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/giverub IDPlayer rub | С Личного (/help -> 7) | ' .. color() .. ' Удачной игры на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.гвк' or sampGetCurrentDialogEditboxText() == '/udr' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}/givecoin IDPlayer coin | С Личного (/help -> 7) | ' .. color1() .. ' Удачной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}/givecoin IDPlayer coin | С Личного (/help -> 7) | ' .. color() .. ' Удачной игры на RDS <3')
 		end
 
 		if sampGetCurrentDialogEditboxText() == '.пв' or sampGetCurrentDialogEditboxText() == '/gd' then
-			sampSetCurrentDialogEditboxText('{FFFFFF}Помогли вам. | ' .. color1() .. ' Удачной игры на RDS <3')
+			sampSetCurrentDialogEditboxText('{FFFFFF}Помогли вам. | ' .. color() .. ' Удачной игры на RDS <3')
 		end
 
         if sampGetCurrentDialogEditboxText() == '.апр' or sampGetCurrentDialogEditboxText() == '/fgh' then 
-            sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Передам ваш репорт! ' .. color1() .. 'Удачной игры!')
+            sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Передам ваш репорт! ' .. color() .. 'Удачной игры!')
             wait(200)
             sampCloseCurrentDialogWithButton(13)
             wait(200)
@@ -666,7 +663,7 @@ function main()
     end
 end
 
-function color1() -- функция, выполняющая рандомнизацию и вывод рандомного цвета с помощью специального os.time()
+function color() -- функция, выполняющая рандомнизацию и вывод рандомного цвета с помощью специального os.time()
 	mcolor = "{"
 	math.randomseed( os.time() )
 	for i = 1, 6 do
@@ -891,7 +888,7 @@ function cmd_cl(arg)
 end
 
 function cmd_yt(arg)
-	sampSendChat("/ans " .. arg .. " Уточните ваш запрос/вопрос. | Приятной игры на RDS <3")
+	sampSendChat("/ans " .. arg .. " Уточните вашу жалобу/вопрос. | Приятной игры на RDS <3")
 end
 
 function cmd_drb(arg)
@@ -1144,25 +1141,18 @@ function imgui.OnDrawFrame()
     if rep.imgui.v then 
 
         imgui.SetNextWindowPos(imgui.ImVec2((sw2 / 2) - 500 , (sh2 / 2) + 40), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.SetNextWindowSize(imgui.ImVec2(550, 305), imgui.Cond.FirstUseEver)
-        imgui.Begin(u8"Ответы на репорты", rep.imgui)
+        imgui.SetNextWindowSize(imgui.ImVec2(380, 230), imgui.Cond.FirstUseEver)
+        imgui.Begin(u8"Ответы на репорты", rep.imgui, imgui.WindowFlags.NoResize)
         local btn_size = imgui.ImVec2(-0.1, 0)
 
 		if report_ans == 0 then  
-			imgui.Text(u8" Вы можете ответить на соответствующий репорт ниже! \nВы можете ввести свой ответ, либо воспользоваться вариантами ответов от AT")
-			--imgui.Text(u8(nick_rep .. " [" .. pid_rep .. "]: " .. u8:decode(rep_text)))
-			if imgui.Button(fa.ICON_CHECK .. u8" Передать жалобу ##SEND") then  
-				lua_thread.create(function()
-					sampSendDialogResponse(2349, 1, 0)
-					sampSendDialogResponse(2350, 1, 0)
-					wait(200)
-					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Передам ваш репорт! ' .. color1() .. 'Удачной игры!')
-					wait(200)
-					sampCloseCurrentDialogWithButton(13)
-					wait(200)
-					sampSendChat("/a " .. nick_rep .. "[" .. pid_rep .. "] | " .. text_rep)
-				end)	
-			end
+			if (nick_rep or pid_rep or rep_text) and sampGetCurrentDialogId() == 2349 then  
+				imgui.Text(u8"Жалоба от: " .. nick_rep .. "[" .. pid_rep .. "]")
+				imgui.Separator()
+			 	imgui.Text(u8(u8:decode(rep_text)))
+			elseif (nick_rep == nil or pid_rep == nil or rep_text == nil) then
+			 	imgui.Text(u8"Жалоба не существует.")
+			end	
 			imgui.Separator()
 			imgui.InputText(u8"##Ответ", rep.text)
 			imgui.SameLine() 
@@ -1175,6 +1165,12 @@ function imgui.OnDrawFrame()
 					imgui.OpenPopup(u8'Биндер')
 				end	
 			end	
+			imgui.SameLine() 
+			if imgui.Button(fa.ICON_FA_TEXT_HEIGHT .. ("##SendColor")) then  
+				rep.text.v = color()
+			end	
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8"Ставит рандомный цвет перед ответом.")
 			if imgui.BeginPopupModal(u8'Биндер', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
 				imgui.BeginChild("##EditBinder", imgui.ImVec2(600, 225), true)
 				imgui.Text(u8'Название бинда:'); imgui.SameLine()
@@ -1216,6 +1212,100 @@ function imgui.OnDrawFrame()
 				imgui.EndChild()
 				imgui.EndPopup()
 			end	
+			imgui.Separator()
+			if imgui.Button(fa.ICON_FA_EYE .. u8" Работа по жб") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Начал(а) работу по вашей жалобе! ' .. color() .. ' // Приятной игры на сервере RDS <3')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					rep.imgui.v = false  
+					imgui.ShowCursor = false
+				end)
+			end	
+			imgui.SameLine()
+			if imgui.Button(fa.ICON_REDDIT_ALIEN .. u8" Слежу") then
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Слежу на данным игроком! ' .. color() .. ' // Приятной игры на сервере RDS <3')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					rep.imgui.v = false  
+					imgui.ShowCursor = false
+				end)
+			end
+			imgui.SameLine()		
+			if imgui.Button(fa.ICON_BAN .. u8" Наказан") then
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Данный игрок наказан! ' .. color() .. ' // Приятной игры на сервере RDS <3')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					rep.imgui.v = false  
+					imgui.ShowCursor = false
+				end)
+			end
+			imgui.SameLine()
+			if imgui.Button(fa.ICON_COMMENTING_O .. u8" Уточните ID") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Уточните ID нарушителя/читера в /report ' .. color() .. ' // Приятной игры на сервере RDS <3')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					rep.imgui.v = false  
+					imgui.ShowCursor = false
+				end)
+			end	
+			if imgui.Button(fa.ICON_FA_EDIT .. u8" Уточните жб") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Уточните вашу жалобу/вопрос ' .. color() .. ' // Приятной игры на сервере RDS <3')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					rep.imgui.v = false  
+					imgui.ShowCursor = false
+				end)
+			end	
+			imgui.SameLine()
+			if imgui.Button(fa.ICON_CHECK .. u8" Передать жалобу ##SEND") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Передам ваш репорт! ' .. color() .. 'Удачной игры!')
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+					wait(200)
+					sampSendChat("/a " .. nick_rep .. "[" .. pid_rep .. "] | " .. text_rep)
+				end)	
+			end
+			if imgui.Button(fa.ICON_QUESTION_CIRCLE .. u8" Ответы от AT") then  
+				report_ans = 1
+			end	
+			imgui.SameLine()
+			if imgui.Button(fa.ICON_FA_SAVE .. u8" Сохраненные ответы") then  
+				report_ans = 2
+			end	
+			imgui.Separator()
+			if imgui.Checkbox(u8"Пожелание в ответе", rep.ggp) then 
+				ATrep.main.good_game_prefix = rep.ggp.v 
+				save() 
+			end
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8'Автоматически при ответе через кнопочки будет желать приятной игры!')	
+			imgui.SetCursorPosY(imgui.GetWindowWidth() - 178)
+			imgui.Separator()
+			imgui.SetCursorPosY(imgui.GetWindowWidth() - 173)
 			if imgui.Button(u8"Ответить") then  
 				if not rep.ggp.v then 
 					lua_thread.create(function()
@@ -1226,6 +1316,7 @@ function imgui.OnDrawFrame()
 						sampSendDialogResponse(2351, 1, 0, u8:decode(settext2))	
 						wait(200)
 						sampCloseCurrentDialogWithButton(13)
+						rep.text.v = " "
 						rep.imgui.v = false
 					end)
 				else 
@@ -1234,34 +1325,16 @@ function imgui.OnDrawFrame()
 						sampSendDialogResponse(2350, 1, 0)
 						wait(200)
 						local settext2 = '{FFFFFF}' .. rep.text.v 
-						sampSendDialogResponse(2351, 1, 0, u8:decode(settext2) .. color1() .. ' // Приятной игры на сервере RDS <3')	
+						sampSendDialogResponse(2351, 1, 0, u8:decode(settext2) .. color() .. ' // Приятной игры на сервере RDS <3')	
 						wait(200)
 						sampCloseCurrentDialogWithButton(13)
+						rep.text.v = " "
 						rep.imgui.v = false
 					end)
 				end	
-			end		
-			imgui.Separator()
-			if imgui.Button(fa.ICON_QUESTION_CIRCLE .. u8" Ответы от AT") then  
-				report_ans = 1
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Выводит ответы, которые зарегистрированы в AT разработчиками")
-			if imgui.Button(fa.ICON_FA_SAVE .. u8" Сохраненные ответы") then  
-				report_ans = 2
-			end	
-			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Выводит ответы, которые вы сохранили в /binder")
-			imgui.Separator()
-			if imgui.Checkbox(u8"Пожелание в ответе", rep.ggp) then 
-				ATrep.main.good_game_prefix = rep.ggp.v 
-				save() 
-			end
-			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'Автоматически при ответе через кнопочки будет желать приятной игры!')	
-			imgui.SetCursorPosY(imgui.GetWindowWidth() - 295)
-			imgui.Separator()
-			imgui.SetCursorPosY(imgui.GetWindowWidth() - 270)
+			imgui.SetCursorPosX(imgui.GetWindowWidth() - 80)
 			if imgui.Button(fa.ICON_WINDOW_CLOSE .. u8" Закрыть ##CLOSE") then  
 				lua_thread.create(function()
 					sampSendDialogResponse(2349, 0, 0)
@@ -1270,38 +1343,38 @@ function imgui.OnDrawFrame()
 					rep.imgui.v = false  
 					imgui.ShowCursor = false
 				end)	
-			end	
+			end				
 		end
 		if report_ans == 1 then  
 			imgui.BeginChild("##menuSecond", imgui.ImVec2(150, 275), true)
-			if imgui.Button(fa.ICON_OBJECT_GROUP .. u8" На кого-то/что-то", imgui.ImVec2(140, 0)) then  -- reporton key
+			if imgui.Button(fa.ICON_OBJECT_GROUP .. u8" На кого-то/что-то", imgui.ImVec2(135, 0)) then  -- reporton key
 				check_ans = 1  
 			end	
-			if imgui.Button(fa.ICON_LIST .. u8" Команды (/help)", imgui.ImVec2(140, 0)) then  -- HelpCMD key
+			if imgui.Button(fa.ICON_LIST .. u8" Команды (/help)", imgui.ImVec2(135, 0)) then  -- HelpCMD key
 				check_ans = 2 
 			end 	
-			if imgui.Button(fa.ICON_USERS .. u8" Банде/семья", imgui.ImVec2(140, 0)) then  -- HelpGangFamilyMafia key
+			if imgui.Button(fa.ICON_USERS .. u8" Банде/семья", imgui.ImVec2(135, 0)) then  -- HelpGangFamilyMafia key
 				check_ans = 3
 			end	
-			if imgui.Button(fa.ICON_MAP_MARKER .. u8" Телепорты", imgui.ImVec2(140, 0)) then  -- HelpTP key
+			if imgui.Button(fa.ICON_MAP_MARKER .. u8" Телепорты", imgui.ImVec2(135, 0)) then  -- HelpTP key
 				check_ans = 4
 			end	
-			if imgui.Button(fa.ICON_SHOPPING_BAG .. u8" Бизнесы", imgui.ImVec2(140, 0)) then  -- HelpBuz key
+			if imgui.Button(fa.ICON_SHOPPING_BAG .. u8" Бизнесы", imgui.ImVec2(135, 0)) then  -- HelpBuz key
 				check_ans = 5 
 			end	
-			if imgui.Button(fa.ICON_MONEY .. u8" Продажа/Покупка", imgui.ImVec2(140, 0)) then  -- HelpSellBuy key
+			if imgui.Button(fa.ICON_MONEY .. u8" Продажа/Покупка", imgui.ImVec2(135, 0)) then  -- HelpSellBuy key
 				check_ans = 6 
 			end	
-			if imgui.Button(fa.ICON_BOLT .. u8" Настройки", imgui.ImVec2(140, 0)) then  -- HelpSettings key
+			if imgui.Button(fa.ICON_BOLT .. u8" Настройки", imgui.ImVec2(135, 0)) then  -- HelpSettings key
 				check_ans = 7
 			end	
-			if imgui.Button(fa.ICON_HOME .. u8" Дома", imgui.ImVec2(140, 0)) then  -- HelpHouses key
+			if imgui.Button(fa.ICON_HOME .. u8" Дома", imgui.ImVec2(135, 0)) then  -- HelpHouses key
 				check_ans = 8 
 			end	
-			if imgui.Button(fa.ICON_MALE .. u8" Скины", imgui.ImVec2(140, 0)) then  -- HelpSkins key
+			if imgui.Button(fa.ICON_MALE .. u8" Скины", imgui.ImVec2(135, 0)) then  -- HelpSkins key
 				check_ans = 9 
 			end	
-			if imgui.Button(fa.ICON_BARCODE .. u8" Остальные ответы", imgui.ImVec2(140, 0)) then  -- HelpDefault key
+			if imgui.Button(fa.ICON_BARCODE .. u8" Остальные ответы", imgui.ImVec2(135, 0)) then  -- HelpDefault key
 				check_ans = 10
 			end	
 			imgui.Separator()
@@ -1312,13 +1385,13 @@ function imgui.OnDrawFrame()
 			imgui.SameLine()
 			imgui.BeginChild("##menuSelectable", imgui.ImVec2(390, 275), true)
 			if check_ans == 0 then  
-				imgui.Text(u8"Заготовленные/сохраненные ответы такого типа \nменяются только разработчиками")
+				imgui.Text(u8"Заготовленные/сохраненные ответы \nтакого типа меняются \nтолько разработчиками")
 			end	
 			if check_ans == 1 then  
 				for key, v in pairs(questions) do
 					if key == "reporton" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1331,7 +1404,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1340,6 +1413,7 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
+								report_ans = 0
 							end
 						end
 					end
@@ -1349,7 +1423,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpCmd" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1362,7 +1436,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1371,8 +1445,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1380,7 +1455,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpGangFamilyMafia" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1393,7 +1468,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1402,8 +1477,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1411,7 +1487,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpTP" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1424,7 +1500,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1433,8 +1509,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1442,7 +1519,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpSellBuy" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1455,7 +1532,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1464,47 +1541,17 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
-			end	
-			if check_ans == 6 then
-				for key, v in pairs(questions) do
-					if key == "HelpMoneys" then
-						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
-								if not rep.ggp.v then
-									lua_thread.create(function()
-										local settext = '{FFFFFF}' .. v_2
-										sampSendDialogResponse(2349, 1, 0)
-										sampSendDialogResponse(2350, 1, 0)
-										wait(200)
-										sampSendDialogResponse(2351, 1, 0, settext)
-										wait(200)
-										sampCloseCurrentDialogWithButton(13)
-									end)
-								else
-									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
-									sampSendDialogResponse(2349, 1, 0)
-									sampSendDialogResponse(2350, 1, 0)
-									wait(200)
-									sampSendDialogResponse(2351, 1, 0, settext)
-									wait(200)
-									sampCloseCurrentDialogWithButton(13)
-									end)
-								end
-							 end
-						 end
-					end
-				end  
 			end	
 			if check_ans == 10 then  
 				for key, v in pairs(questions) do
 					if key == "HelpDefault" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1517,7 +1564,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1526,8 +1573,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1535,7 +1583,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpSkins" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1548,7 +1596,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1557,6 +1605,7 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
+								report_ans = 0
 							 end
 						 end
 					end
@@ -1566,7 +1615,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpSettings" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1579,7 +1628,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1588,8 +1637,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1597,7 +1647,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpHouses" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1610,7 +1660,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1619,8 +1669,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1628,7 +1679,7 @@ function imgui.OnDrawFrame()
 				for key, v in pairs(questions) do
 					if key == "HelpBuz" then
 						for key_2, v_2 in pairs(questions[key]) do
-							if imgui.Button(key_2, btn_size) then
+							if imgui.Button(key_2) then
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
@@ -1641,7 +1692,7 @@ function imgui.OnDrawFrame()
 									end)
 								else
 									lua_thread.create(function()
-									local settext = '{FFFFFF}' .. v_2 .. '' .. color1() .. ' // Приятной игры на сервере RDS <3'
+									local settext = '{FFFFFF}' .. v_2 .. '' .. color() .. ' // Приятной игры на сервере RDS <3'
 									sampSendDialogResponse(2349, 1, 0)
 									sampSendDialogResponse(2350, 1, 0)
 									wait(200)
@@ -1650,8 +1701,9 @@ function imgui.OnDrawFrame()
 									sampCloseCurrentDialogWithButton(13)
 									end)
 								end
-							 end
-						 end
+								report_ans = 0
+							end
+						end
 					end
 				end
 			end	
@@ -1863,13 +1915,13 @@ function play_bind_ans(num)
 	lua_thread.create(function()
 		if num ~= -1 then
 			for bp in ATrep.bind_text[num]:gmatch('[^~]+') do
-				-- sampSendDialogResponse(2349, 1, 0)
-				-- sampSendDialogResponse(2350, 1, 0)
-				-- wait(200)
-				-- sampSendDialogResponse(2351, 1, 0, u8:decode(tostring(bp)))
-				-- wait(200)
-				-- sampCloseCurrentDialogWithButton(13)
-				sampAddChatMessage(u8:decode(tostring(bp)), -1)
+				sampSendDialogResponse(2349, 1, 0)
+				sampSendDialogResponse(2350, 1, 0)
+				wait(200)
+				sampSendDialogResponse(2351, 1, 0, u8:decode(tostring(bp)))
+				wait(200)
+				sampCloseCurrentDialogWithButton(13)
+				-- sampAddChatMessage(u8:decode(tostring(bp)), -1)
 			end
 			num = -1
 		end

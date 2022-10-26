@@ -10,6 +10,21 @@ local mem = require "memory" -- библиотека, отвечающие за чтение памяти, и её фа
 local notfy	= import 'lib/lib_imgui_notf.lua'
 encoding.default = 'CP1251' -- смена кодировки на CP1251
 u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
+ffi.cdef[[
+	short GetKeyState(int nVirtKey);
+	bool GetKeyboardLayoutNameA(char* pwszKLID);
+	int GetLocaleInfoA(int Locale, int LCType, char* lpLCData, int cchData);
+]]
+local BuffSize = 32
+local KeyboardLayoutName = ffi.new("char[?]", BuffSize)
+local LocalInfo = ffi.new("char[?]", BuffSize)
+chars = {
+	["й"] = "q", ["ц"] = "w", ["у"] = "e", ["к"] = "r", ["е"] = "t", ["н"] = "y", ["г"] = "u", ["ш"] = "i", ["щ"] = "o", ["з"] = "p", ["х"] = "[", ["ъ"] = "]", ["ф"] = "a",
+	["ы"] = "s", ["в"] = "d", ["а"] = "f", ["п"] = "g", ["р"] = "h", ["о"] = "j", ["л"] = "k", ["д"] = "l", ["ж"] = ";", ["э"] = "'", ["я"] = "z", ["ч"] = "x", ["с"] = "c", ["м"] = "v",
+	["и"] = "b", ["т"] = "n", ["ь"] = "m", ["б"] = ",", ["ю"] = ".", ["Й"] = "Q", ["Ц"] = "W", ["У"] = "E", ["К"] = "R", ["Е"] = "T", ["Н"] = "Y", ["Г"] = "U", ["Ш"] = "I",
+	["Щ"] = "O", ["З"] = "P", ["Х"] = "{", ["Ъ"] = "}", ["Ф"] = "A", ["Ы"] = "S", ["В"] = "D", ["А"] = "F", ["П"] = "G", ["Р"] = "H", ["О"] = "J", ["Л"] = "K", ["Д"] = "L",
+	["Ж"] = ":", ["Э"] = "\"", ["Я"] = "Z", ["Ч"] = "X", ["С"] = "C", ["М"] = "V", ["И"] = "B", ["Т"] = "N", ["Ь"] = "M", ["Б"] = "<", ["Ю"] = ">"
+}
 
 local directIni = "AdminTool\\config.ini" -- создание специального файла, отвечающего за настройки.
 
@@ -20,7 +35,11 @@ imgui.ToggleButton = require('imgui_addons').ToggleButton
 
 local fa = require 'faicons'
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
-local fav = require 'fAwesome5'
+local target = -1
+local keys = {
+	["onfoot"] = {},
+	["vehicle"] = {}
+}
 
 function showNotification(handle, text_not)
 	notfy.addNotify("{87CEEB}" .. handle, text_not, 2, 1, 6)
@@ -35,6 +54,51 @@ function imgui.BeforeDrawFrame()
 end 	
 
 local tag = "{00BFFF} [AT]" -- локальная переменная, которая регистрирует тэг AT
+
+function sampev.onPlayerSync(playerId, data)
+	local result, id = sampGetPlayerIdByCharHandle(target)
+	if result and id == playerId then
+		keys["onfoot"] = {}
+
+		keys["onfoot"]["W"] = (data.upDownKeys == 65408) or nil
+		keys["onfoot"]["A"] = (data.leftRightKeys == 65408) or nil
+		keys["onfoot"]["S"] = (data.upDownKeys == 00128) or nil
+		keys["onfoot"]["D"] = (data.leftRightKeys == 00128) or nil
+
+		keys["onfoot"]["Alt"] = (bit.band(data.keysData, 1024) == 1024) or nil
+		keys["onfoot"]["Shift"] = (bit.band(data.keysData, 8) == 8) or nil
+		keys["onfoot"]["Tab"] = (bit.band(data.keysData, 1) == 1) or nil
+		keys["onfoot"]["Space"] = (bit.band(data.keysData, 32) == 32) or nil
+		keys["onfoot"]["F"] = (bit.band(data.keysData, 16) == 16) or nil
+		keys["onfoot"]["C"] = (bit.band(data.keysData, 2) == 2) or nil
+
+		keys["onfoot"]["RKM"] = (bit.band(data.keysData, 4) == 4) or nil
+		keys["onfoot"]["LKM"] = (bit.band(data.keysData, 128) == 128) or nil
+	end
+end
+
+function sampev.onVehicleSync(playerId, vehicleId, data)
+	local result, id = sampGetPlayerIdByCharHandle(target)
+	if result and id == playerId then
+		keys["vehicle"] = {}
+
+		keys["vehicle"]["W"] = (bit.band(data.keysData, 8) == 8) or nil
+		keys["vehicle"]["A"] = (data.leftRightKeys == 65408) or nil
+		keys["vehicle"]["S"] = (bit.band(data.keysData, 32) == 32) or nil
+		keys["vehicle"]["D"] = (data.leftRightKeys == 00128) or nil
+
+		keys["vehicle"]["H"] = (bit.band(data.keysData, 2) == 2) or nil
+		keys["vehicle"]["Space"] = (bit.band(data.keysData, 128) == 128) or nil
+		keys["vehicle"]["Ctrl"] = (bit.band(data.keysData, 1) == 1) or nil
+		keys["vehicle"]["Alt"] = (bit.band(data.keysData, 4) == 4) or nil
+		keys["vehicle"]["Q"] = (bit.band(data.keysData, 256) == 256) or nil
+		keys["vehicle"]["E"] = (bit.band(data.keysData, 64) == 64) or nil
+		keys["vehicle"]["F"] = (bit.band(data.keysData, 16) == 16) or nil
+
+		keys["vehicle"]["Up"] = (data.upDownKeys == 65408) or nil
+		keys["vehicle"]["Down"] = (data.upDownKeys == 00128) or nil
+	end
+end
 
 function imgui.TextColoredRGB(text, render_text)
 	local max_float = imgui.GetWindowWidth()
@@ -130,6 +194,8 @@ local defTable = inicfg.load({
         showMyBullet = false,  
         infinite_run = false, 
         wallhack = false,
+        skeyposX = 0,
+        skeyposY = 0,
     }
 }, directIni)
 inicfg.save(defTable, directIni)
@@ -156,8 +222,13 @@ local nel = {
         rotationPolygonTwo = imgui.ImInt(defTable.set.rotationPolygonTwo),
         maxMyLines = imgui.ImInt(defTable.set.maxMyLines),
         maxNotMyLines = imgui.ImInt(defTable.set.maxNotMyLines),
-    }
+    },
+    ksync = {
+        skey = imgui.ImBool(false),
+    },
 }
+
+local changePosition = false
 
 function join_argb(a, r, g, b)
     local argb = b  -- b
@@ -207,6 +278,31 @@ end
 function main()
     while not isSampAvailable() do wait(0) end
 
+
+	sampRegisterChatCommand("keysync", function(playerId)
+		if playerId == "off" then
+			target = -1
+            nel.ksync.skey.v = false
+            imgui.Process = false
+			return
+		else
+			playerId = tonumber(playerId)
+			if playerId ~= nil then
+				local pedExist, ped = sampGetCharHandleBySampPlayerId(playerId)
+				if pedExist then
+					target = ped
+					nel.ksync.skey.v = true  
+					imgui.Process = true
+					return true
+				end
+				return
+			end
+		end
+	end)
+    inputHelpText = renderCreateFont("Arial", 9, FCR_BORDER + FCR_BOLD)
+	lua_thread.create(inputChat)
+	lua_thread.create(showInputHelp)
+
     file = io.open(getGameDirectory().."//moonloader//config//AdminTool//note.txt","r+");
     if file == nil then 
             file = io.open(getGameDirectory().."//moonloader//config//AdminTool//note.txt","w"); 
@@ -221,6 +317,17 @@ function main()
 
     while true do
         wait(0)
+
+        imgui.Process = true
+        
+        if not nel.ksync.skey.v and changePosition == false then 
+            nel.ksync.skey.v = false
+            imgui.ShowCursor = false  
+            imgui.Process = false
+        end    
+
+        change_pos()
+
         local oTime = os.time()
 		if nel.check.bullettracer.v then
             for i = 1, bulletSync.maxLines do
@@ -271,6 +378,97 @@ function main()
     end
 end
 
+function showCursor(toggle)
+    if toggle then
+      sampSetCursorMode(CMODE_LOCKCAM)
+    else
+      sampToggleCursor(false)
+    end
+    cursorEnabled = toggle
+end
+
+function change_pos()
+    if changePosition then
+        if nel.ksync.skey.v then  
+            defTable.set.skeyposX, defTable.set.skeyposY = getCursorPos()
+            if isKeyJustPressed(49) then  
+                showNotification(tag, "Успешно сохранено")
+                changePosition = false 
+                save()
+                if target == -1 then  
+                    nel.ksync.skey.v = false 
+                    imgui.ShowCursor = false
+                end    
+            end 
+        else
+            nel.ksync.skey.v = true 
+        end
+    end
+end  
+
+function showInputHelp()
+	while true do
+		local chat = sampIsChatInputActive()
+		if chat == true then
+			local in1 = sampGetInputInfoPtr()
+			local in1 = getStructElement(in1, 0x8, 4)
+			local in2 = getStructElement(in1, 0x8, 4)
+			local in3 = getStructElement(in1, 0xC, 4)
+			fib = in3 + 41
+			fib2 = in2 + 10
+			local _, pID = sampGetPlayerIdByCharHandle(playerPed)
+			local name = sampGetPlayerNickname(pID)
+			local score = sampGetPlayerScore(pID)
+			local color = sampGetPlayerColor(pID)
+			local capsState = ffi.C.GetKeyState(20)
+			local success = ffi.C.GetKeyboardLayoutNameA(KeyboardLayoutName)
+			local errorCode = ffi.C.GetLocaleInfoA(tonumber(ffi.string(KeyboardLayoutName), 16), 0x00000002, LocalInfo, BuffSize)
+			local localName = ffi.string(LocalInfo)
+			local text = string.format(
+				"%s :: {%0.6x}%s[%d] {ffffff}:: Капс: %s {FFFFFF}:: Язык: {ffeeaa}%s{ffffff}",
+				os.date("%H:%M:%S"), bit.band(color,0xffffff), name, pID, getStrByState(capsState), string.match(localName, "([^%(]*)")
+			)
+			renderFontDrawText(inputHelpText, text, fib2, fib, 0xD7FFFFFF)
+			end
+		wait(0)
+	end
+end
+function getStrByState(keyState)
+	if keyState == 0 then
+		return "{ffeeaa}Выкл{ffffff}"
+	end
+	return "{9EC73D}Вкл{ffffff}"
+end
+function translite(text)
+	for k, v in pairs(chars) do
+		text = string.gsub(text, k, v)
+	end
+	return text
+end
+
+function inputChat()
+	while true do
+		if(sampIsChatInputActive())then
+			local getInput = sampGetChatInputText()
+			if(oldText ~= getInput and #getInput > 0)then
+				local firstChar = string.sub(getInput, 1, 1)
+				if(firstChar == "." or firstChar == "/")then
+					local cmd, text = string.match(getInput, "^([^ ]+)(.*)")
+					local nText = "/" .. translite(string.sub(cmd, 2)) .. text
+					local chatInfoPtr = sampGetInputInfoPtr()
+					local chatBoxInfo = getStructElement(chatInfoPtr, 0x8, 4)
+					local lastPos = mem.getint8(chatBoxInfo + 0x11E)
+					sampSetChatInputText(nText)
+					mem.setint8(chatBoxInfo + 0x11E, lastPos)
+					mem.setint8(chatBoxInfo + 0x119, lastPos)
+					oldText = nText
+				end
+			end
+		end
+		wait(0)
+	end
+end
+
 function cmd_wh(arg)
     if control_wallhack then 
         showNotification("AdminTool", "Выключен WallHack")
@@ -297,7 +495,7 @@ function drawWallhack()
 	local peds = getAllChars()
 	local _, pid = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	while true do
-		wait(10)
+		wait(0)
 		for i = 0, sampGetMaxPlayerId() do
 			if sampIsPlayerConnected(i) and (nel.check.wallhack.v or control_wallhack) then
 				local result, cped = sampGetCharHandleBySampPlayerId(i)
@@ -655,9 +853,154 @@ function EXPORTS.ActiveBT()
         defTable.set.bullettracer = nel.check.bullettracer.v
         save()
     end
-end        
+end    
+
+function EXPORTS.kposition()
+    changePosition = true
+    sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
+end
+
+function onScriptTerminate(script, quitGame)
+	if script == thisScript() then 
+		if save() then sampfuncsLog('{00FF00}AdminTool: {FFFFFF}Настройки сохранены!!') end
+	end
+end
+
 
 function EXPORTS.OffScript()
     imgui.ShowCursor = false
     thisScript():unload()
 end    
+
+function imgui.OnDrawFrame()
+    if nel.ksync.skey.v then  
+        imgui.ShowCursor = false 
+
+        imgui.SetNextWindowPos(imgui.ImVec2(defTable.set.skeyposX, defTable.set.skeyposY), imgui.Cond.Always, imgui.ImVec2(1, 1))
+		imgui.Begin("KEYS", nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize + imgui.WindowFlags.NoTitleBar)
+			if doesCharExist(target) then
+				local plState = (isCharOnFoot(target) and "onfoot" or "vehicle")
+
+				imgui.BeginGroup()
+					imgui.SetCursorPosX(10 + 30 + 44)
+					KeyCap("W", (keys[plState]["W"] ~= nil), imgui.ImVec2(30, 30))
+					KeyCap("Tab", (keys[plState]["Tab"] ~= nil), imgui.ImVec2(30,30)); imgui.SameLine()
+					KeyCap("A", (keys[plState]["A"] ~= nil), imgui.ImVec2(30, 30)); imgui.SameLine()
+					KeyCap("S", (keys[plState]["S"] ~= nil), imgui.ImVec2(30, 30)); imgui.SameLine()
+					KeyCap("D", (keys[plState]["D"] ~= nil), imgui.ImVec2(30, 30))
+				imgui.EndGroup()
+				imgui.SameLine(nil, 20)
+
+				if plState == "onfoot" then
+					imgui.BeginGroup()
+						KeyCap("Shift", (keys[plState]["Shift"] ~= nil), imgui.ImVec2(75, 30)); imgui.SameLine()
+						KeyCap("Alt", (keys[plState]["Alt"] ~= nil), imgui.ImVec2(55, 30))
+						KeyCap("Space", (keys[plState]["Space"] ~= nil), imgui.ImVec2(135, 30))
+					imgui.EndGroup()
+					imgui.SameLine()
+					imgui.BeginGroup()
+						KeyCap("C", (keys[plState]["C"] ~= nil), imgui.ImVec2(30, 30)); imgui.SameLine()
+						KeyCap("F", (keys[plState]["F"] ~= nil), imgui.ImVec2(30, 30))
+						KeyCap("RM", (keys[plState]["RKM"] ~= nil), imgui.ImVec2(30, 30)); imgui.SameLine()
+						KeyCap("LM", (keys[plState]["LKM"] ~= nil), imgui.ImVec2(30, 30))		
+					imgui.EndGroup()
+				else
+					imgui.BeginGroup()
+						KeyCap("Ctrl", (keys[plState]["Ctrl"] ~= nil), imgui.ImVec2(65, 30)); imgui.SameLine()
+						KeyCap("Alt", (keys[plState]["Alt"] ~= nil), imgui.ImVec2(65, 30))
+						KeyCap("Space", (keys[plState]["Space"] ~= nil), imgui.ImVec2(135, 30))
+					imgui.EndGroup()
+					imgui.SameLine()
+					imgui.BeginGroup()
+						KeyCap("Up", (keys[plState]["Up"] ~= nil), imgui.ImVec2(40, 30))
+						KeyCap("Down", (keys[plState]["Down"] ~= nil), imgui.ImVec2(40, 30))	
+					imgui.EndGroup()
+					imgui.SameLine()
+					imgui.BeginGroup()
+						KeyCap("H", (keys[plState]["H"] ~= nil), imgui.ImVec2(30, 30)); imgui.SameLine()
+						KeyCap("F", (keys[plState]["F"] ~= nil), imgui.ImVec2(30, 30))
+						KeyCap("Q", (keys[plState]["Q"] ~= nil), imgui.ImVec2(30, 30)); imgui.SameLine()
+						KeyCap("E", (keys[plState]["E"] ~= nil), imgui.ImVec2(30, 30))
+					imgui.EndGroup()
+				end
+			else
+				imgui.Text(u8"Игрок не находится в зоне стрима AT. Игрок не был выбран скриптом.\nПроверьте правильность переменной.\nЕсли вы в режиме смены положения окна - игнорируйте данный текст.\nЕсли скрипт автоматически после смены положения окна не завершил его, перезагрузите скрипты (ALT+R)")
+			end
+		imgui.End()
+    end    
+end
+
+function KeyCap(keyName, isPressed, size)
+	u32 = imgui.ColorConvertFloat4ToU32
+	local DL = imgui.GetWindowDrawList()
+	local p = imgui.GetCursorScreenPos()
+	local colors = {
+		[true] = imgui.ImVec4(0.60, 0.60, 1.00, 1.00),
+		[false] = imgui.ImVec4(0.60, 0.60, 1.00, 0.10)
+	}
+
+	if KEYCAP == nil then KEYCAP = {} end
+	if KEYCAP[keyName] == nil then
+		KEYCAP[keyName] = {
+			status = isPressed,
+			color = colors[isPressed],
+			timer = nil
+		}
+	end
+
+	local K = KEYCAP[keyName]
+	if isPressed ~= K.status then
+		K.status = isPressed
+		K.timer = os.clock()
+	end
+
+	local rounding = 3.0
+	local A = imgui.ImVec2(p.x, p.y)
+	local B = imgui.ImVec2(p.x + size.x, p.y + size.y)
+	if K.timer ~= nil then
+		K.color = bringVec4To(colors[not isPressed], colors[isPressed], K.timer, 0.1)
+	end
+	local ts = imgui.CalcTextSize(keyName)
+	local text_pos = imgui.ImVec2(p.x + (size.x / 2) - (ts.x / 2), p.y + (size.y / 2) - (ts.y / 2))
+
+	imgui.Dummy(size)
+	DL:AddRectFilled(A, B, u32(K.color), rounding)
+	DL:AddRect(A, B, u32(colors[true]), rounding, _, 1)
+	DL:AddText(text_pos, 0xFFFFFFFF, keyName)
+end
+
+function cyrillic(text)
+    local convtbl = {
+    	[230] = 155, [231] = 159, [247] = 164, [234] = 107, [250] = 144, [251] = 168,
+    	[254] = 171, [253] = 170, [255] = 172, [224] = 097, [240] = 112, [241] = 099, 
+    	[226] = 162, [228] = 154, [225] = 151, [227] = 153, [248] = 165, [243] = 121, 
+    	[184] = 101, [235] = 158, [238] = 111, [245] = 120, [233] = 157, [242] = 166, 
+    	[239] = 163, [244] = 063, [237] = 174, [229] = 101, [246] = 036, [236] = 175, 
+    	[232] = 156, [249] = 161, [252] = 169, [215] = 141, [202] = 075, [204] = 077, 
+    	[220] = 146, [221] = 147, [222] = 148, [192] = 065, [193] = 128, [209] = 067, 
+    	[194] = 139, [195] = 130, [197] = 069, [206] = 079, [213] = 088, [168] = 069, 
+    	[223] = 149, [207] = 140, [203] = 135, [201] = 133, [199] = 136, [196] = 131, 
+    	[208] = 080, [200] = 133, [198] = 132, [210] = 143, [211] = 089, [216] = 142, 
+    	[212] = 129, [214] = 137, [205] = 072, [217] = 138, [218] = 167, [219] = 145
+    }
+    local result = {}
+    for i = 1, string.len(text) do
+        local c = text:byte(i)
+        result[i] = string.char(convtbl[c] or c)
+    end
+    return table.concat(result)
+end
+
+function bringVec4To(from, dest, start_time, duration)
+    local timer = os.clock() - start_time
+    if timer >= 0.00 and timer <= duration then
+        local count = timer / (duration / 100)
+        return imgui.ImVec4(
+            from.x + (count * (dest.x - from.x) / 100),
+            from.y + (count * (dest.y - from.y) / 100),
+            from.z + (count * (dest.z - from.z) / 100),
+            from.w + (count * (dest.w - from.w) / 100)
+        ), true
+    end
+    return (timer > duration) and dest or from, false
+end

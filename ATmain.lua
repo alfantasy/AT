@@ -1,5 +1,4 @@
 script_name('AdminTool') -- название скрипта
--- Помощники, авторы, соавторы скрипта: alfantasy, Unite, Liquit, Natsuki, Shtormo., Yuri_Dan__, Yamada, Soulful., Lebedev, SatanHolograms
 script_description('Скрипт для облегчения работы администраторам') -- описание скрипта
 script_properties('work-in-pause')
 
@@ -12,15 +11,12 @@ local imgui 				= require 'imgui' -- регистр imgui окон
 local encoding 				= require 'encoding' -- дешифровка форматов
 local inicfg 				= require 'inicfg' -- работа с ini
 local sampev 				= require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
-local mem 					= require "memory" -- библиотека, отвечающие за чтение памяти, и её факторы
 local tab_board				= import ('lib/scoreboard.lua') -- регистр для scoreboard
 local notfy					= import 'lib/lib_imgui_notf.lua'
 local rep_res, rep_pl 		= pcall(import, "ATreport.lua")
 local plugin_res, plugin 	= pcall(import, "module/ATother.lua")
 local plre_res, plre 	 	= pcall(import, "module/ATplugin.lua")
 local plugin2_res, plugin2  = pcall(import, "module/ATautomute.lua")
-local cjson 				= require "cjson"
-local effil 				= require "effil"
 local fa 					= require 'faicons'
 
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
@@ -108,8 +104,8 @@ local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 
 local chat_logger_text = { } -- текст логгера
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 3 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "12.2" -- текстовая версия
+local script_version = 4 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "12.4" -- текстовая версия
 local script_path = thisScript().path  -- патч
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
 local report_path = getWorkingDirectory() .. "ATreport.lua"
@@ -129,7 +125,7 @@ local scoreboard_url = 'https://raw.githubusercontent.com/alfantasy/AT/main/scor
 local scoreboard_path = getWorkingDirectory() .. '\\lib\\scoreboard.lua'
 
 local directIni = "AdminTool\\settings.ini" -- создание специального файла, отвечающего за настройки.
-local massivIni = "AdminTool\\texts.ini"
+local massivIni = "AdminTool\\texts.ini" -- создание специального файла, отвечающего за биндерные элементы AT
 
 local textcfg = inicfg.load({
 	flood_text = {},
@@ -168,6 +164,7 @@ local ATcfg = inicfg.load({
 		good_game_prefix = false,
 		recon_menu = false,
 		show_admins = false,
+		keysync = false,
 		acX = 0,
 		acY = 0,
 	},
@@ -274,6 +271,7 @@ local elm = {
 		good_game_prefix = imgui.ImBool(ATcfg.setting.good_game_prefix),
 		atrecon = imgui.ImBool(ATcfg.setting.recon_menu),
 		show_admins = imgui.ImBool(ATcfg.setting.show_admins),
+		keysync = imgui.ImBool(ATcfg.setting.keysync),
 	},
 	int = {
 		styleImgui = imgui.ImInt(ATcfg.setting.styleImgui),
@@ -299,51 +297,16 @@ local elm = {
 	},
 	ac = {
 		X = ATcfg.setting.acX,
-		Y = ATcfg.setting.acY, 
+		Y = ATcfg.setting.acY
 	}
 }	
 
 local font_ac = renderCreateFont("Arial", tonumber(elm.int.admFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
--- local r_nick, id_rep, rep_text -- строчки от репорта
 
 ------ Введенные локальные переменная, отвечающие за перевод символов, или остальных свойств чата -----------
 local russian_characters = {
     [168] = 'Ё', [184] = 'ё', [192] = 'А', [193] = 'Б', [194] = 'В', [195] = 'Г', [196] = 'Д', [197] = 'Е', [198] = 'Ж', [199] = 'З', [200] = 'И', [201] = 'Й', [202] = 'К', [203] = 'Л', [204] = 'М', [205] = 'Н', [206] = 'О', [207] = 'П', [208] = 'Р', [209] = 'С', [210] = 'Т', [211] = 'У', [212] = 'Ф', [213] = 'Х', [214] = 'Ц', [215] = 'Ч', [216] = 'Ш', [217] = 'Щ', [218] = 'Ъ', [219] = 'Ы', [220] = 'Ь', [221] = 'Э', [222] = 'Ю', [223] = 'Я', [224] = 'а', [225] = 'б', [226] = 'в', [227] = 'г', [228] = 'д', [229] = 'е', [230] = 'ж', [231] = 'з', [232] = 'и', [233] = 'й', [234] = 'к', [235] = 'л', [236] = 'м', [237] = 'н', [238] = 'о', [239] = 'п', [240] = 'р', [241] = 'с', [242] = 'т', [243] = 'у', [244] = 'ф', [245] = 'х', [246] = 'ц', [247] = 'ч', [248] = 'ш', [249] = 'щ', [250] = 'ъ', [251] = 'ы', [252] = 'ь', [253] = 'э', [254] = 'ю', [255] = 'я',
 } 
-local english_translate = {
-	["q"] = "й",
-	["w"] = "ц",
-	["e"] = "у",
-	["r"] = "к",
-	["t"] = "е",
-	["y"] = "н",
-	["u"] = "г",
-	["i"] = "ш",
-	["o"] = "щ",
-	["p"] = "з",
-	["["] = "х",
-	["]"] = "ъ",
-	["a"] = "ф",
-	["s"] = "ы",
-	["d"] = "в",
-	["f"] = "а",
-	["g"] = "п",
-	["h"] = "р",
-	["j"] = "о",
-	["k"] = "л",
-	["l"] = "д",
-	[";"] = "ж",
-	["'"] = "э",
-	["z"] = "я",
-	["x"] = "ч",
-	["c"] = "с",
-	["v"] = "м",
-	["b"] = "и",
-	["n"] = "ь",
-	["m"] = "ь",
-	[","] = "б",
-	["."] = "ю"
-}
 
 local translate = {
 	["й"] = "q",
@@ -583,7 +546,7 @@ function showFlood()
 			sampSendChat("/mess 15 Хочешь задонатить на свой любимый сервер RDS? :> ")
 			sampSendChat("/mess 15 Ты это можешь сделать с радостью! Сайт: myrds.ru :3 ")
 			sampSendChat("/mess 15 И через основателя: @empirerosso, и также..")
-			sampSendChat("/mess 15 .. через нашего руководителя: @burythelights ")
+			sampSendChat("/mess 15 .. через нашего руководителя: @sheeeshys ")
 			sampSendChat("/mess 8 ===================== | Донат | ====================")
 		end
 		imgui.SameLine()
@@ -993,7 +956,6 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 	end
 end
 
-
 function sampev.onServerMessage(color, text)
 
 	if text:find("%[(.+)%] IP:") then
@@ -1014,20 +976,6 @@ function sampev.onServerMessage(color, text)
 		elm.checkbox.clist_adm.v = true 
 	end	
 
-	-- if text:find("%(Жалоба/Вопрос%) (.+)%[(%d+)%]%: (.+)%(%d жалоба%)") and elm.checkbox.push_report.v then 
-	-- 	local nick, id, text, _ = text:match("%(Жалоба/Вопрос%) (.+)%[(%d+)%]%: (.+)%(%d жалоба%)")
-	-- 	r_nick = nick 
-	-- 	id_rep = id 
-	-- 	rep_text = text
-	-- elseif text:find("%(Жалоба/Вопрос%) (.+)%[(%d+)%]%: %{.+}%(.+)%(%d жалоба%)") then 
-	-- 	local nick, id, text, _ = text:match("%(Жалоба/Вопрос%) (.+)%[(%d+)%]%: %{.+}%(.+)%(%d жалоба%)")
-	-- 	r_nick = nick 
-	-- 	id_rep = id 
-	-- 	rep_text = text
-	-- end	
-	-- [A] Администратор alfantasyz[48] (18 level) авторизовался в админ панели
-	-- [A-15] Trofim_Yenkov отключился
-
 	if text:find("%[A%] Администратор (.+)%[(%d+)%] %(%d+ level%) авторизовался в админ панели") or text:find("%[A%-(%d+)%] (.+) отключился") then 
 		if elm.checkbox.show_admins.v then 
 			sampSendChat("/admins ")
@@ -1036,7 +984,6 @@ function sampev.onServerMessage(color, text)
 	end	
 
 	local check_string = string.match(text, "[^%s]+")
-	local check_string_2 = string.match(text, "[^%s]+")
 
 	if check_string == '(Жалоба/Вопрос)' and elm.checkbox.push_report.v then
 		showNotification("[AT - Уведомление]", "Поступил новый репорт.")
@@ -1062,13 +1009,27 @@ function sampev.onServerMessage(color, text)
 	if text == "Игрок не в сети" and recon_to_player then
 		recon_to_player = false
 		showNotification(tag, "Игрок не в сети!")
+		if elm.checkbox.keysync.v then 
+			lua_thread.create(function()
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/keysync off")
+				setVirtualKeyDown(VK_RETURN)
+			end)
+		elseif elm.checkbox.keysync.v == false then
+			lua_thread.create(function()
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/keysync off")
+				setVirtualKeyDown(VK_RETURN)
+			end)
+		end	
 		sampSendChat("/reoff")
 	end
-end
+endd
 
 function main()
 	while not isSampAvailable() do wait(100) end
-
 	sampRegisterChatCommand("prf1", function(arg)
 		sampSendChat("/prefix " .. arg .. " Хелпер " .. elm.input.prefix_Helper.v)
 	end)
@@ -1154,7 +1115,6 @@ function main()
 			  	sampAddChatMessage(tag .. "Файл rpforms.txt отсуствует. Начинаю его создание.")
 			  	fileonrp:close();
 		   end;
-
 	sampRegisterChatCommand("tpcord", tpcord)
 	sampRegisterChatCommand("delch", delch)
 	sampRegisterChatCommand("tpad", function()
@@ -1164,10 +1124,6 @@ function main()
 	sampRegisterChatCommand("ahi", function()
 		sampSendChat("/a " .. elm.input.ATHelloAdm.v)
 	end)
-
-	-- sampRegisterChatCommand("apr", function()
-	-- 	sampSendChat("/d " .. r_nick .. " [" .. id_rep .. "]:" .. rep_text)
-	-- end)
 
 	sampRegisterChatCommand("tool", function()
 		ATToolsMenu.v = not ATToolsMenu.v 
@@ -1263,7 +1219,6 @@ function main()
 	------- Команды исключительно для джайлов -------
 
 	------- Команды исключительно для банов -------
-
 	sampRegisterChatCommand('bosk', function(param)
         lua_thread.create(function()
             if param:match("(%d+)") then
@@ -1408,9 +1363,9 @@ function main()
 	end)
 	-- активация чат-логгера
 
-	------------------ Показ запуска скрипта, указ автора и функций -------------------------
+	------------------ Показ запуска скрипта -------------------------
 	sampAddChatMessage(tag .. " Скрипт был инициализирован! Для проверки введите /tool")
-	------------------ Показ запуска скрипта, указ автора и функций -------------------------
+	------------------ Показ запуска скрипта -------------------------
 
 	_, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	nick = sampGetPlayerNickname(id)
@@ -1541,7 +1496,19 @@ function main()
 			sampSendChat("/reoff " )
 			recon_to_player = false
 			imgui.ShowCursor = false
-			control_recon_playerid = -1
+			if elm.checkbox.keysync.v then 
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/keysync off")
+				setVirtualKeyDown(VK_RETURN)
+				control_recon_playerid = -1
+			elseif elm.checkbox.keysync.v == false then 
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/keysync off")
+				setVirtualKeyDown(VK_RETURN)
+				control_recon_playerid = -1
+			end	
 		end
 
 		if not ATToolsMenu.v and not ATre_menu.v and not ATChatLogger.v then 
@@ -1574,6 +1541,15 @@ function change_show_admins()
 		elm.ac.X, elm.ac.Y = getCursorPos()
 	end
 end	
+
+function showCursor(toggle)
+    if toggle then
+      sampSetCursorMode(CMODE_LOCKCAM)
+    else
+      sampToggleCursor(false)
+    end
+    cursorEnabled = toggle
+end
 
 function playersToStreamZone()
 	local peds = getAllChars()
@@ -1709,7 +1685,6 @@ function cmd_zs(arg)
 		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
-
 
 function cmd_fd1(arg)
 	if #arg > 0 then 
@@ -2828,7 +2803,6 @@ function cmd_agcnkip(arg)
 	end
 end
 
-
 function cmd_rdsob(arg)
 	if #arg > 0 then
 		sampSendChat("/banakk " .. arg .. " 30 " .. " Обман администрации/игроков")
@@ -2836,6 +2810,7 @@ function cmd_rdsob(arg)
 		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end	
+
 function cmd_rdsip(arg)
 	if #arg > 0 then
 		sampSendChat("/banip " .. arg .. " 30 " .. " Обман администрации/игроков")
@@ -2923,19 +2898,6 @@ function sampev.onSendChat(message)
 	end
 end
 
-function EngToRus(text)
-    result = text == '' and nil or ''
-    if result then
-        for i = 0, #text do
-            letter = string.sub(text, i, i)
-            if letter then
-                result = (letter:find('[A-Z/{/}/</>]') and string.upper(english_translate[string.rlower(letter)]) or letter:find('[a-z/,]') and english_translate[letter] or letter)..result
-            end
-        end
-    end
-    return result and result:reverse() or result
-end
-
 function RusToEng(text)
     result = text == '' and nil or ''
     if result then
@@ -3008,7 +2970,7 @@ function join_argb(a, r, g, b)
 	argb = bit.bor(argb, bit.lshift(a, 24)) -- a
 	return argb
 end
-	function explode_samp_rgba(rgba)
+function explode_samp_rgba(rgba)
 	local b = bit.band(bit.rshift(rgba, 24), 0xFF)
 	local r = bit.band(bit.rshift(rgba, 16), 0xFF)
 	local g = bit.band(bit.rshift(rgba, 8), 0xFF)
@@ -3140,7 +3102,7 @@ function sampev.onShowTextDraw(id, data)
 	if (id >= 3 and id <= 38 or 
 	id == 266 or id == 2078 or 
 	id == 2050 or id == 351 or 
-	id == 104 or id == 105 or id == 106 or id == 107 or id == 108 or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 or id == 138 or id == 122 or id == 132 or id == 350 or id == 133 or id == 103 or id == 134 or id == 135 or id == 136 or id == 137 or id == 126 or id == 114 or id == 113 or id == 119 or id == 131 or id == 132 or id == 129 or id == 123 or id == 117 or id == 112 or id == 116 or id == 119 or id == 120 or id == 118 or id == 121 or id == 124 or id == 125 or id == 127 or id == 128 or id == 115 or id == 2061 or id == 354 or id == 136 or id == 2056) and elm.checkbox.atrecon.v then
+	id == 104 or id == 105 or id == 106 or id == 107 or id == 108 or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 or id == 138 or id == 122 or id == 132 or id == 350 or id == 133 or id == 103 or id == 134 or id == 135 or id == 136 or id == 137 or id == 126 or id == 114 or id == 113 or id == 119 or id == 131 or id == 132 or id == 129 or id == 123 or id == 117 or id == 112 or id == 116 or id == 119 or id == 120 or id == 118 or id == 121 or id == 124 or id == 125 or id == 127 or id == 128 or id == 115 or id == 2061 or id == 354 or id == 136 or id == 2056 or id == 140 or id == 141 or id == 142) and elm.checkbox.atrecon.v then
 		return false
 	end
 	if id == 2056 then  
@@ -3162,9 +3124,39 @@ function sampev.onSendCommand(command)
 			sampSendChat("/re " .. id)
 			check_cmd:run()
 			sampSendChat("/remenu")
+			if elm.checkbox.keysync.v then 
+				lua_thread.create(function()
+					wait(1000)
+					sampSetChatInputEnabled(true)
+					sampSetChatInputText("/keysync " .. control_recon_playerid)
+					setVirtualKeyDown(VK_RETURN)
+				end)
+			elseif elm.checkbox.keysync.v == false then
+				lua_thread.create(function()
+					wait(1)
+					sampSetChatInputEnabled(true)
+					sampSetChatInputText("/keysync off")
+					setVirtualKeyDown(VK_RETURN)
+				end)
+			end
 		end
 	end
 	if command == "/reoff" then
+		if elm.checkbox.keysync.v then 
+			lua_thread.create(function()
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/keysync off")
+				setVirtualKeyDown(VK_RETURN)
+			end)
+		elseif elm.checkbox.keysync.v == false then
+			lua_thread.create(function()
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/keysync off")
+				setVirtualKeyDown(VK_RETURN)
+			end)
+		end
 		recon_to_player = false
 		imgui.ShowCursor = false
 		control_recon_playerid = -1
@@ -3273,7 +3265,6 @@ local helloText = [[
 	Вы находитесь в нулевом окне основного меню! Чтобы перейти дальше
 	просто переходите по пунктам слева, которые вы видите
 	Автор данного скрипта: Егор Федосеев, VK: {00BFFF}https://vk.com/alfantasy
-	Тестер и помощник: Паша Орлов, VK: {00BFFF}https://vk.com/satanholograms
 	Хорошей работы вам, коллега! :3
 ]]
 
@@ -3423,6 +3414,8 @@ function imgui.OnDrawFrame()
 			imgui.TextQuestion('(?)', u8'При вводе, пароль автоматически сохраняется в конфиг\nПри интерфейсе и вводе, будут показываться *********')	
 			if imgui.Button(fa.ICON_REFRESH .. u8"  Обновить ##REFRESHTHISPASSWORD") then  
 				elm.input.ATAdminPass.v = ' '
+				ATcfg.setting.ATAdminPass = elm.input.ATAdminPass.v  
+				save()
 			end	
 			imgui.Separator()
 			imgui.TextColoredRGB(fa.ICON_USER_CIRCLE .. u8' Бессмертие {808080}(/agm)')
@@ -3549,7 +3542,25 @@ function imgui.OnDrawFrame()
 			end	
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8"Рендерит /admins отдельно, автоматически закрывая диалог\n Функция находится на стадии тестирования/разработки. \nДля вывода рендера, необходимо прописывать /admins (ВРЕМЕННО)")
-			
+			imgui.Text(fa.ICON_FA_KEYBOARD .. u8" Синхрониз.клавы игрока")
+			imgui.SameLine()
+			if imgui.Button(fa.ICON_FA_COGS .. u8" ##ChangePos") then  
+				imgui.OpenPopup('keypos')
+			end	
+			imgui.SameLine()
+			if imgui.ToggleButton("##KeySyncOn", elm.checkbox.keysync) then  
+				ATcfg.setting.keysync = elm.checkbox.keysync.v  
+				save()
+			end	
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8"Показывает нажатые клавиши игрока в реконе.")
+			imgui.SameLine()
+			if imgui.BeginPopup("keypos") then  
+				if imgui.Button(fa.ICON_FA_COGS .. u8" Изменение положения окна") then  
+					plugin.kposition()
+				end	
+				imgui.EndPopup()
+			end	
 			if imgui.BeginPopup("adminshow") then   
 				if imgui.Button(u8"Изменение положения рендера") then  
 					render.acX = elm.ac.X; render.acY = elm.ac.Y
@@ -3928,7 +3939,7 @@ function imgui.OnDrawFrame()
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/rz - розжиг межнац.розни")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rs - злоупотребление символами")
+					imgui.Text(u8"/zs - злоупотребление символами")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/ror - мут за оск род в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
@@ -4410,6 +4421,21 @@ function imgui.OnDrawFrame()
 					imgui.SameLine()
 					if imgui.Button(u8"Обновить") then
 						sampSendClickTextdraw(136)
+						if elm.checkbox.keysync.v then 
+							lua_thread.create(function()
+								wait(1)
+								sampSetChatInputEnabled(true)
+								sampSetChatInputText("/keysync " .. control_recon_playerid)
+								setVirtualKeyDown(VK_RETURN)
+							end)
+						elseif elm.checkbox.keysync.v == false then  
+							lua_thread.create(function()
+								wait(1)
+								sampSetChatInputEnabled(true)
+								sampSetChatInputText("/keysync off")
+								setVirtualKeyDown(VK_RETURN)
+							end)
+						end	
 					end
 					imgui.SameLine()
 					if imgui.Button(u8"Слапнуть") then  
@@ -4422,6 +4448,21 @@ function imgui.OnDrawFrame()
 					imgui.SameLine()
 					if imgui.Button(u8"Выйти") then
 						sampSendChat("/reoff")
+						if elm.checkbox.keysync.v then
+							lua_thread.create(function()
+								wait(1)
+								sampSetChatInputEnabled(true)
+								sampSetChatInputText("/keysync off")
+								setVirtualKeyDown(VK_RETURN)
+							end)
+						elseif elm.checkbox.keysync.v == false then  
+							lua_thread.create(function()
+								wait(1)
+								sampSetChatInputEnabled(true)
+								sampSetChatInputText("/keysync off")
+								setVirtualKeyDown(VK_RETURN)
+							end)
+						end	
 						control_recon_playerid = -1
 					end
 					imgui.SameLine()
@@ -4444,9 +4485,10 @@ function imgui.OnDrawFrame()
 						tool_re = 3
 					end
 				imgui.End()
+				
 				imgui.SetNextWindowPos(imgui.ImVec2(sw-10, 10), imgui.Cond.FirstUseEver, imgui.ImVec2(1, 0.5))
 				imgui.SetNextWindowSize(imgui.ImVec2(250, sh/1.15), imgui.Cond.FirstUseEver)
-		
+
 				if right_re_menu then -- рекон
 		
 					imgui.Begin(u8"Информация об игроке", false, 2+4+32)
@@ -4579,7 +4621,7 @@ function imgui.OnDrawFrame()
 						imgui.Text(u8"Для появления курсора нажмите ПКМ.")
 						imgui.Text(u8"Клавиша: R - обновить рекон. \nКлавиша: Q - выйти из рекона")
 						imgui.Text(u8"NumPad4 - предыдущий игрок \nNumPad6 - следующий игрок")
-		
+						
 					else
 						imgui.SetCursorPosX(imgui.GetWindowWidth()/2.3)
 						imgui.SetCursorPosY(imgui.GetWindowHeight()/2.3)
