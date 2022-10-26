@@ -1026,7 +1026,7 @@ function sampev.onServerMessage(color, text)
 		end	
 		sampSendChat("/reoff")
 	end
-endd
+end
 
 function main()
 	while not isSampAvailable() do wait(100) end
