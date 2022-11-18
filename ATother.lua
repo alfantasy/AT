@@ -196,6 +196,7 @@ local defTable = inicfg.load({
         wallhack = false,
         skeyposX = 0,
         skeyposY = 0,
+        fontHelp = 10,
     }
 }, directIni)
 inicfg.save(defTable, directIni)
@@ -222,6 +223,7 @@ local nel = {
         rotationPolygonTwo = imgui.ImInt(defTable.set.rotationPolygonTwo),
         maxMyLines = imgui.ImInt(defTable.set.maxMyLines),
         maxNotMyLines = imgui.ImInt(defTable.set.maxNotMyLines),
+        fontHelp = imgui.ImInt(defTable.set.fontHelp),
     },
     ksync = {
         skey = imgui.ImBool(false),
@@ -299,7 +301,7 @@ function main()
 			end
 		end
 	end)
-    inputHelpText = renderCreateFont("Arial", 9, FCR_BORDER + FCR_BOLD)
+    inputHelpText = renderCreateFont("Arial", tonumber(nel.intz.fontHelp.v), FCR_BORDER + FCR_BOLD)
 	lua_thread.create(inputChat)
 	lua_thread.create(showInputHelp)
 
@@ -859,6 +861,16 @@ function EXPORTS.kposition()
     changePosition = true
     sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
 end
+
+function EXPORTS.changefont()
+    imgui.Text(u8"Размер шрифта InputHelper")
+    imgui.PushItemWidth(175)
+    if imgui.SliderInt("##sizehelpfont", nel.intz.fontHelp, 1, 20) then  
+        inputHelpText = renderCreateFont("Arial", tonumber(nel.intz.fontHelp), FCR_BORDER + FCR_BOLD)
+        defTable.set.fontHelp = nel.intz.fontHelp.v  
+        save()  
+    end
+end      
 
 function onScriptTerminate(script, quitGame)
 	if script == thisScript() then 
