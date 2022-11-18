@@ -104,8 +104,8 @@ local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 
 local chat_logger_text = { } -- текст логгера
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 4 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "12.4" -- текстовая версия
+local script_version = 5 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "12.5" -- текстовая версия
 local script_path = thisScript().path  -- патч
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
 local report_path = getWorkingDirectory() .. "ATreport.lua"
@@ -256,6 +256,9 @@ local menuSelect = 0
 local combo_select = imgui.ImInt(0) -- отвечает за комбо-штучки
 local sw1, sh1 = getScreenResolution() -- отвечает за ширину и длину, короче говоря - размер окна.
 local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
+
+local selectlogin = false
+local scanspawn = false
 
 local elm = {
 	checkbox = {
@@ -911,6 +914,10 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 		sampAddChatMessage("")
     end
 	
+	if id == 658 then  
+		sampCloseCurrentDialogWithButton(0)
+	end
+
 	if check_report or id == 2349 then
 	 if title:find("(%d+) (.+)") then
         nickname = text:match("(.+)")
@@ -954,6 +961,10 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 			end
 		end
 	end
+end
+
+function sampev.onSendSpawn()
+	scanspawn = true 
 end
 
 function sampev.onServerMessage(color, text)
@@ -1390,13 +1401,20 @@ function main()
 			end)
 		end	
 			
-		if elm.checkbox.autoalogin.v == true then
-			lua_thread.create(function()
-				if sampGetCurrentDialogId() == 1227 and elm.input.ATAdminPass.v and sampIsDialogActive() then
-        		    sampSendDialogResponse(1227, 1, _, u8:decode(elm.input.ATAdminPass.v))
-					sampCloseCurrentDialogWithButton(1227, 1)
-				end
-			end)
+		if elm.checkbox.autoalogin.v == true and selectlogin == false and scanspawn then
+			-- lua_thread.create(function()
+			-- 	if sampGetCurrentDialogId() == 1227 and elm.input.ATAdminPass.v and sampIsDialogActive() then
+        	-- 	    sampSendDialogResponse(1227, 1, _, u8:decode(elm.input.ATAdminPass.v))
+			-- 		sampCloseCurrentDialogWithButton(1227, 1)
+			-- 	end
+			-- end)
+			wait(10000)
+			sampAddChatMessage(tag .. "Авторизируюсь под админкой!", -1)
+			if sampIsChatInputActive() == false and sampIsDialogActive() == false and elm.input.ATAdminPass.v and selectlogin == false then  
+				sampSendChat("/alogin " .. u8:decode(elm.input.ATAdminPass.v))
+				selectlogin = true  
+				scanspawn = false
+			end
 		end
 		-- автоматический ввод пароля
 
@@ -4110,6 +4128,8 @@ function imgui.OnDrawFrame()
 				save()  
 			end	
 			imgui.Separator()
+			plugin.changefont()
+			imgui.Separator()
 			imgui.Text(fa.ICON_TICKET .. u8" Ввод цвета для ответа в репорт. (окно)")
 			imgui.Text(u8"Пишите {} и берете цвет в HTML. Его можно взять с сайта")
 			imgui.Link("https://colorscheme.ru/html-colors.html")
@@ -4196,7 +4216,7 @@ function imgui.OnDrawFrame()
 				end)
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Содержит: трейсер пуль, WallHack, Infinite Run, Блокнот")
+			imgui.TextQuestion('(?)', u8"Содержит: трейсер пуль, WallHack, Infinite Run, Блокнот, InputHelper")
 			if imgui.Button(u8"Обновление плагина дополнительных функций №3") then  
 				lua_thread.create(function()
 					showNotification(tag .. " - Update","Начинаю загрузку плагина доп.функций!")
