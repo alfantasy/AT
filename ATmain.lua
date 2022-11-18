@@ -964,7 +964,11 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 end
 
 function sampev.onSendSpawn()
-	scanspawn = true 
+	if selectlogin == true then  
+		scanspawn = false
+	elseif selectlogin == false then
+		scanspawn = true 
+	end	
 end
 
 function sampev.onServerMessage(color, text)
