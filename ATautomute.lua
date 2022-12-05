@@ -612,16 +612,16 @@ end
 function EXPORTS.ActiveAutoMute()
     imgui.Text(fa.ICON_NEWSPAPER_O .. u8" Авто-мут за мат")
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
     if imgui.ToggleButton("##AutoMuteMat", ini.automute_mat) then 
         cfg.settings.automute_mat = ini.automute_mat.v 
         save() 
     end	
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 200)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
     imgui.Text(fa.ICON_NEWSPAPER_O .. u8" Авто-мут за оск")
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 50)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
     if imgui.ToggleButton("##AutoMuteOsk", ini.automute_osk) then 
         cfg.settings.automute_osk = ini.automute_osk.v 
         save() 
@@ -1123,7 +1123,7 @@ end
 function EXPORTS.autoMP()
     imgui.Text(fa.ICON_MAP .. u8" Авто-TP на МП")
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
     if imgui.ToggleButton(u8'##AutoTP', ini.mp_tp) then 
         cfg.settings.mp_tp = ini.mp_tp.v
         save() 
