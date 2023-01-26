@@ -1511,7 +1511,7 @@ function main()
 		end
 
 		if isKeyDown(VK_R) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
-			sampSendClickTextdraw(122)
+			sampSendClickTextdraw(130)
 		end
 
 		if isKeyDown(VK_Q) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
@@ -3124,8 +3124,8 @@ function sampev.onShowTextDraw(id, data)
 	if (id >= 3 and id <= 38 or 
 	id == 266 or id == 344 or
 	id == 2078 or 
-	id == 2057 or id == 359 or id == 2050 
-	or id == 104 or id == 105 or id == 106 or id == 107 or id == 108 or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 or id == 138 or id == 122 or id == 132 or id == 350 or id == 133 or id == 103 or id == 134 or id == 135 or id == 136 or id == 137 or id == 126 or id == 114 or id == 113 or id == 119 or id == 131 or id == 132 or id == 129 or id == 123 or id == 117 or id == 112 or id == 116 or id == 119 or id == 120 or id == 118 or id == 121 or id == 124 or id == 125 or id == 127 or id == 128 or id == 115 or id == 2060 or id == 354 or id == 136 or id == 2056 or id == 140 or id == 141 or id == 142 or id == 145 or id == 146 or id == 144 or id == 147 or id == 148 or id == 149 or id == 149 or id == 150 or id == 143) and elm.checkbox.atrecon.v then
+	id == 2057 or id == 359 or id == 2050 or id == 367
+	or id == 104 or id == 105 or id == 106 or id == 107 or id == 108 or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 or id == 138 or id == 122 or id == 132 or id == 350 or id == 133 or id == 103 or id == 134 or id == 135 or id == 136 or id == 137 or id == 126 or id == 114 or id == 113 or id == 119 or id == 131 or id == 132 or id == 129 or id == 123 or id == 117 or id == 112 or id == 116 or id == 119 or id == 120 or id == 118 or id == 121 or id == 124 or id == 125 or id == 127 or id == 128 or id == 115 or id == 2060 or id == 354 or id == 136 or id == 2056 or id == 140 or id == 141 or id == 142 or id == 145 or id == 146 or id == 144 or id == 147 or id == 148 or id == 149 or id == 149 or id == 150 or id == 143 or id == 153 or id == 154 or id == 152 or id == 155 or id == 156 or id == 157 or id == 158 or id == 151) and elm.checkbox.atrecon.v then
 		return false
 	end
 	if id == 2056 then  
@@ -4445,7 +4445,7 @@ function imgui.OnDrawFrame()
 					end
 					imgui.SameLine()
 					if imgui.Button(u8"Îáíîâèòü") then
-						sampSendClickTextdraw(122)
+						sampSendClickTextdraw(130)
 						if elm.checkbox.keysync.v then 
 							lua_thread.create(function()
 								wait(1)
