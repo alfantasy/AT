@@ -52,6 +52,7 @@ local rep = {
 
 local questions = {
     ["reporton"] = {
+		[u8"Игрок вышел"] = "Данный игрок покинул игру.",
         [u8"Начало работы по жалобе"] = "Начал(а) работу по вашей жалобе!",
 		[u8"Иду помогать"] = "Уважаемый игрок, сейчас помогу вам!",
 		[u8"Нет такой инфы у админов"] = "Данную информацию узнавайте в интернете.",
@@ -291,6 +292,11 @@ function main()
 	sampRegisterChatCommand("hct", cmd_hct)
 	sampRegisterChatCommand("gvr", cmd_gvr)
 	sampRegisterChatCommand("gvc", cmd_gvc)
+	sampRegisterChatCommand("ngm", cmd_ngm)
+
+	sampRegisterChatCommand("senderre", function()
+		sampAddChatMessage("ita idd: " .. reid_rep, -1)
+	end)
 
     while true do
         wait(0)
@@ -550,9 +556,13 @@ function main()
 		lua_thread.create(function()
 			if sampGetCurrentDialogEditboxText() == '.нч' or sampGetCurrentDialogEditboxText() == '/yx' then
 				sampSetCurrentDialogEditboxText('{FFFFFF}Начал(а) работу по вашей жалобе! ' .. color() .. ' Приятной игры на сервере RDS. <3 ')
-				wait(1000)
-				sampSetChatInputEnabled(true)
-				sampSetChatInputText("/re " )
+				wait(2000)
+				if tonumber(id_punish) ~= nil then 
+					sampSendChat("/re " .. id_punish)
+				else 	
+					sampSetChatInputEnabled(true)
+					sampSetChatInputText("/re " )
+				end	
 			end
 		end)
 
@@ -563,9 +573,13 @@ function main()
 		lua_thread.create(function()
 			if sampGetCurrentDialogEditboxText() == '.сл' then
 				sampSetCurrentDialogEditboxText('{FFFFFF}Слежу за данным игроком, ожидайте. :3 ')
-				wait(1000)
-				sampSetChatInputEnabled(true)
-				sampSetChatInputText("/re " )
+				wait(2000)
+				if tonumber(id_punish) ~= nil then 
+					sampSendChat("/re " .. id_punish)
+				else 	
+					sampSetChatInputEnabled(true)
+					sampSetChatInputText("/re " )
+				end	
 			end
 		end)
 
@@ -660,6 +674,7 @@ function main()
 		if sampGetCurrentDialogId() == 2352 then  
 			sampCloseCurrentDialogWithButton(1)
 		end
+		
     end
 end
 
@@ -723,6 +738,10 @@ function color() -- функция, выполняющая рандомнизацию и вывод рандомного цвета 
 end 
 
 ------- Функции, относящиеся к быстрым ответам -------
+function cmd_ngm(arg)
+	sampSendChat("/ans " .. arg .. " Данный игрок покинул игру. // Приятной игры на RDS <3")
+end
+
 function cmd_tcm(arg)
 	sampSendChat("/ans " .. arg .. " Чтобы обменять валюту, введите /trade, и подойдите к NPC Арману, стоит справа ")
 end 
@@ -1081,6 +1100,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
             text_rep = text:match("Жалоба:\n{......}(.*)\n\n{......}")	
 			pid_rep = sampGetPlayerIdByNickname(nick_rep)
 			rep_text = u8:encode(text_rep)
+			id_punish = rep_text:match("(%d+)")
         end
 		if not rep.imgui.v then  
 			rep.imgui.v = true  
@@ -1150,7 +1170,8 @@ function imgui.OnDrawFrame()
 				imgui.Text(u8"Жалоба от: " .. nick_rep .. "[" .. pid_rep .. "]")
 				imgui.Separator()
 			 	imgui.Text(u8(u8:decode(rep_text)))
-			elseif (nick_rep == nil or pid_rep == nil or rep_text == nil) then
+				imgui.Separator()
+			elseif (nick_rep == nil or pid_rep == nil or rep_text == nil or text_rep == nil) then
 			 	imgui.Text(u8"Жалоба не существует.")
 			end	
 			imgui.Separator()
@@ -1231,7 +1252,7 @@ function imgui.OnDrawFrame()
 					sampSendDialogResponse(2349, 1, 0)
 					sampSendDialogResponse(2350, 1, 0)
 					wait(200)
-					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Слежу на данным игроком! ' .. color() .. ' // Приятной игры на сервере RDS <3')
+					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Слежу за данным игроком! ' .. color() .. ' // Приятной игры на сервере RDS <3')
 					wait(200)
 					sampCloseCurrentDialogWithButton(13)
 					rep.imgui.v = false  
@@ -1782,119 +1803,6 @@ function imgui.OnDrawFrame()
 		end	
         imgui.End()
     end
-
-			-- if imgui.Button(u8'Местоположение окна') then
-			-- 	lua_thread.create(function()
-			-- 		rep.binder.v = false
-			-- 		rep.window_ans.v = true
-			-- 		showCursor(true, true)
-			-- 		checkCursor = true
-			-- 		sampSetCursorMode(4)
-			-- 		sampAddChatMessage(tag .. " Нажмите {69b2ff}SPACE{FFFFFF} чтобы сохранить позицию")
-			-- 		while checkCursor do
-			-- 			local cX, cY = getCursorPos()
-			-- 			rep.posX, rep.posY = cX, cY
-			-- 			if isKeyDown(32) then
-			-- 				sampSetCursorMode(0)
-			-- 				ATrep.main.posX, ATrep.main.posY = rep.posX, rep.posY
-			-- 				checkCursor = false
-			-- 				showCursor(false, false)
-			-- 				rep.binder.v = true
-			-- 				rep.window_ans.v = false
-			-- 				if save() then sampAddChatMessage(tag .. "Местоположение сохранено!", -1) end
-			-- 			end
-			-- 			wait(0)
-			-- 		end
-			-- 	end)
-			-- end
-		
-
-	-- if rep.window_ans.v then  
-
-	-- 	imgui.SetNextWindowPos(imgui.ImVec2(rep.posX, rep.posY), imgui.Cond.Always)
-	-- 	imgui.SetNextWindowSize(imgui.ImVec2(125, -1), imgui.Cond.Appearing)
-	-- 	imgui.Begin(u8"##window_ans", rep.window_ans, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)
-	-- 	if #ATrep.bind_name > 0 then  
-	-- 		for key_bind, name_bind in pairs(ATrep.bind_name) do  
-	-- 			if imgui.Button(name_bind.. '##'..key_bind) then  
-	-- 				play_bind(key_bind)
-	-- 			end	
-	-- 		end	
-	-- 	else 
-	-- 		imgui.Text(u8"Пусто!")
-	-- 		if imgui.Button(u8"Создать!") then  
-	-- 			imgui.OpenPopup(u8'Биндер')	 
-	-- 		end	
-	-- 	end	
-	-- 	if imgui.BeginPopupModal(u8'Биндер', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
-	-- 		imgui.BeginChild("##EditBinder", imgui.ImVec2(600, 225), true)
-	-- 		imgui.Text(u8'Название бинда:'); imgui.SameLine()
-	-- 		imgui.PushItemWidth(130)
-	-- 		imgui.InputText("##rep.binder_name", rep.binder_name)
-	-- 		imgui.PopItemWidth()
-	-- 		imgui.PushItemWidth(100)
-	-- 		imgui.InputInt(u8("Задержка между строками в миллисекундах"), rep.binder_delay)
-	-- 		imgui.PopItemWidth()
-	-- 		if rep.binder_delay.v <= 0 then
-	-- 			rep.binder_delay.v = 1
-	-- 		elseif rep.binder_delay.v >= 60001 then
-	-- 			rep.binder_delay.v = 60000
-	-- 		end
-	-- 		imgui.Separator()
-	-- 		imgui.Text(u8'Текст бинда:')
-	-- 		imgui.PushItemWidth(300)
-	-- 		imgui.InputTextMultiline("##rep.binder_text", rep.binder_text, imgui.ImVec2(-1, 110))
-	-- 		imgui.PopItemWidth()
-
-	-- 		imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
-	-- 		if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
-	-- 			rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
-	-- 			imgui.CloseCurrentPopup()
-	-- 		end
-	-- 		imgui.SameLine()
-	-- 		if #rep.binder_name.v > 0 and #rep.binder_text.v > 0 then
-	-- 			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
-	-- 			if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
-	-- 				if not EditOldBind then
-	-- 					local refresh_text = rep.binder_text.v:gsub("\n", "~")
-	-- 					table.insert(ATrep.bind_name, rep.binder_name.v)
-	-- 					table.insert(ATrep.bind_text, refresh_text)
-	-- 					table.insert(ATrep.bind_delay, rep.binder_delay.v)
-	-- 					if save() then
-	-- 						sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно создан!', -1)
-	-- 						rep.binder_name.v, rep.binder_text.v, rep.binder_delay.v = '', '', 2500
-	-- 					end
-	-- 						if rep.window_ans.v then
-	-- 							lua_thread.create(function()
-	-- 								rep.window_ans.v = false
-	-- 								wait(0)
-	-- 								rep.window_ans.v = true
-	-- 							end)
-	-- 						end
-	-- 						imgui.CloseCurrentPopup()
-	-- 					else
-	-- 						local refresh_text = rep.binder_text.v:gsub("\n", "~")
-	-- 						table.insert(ATrep.bind_name, getpos, rep.binder_name.v)
-	-- 						table.insert(ATrep.bind_text, getpos, refresh_text)
-	-- 						table.insert(ATrep.bind_delay, getpos, rep.binder_delay.v)
-	-- 						table.remove(ATrep.bind_name, getpos + 1)
-	-- 						table.remove(ATrep.bind_text, getpos + 1)
-	-- 						table.remove(ATrep.bind_delay, getpos + 1)
-	-- 					if save() then
-	-- 						sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(rep.binder_name.v).. '" успешно отредактирован!', -1)
-	-- 						rep.binder_name.v, rep.binder_text.v, rep.rep.binder_delay.v = '', '', 2500
-	-- 					end
-	-- 					EditOldBind = false
-	-- 					imgui.CloseCurrentPopup()
-	-- 				end
-	-- 			end
-
-	-- 		end
-	-- 		imgui.EndChild()
-	-- 		imgui.EndPopup()
-	-- 	end
-	-- 	imgui.End()
-	-- end
 end
 
 function play_bind(num)
