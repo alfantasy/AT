@@ -36,12 +36,14 @@ imgui.ToggleButton = require('imgui_addons').ToggleButton
 
 local cfg = inicfg.load({
     settings = {
-        automute_osk = false,
         automute_mat = false,
+        automute_osk = false,
         mp_tp = false,
         admin_state = false,
         posX = 1000,
         posY = 800,
+        reX = 0,
+        reY = 0,
         show_mute_day = false,
         show_mute_now = false,
         show_report_day = false,
@@ -58,6 +60,7 @@ local cfg = inicfg.load({
         show_afk_now = false,
         show_nick_id = false, 
         show_time = false, 
+        recon_state = false,
     },
 	static = {
 		dayReport = 0,
@@ -75,6 +78,7 @@ local cfg = inicfg.load({
 inicfg.save(cfg, directIni)
 
 local changePosition = false
+local changePosition1 = false
 local sessionOnline = imgui.ImInt(0)
 local sessionAfk = imgui.ImInt(0)
 local sessionFull = imgui.ImInt(0)
@@ -89,6 +93,7 @@ local LsessionJail = 0
 local ini = {
     textrule = imgui.ImBuffer(65536),
     admin_state = imgui.ImBool(cfg.settings.admin_state),
+    recon_state = imgui.ImBool(cfg.settings.recon_state),
     mp_tp = imgui.ImBool(cfg.settings.mp_tp),
     automute_mat = imgui.ImBool(cfg.settings.automute_mat),
     automute_osk = imgui.ImBool(cfg.settings.automute_osk),
@@ -116,6 +121,8 @@ local ini = {
 local onscene = { "блять", "сука", "хуй", "нахуй" } -- основная сцена мата
 local control_onscene = false -- контролирование сцены мата
 ------ Введенные локальные переменные, отвечающие за автомут ----------
+
+local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
 
 local onscene_2 = { "пидр", "лох", "гандон", "уебан" }
 local neosk = { "я лох" }
@@ -254,27 +261,8 @@ function sampev.onServerMessage(color, text)
         return true 
     end 
 
-    if check_mat ~= nil and check_mat_id ~= nil and ini.automute_mat.v then
-		local string_os = string.split(check_mat, " ")
-		for i, value in ipairs(onscene) do
-			for j, val in ipairs(string_os) do
-				val = val:match("(%P+)")
-				if val ~= nil then
-					if value == string.rlower(val) then
-						lua_thread.create(function()
-							sampAddChatMessage(tag .. text)
-							if not isGamePaused() and not isPauseMenuActive() then
-								sampSendChat("/mute " .. check_mat_id .. " 300 " .. " Нецензурная лексика.")
-                                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_mat_id)) .. "\n Запрещенное слово: " .. value)
-							end
-						end)	
-					end
-				end
-			end
-		end
-		return true
-	end
-	if check_osk ~= nil and check_osk_id ~= nil and ini.automute_osk.v then
+
+	if check_osk ~= nil and check_osk_id ~= nil and (ini.automute_mat.v or ini.automute_osk.v) then
 		local string_os = string.split(check_osk, " ")
 		for i, value in ipairs(onscene_2) do
 			for j, val in ipairs(string_os) do
@@ -283,7 +271,7 @@ function sampev.onServerMessage(color, text)
 					if value == string.rlower(val) and not check_osk:find(":я") then
 						lua_thread.create(function()
 						sampAddChatMessage(tag .. text)
-							if not isGamePaused() and not isPauseMenuActive() then
+							if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_osk.v then
 								sampSendChat("/mute " .. check_osk_id .. " 400 " .. " Оскорбление/Унижение.")
 								showNotification("{87CEEB}AdminTool", 'Запрещенное слово: {FFFFFF}' .. value .. '\n{FFFFFF}Ник нарушителя: {FFFFFF}' .. sampGetPlayerNickname(tonumber(check_osk_id)))
 							end	
@@ -292,7 +280,23 @@ function sampev.onServerMessage(color, text)
 				end
 			end
 		end
-		return true
+		for i, value in ipairs(onscene) do
+			for j, val in ipairs(string_os) do
+				val = val:match("(%P+)")
+				if val ~= nil then
+					if value == string.rlower(val) then
+						lua_thread.create(function()
+							sampAddChatMessage(tag .. text)
+							if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_mat.v then
+								sampSendChat("/mute " .. check_osk_id .. " 300 " .. " Нецензурная лексика.")
+                                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_osk_id)) .. "\n Запрещенное слово: " .. value)
+							end
+						end)	
+					end
+				end
+			end
+		end
+        return true
 	end
 
 end    
@@ -319,6 +323,14 @@ function main()
 	end
 
 	sampRegisterChatCommand("chip", chip)
+
+    sampRegisterChatCommand("reconmenu", function()
+        changePosition1 = true
+    end)
+
+    sampRegisterChatCommand("check_re", function()
+        sampAddChatMessage(tag .. " X: " .. tostring(cfg.settings.reX) .. " | Y: " ..  tostring(cfg.settings.reY), -1)
+    end)
 
     sampRegisterChatCommand('s_osk', function(param)
 		if param == nil then
@@ -434,13 +446,16 @@ function main()
 
         imgui.Process = true
 
-        if not ini.admin_state.v then 
+        if not ini.admin_state.v and not ini.recon_state.v then 
             ini.admin_state.v = false
+            ini.recon_state.v = false
             imgui.ShowCursor = false  
             imgui.Process = false
         end    
+
         
         isPos()
+        rePos()
     end
 end
 
@@ -585,6 +600,22 @@ function time()
     end
 end
 
+function rePos()
+    if changePosition1 then  
+        ini.recon_state.v = true 
+        showCursor(true, false)
+        local mouseX, mouseY = getCursorPos()
+        cfg.settings.reX, cfg.settings.reY = mouseX, mouseY
+        if isKeyJustPressed(49) then
+            showCursor(false, false)
+            showNotification(tag, "Успешно сохранено\n Перезагрузите AT для изменения значений\nALT+R")
+            changePosition1 = false
+            save()
+            ini.recon_state.v = false
+        end
+    end
+end	        
+
 function isPos() 
 	if changePosition then
         showCursor(true, false)
@@ -608,24 +639,24 @@ function showCursor(toggle)
     cursorEnabled = toggle
 end
 
-
 function EXPORTS.ActiveAutoMute()
-    imgui.Text(fa.ICON_NEWSPAPER_O .. u8" Авто-мут за мат")
+    imgui.Text(fa.ICON_NEWSPAPER_O .. u8" Автомут")
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
-    if imgui.ToggleButton("##AutoMuteMat", ini.automute_mat) then 
-        cfg.settings.automute_mat = ini.automute_mat.v 
-        save() 
-    end	
-    imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
-    imgui.Text(fa.ICON_NEWSPAPER_O .. u8" Авто-мут за оск")
-    imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
-    if imgui.ToggleButton("##AutoMuteOsk", ini.automute_osk) then 
-        cfg.settings.automute_osk = ini.automute_osk.v 
-        save() 
-    end	
+    if imgui.Button(u8"On/Off") then  
+        imgui.OpenPopup('settingautomute')
+    end    
+    if imgui.BeginPopup('settingautomute') then  
+        if imgui.ToggleButton(u8" Автомут за мут ", ini.automute_mat) then 
+            cfg.settings.automute_mat = ini.automute_mat.v 
+            save() 
+        end	
+        if imgui.ToggleButton(u8" Автомут за оск ", ini.automute_osk) then 
+            cfg.settings.automute_osk = ini.automute_osk.v 
+            save() 
+        end	
+        imgui.EndPopup()
+    end    
 end
 
 function EXPORTS.ActiveMP()
@@ -740,6 +771,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Прятки")
@@ -775,6 +808,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "КД")
@@ -810,6 +845,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "РР")
@@ -845,6 +882,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Поливалка")
@@ -881,6 +920,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Крылья смерти")
@@ -929,6 +970,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "ЖилиУ")
@@ -966,6 +1009,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Развлекательное МП")
@@ -1016,6 +1061,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16066, 1, 0)
                     sampSendDialogResponse(16066, 1, 1)
                     sampSendDialogResponse(16067, 1, 0, "359")
+                    sampSendDialogResponse(16066, 1, 2)
+                    sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
                     sampSendDialogResponse(5344, 1, 0, "Догони админа")
@@ -1060,11 +1107,14 @@ function EXPORTS.ActiveMP()
             sampSendDialogResponse(16066, 1, 0)
             sampSendDialogResponse(16066, 0, 0)
             sampSendDialogResponse(16066, 1, 1)
-            if #ini.set_dt > 0 then
+            if #ini.set_dt.v > 0 then
                 sampSendDialogResponse(16067, 1, 0, ini.set_dt.v)
             else  
                 sampSendDialogResponse(16067, 1, 0, "467")
             end 
+            sampSendDialogResponse(16066, 1, 2)
+            sampSendDialogResponse(16068, 1, 0, "0")
+            sampSendDialogResponse(16066, 0, 0)
             sampSendDialogResponse(5343, 1, 0)
             sampSendDialogResponse(5344, 1, 0, u8:decode(ini.open_mp.v))
             sampSendChat("/mess 10 Чтобы попасть на мероприятие, введите /tpmp")
@@ -1256,6 +1306,26 @@ function imgui.OnDrawFrame()
         imgui.End()
     end    
 
+    if ini.recon_state.v then  
+
+        grey_black()
+
+        imgui.ShowCursor = false  
+        
+        imgui.SetNextWindowSize(imgui.ImVec2(250, sh/2.15), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(cfg.settings.reX, cfg.settings.reY), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5))
+
+        imgui.Begin(u8"Изменение рекон-меню (пример окна)", ini.recon_state)
+        
+        imgui.BeginChild('##SelectMenuRecon', imgui.ImVec2(50, sh/2.15), true)
+        imgui.EndChild()
+        imgui.SameLine()
+        imgui.BeginChild('##ShowInformation', imgui.ImVec2(200,sh/2.15), true)
+        imgui.Text(u8"Информация об игроке")
+        imgui.EndChild()
+        
+        imgui.End()
+    end    
 end    
 
 function onScriptTerminate(script, quitGame)
@@ -1264,6 +1334,81 @@ function onScriptTerminate(script, quitGame)
 	end
 end
 
+function EXPORTS.SetReconPos()
+    if imgui.Button(fa.ICON_FA_COGS .. "##ReconMenuSet") then  
+        changePosition1 = true
+        sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
+    end    
+end    
+
+function grey_black()
+    imgui.SwitchContext()
+    local style = imgui.GetStyle()
+    local colors = style.Colors
+    local clr = imgui.Col
+    local ImVec4 = imgui.ImVec4
+	local ImVec2 = imgui.ImVec2
+
+	style.WindowPadding       = ImVec2(4, 6)
+	style.WindowRounding      = 0
+	style.ChildWindowRounding = 3
+	style.FramePadding        = ImVec2(5, 4)
+	style.FrameRounding       = 2
+	style.ItemSpacing         = ImVec2(3, 3)
+	style.TouchExtraPadding   = ImVec2(0, 0)
+	style.IndentSpacing       = 21
+	style.ScrollbarSize       = 14
+	style.ScrollbarRounding   = 16
+	style.GrabMinSize         = 10
+	style.GrabRounding        = 5
+	style.WindowTitleAlign    = ImVec2(0.50, 0.50)
+	style.ButtonTextAlign     = ImVec2(0, 0)
+
+
+    colors[clr.Text]                   = ImVec4(0.90, 0.90, 0.90, 1.00)
+    colors[clr.TextDisabled]           = ImVec4(1.00, 1.00, 1.00, 1.00)
+    colors[clr.WindowBg]               = ImVec4(0.00, 0.00, 0.00, 1.00)
+    colors[clr.ChildWindowBg]          = ImVec4(0.00, 0.00, 0.00, 1.00)
+    colors[clr.PopupBg]                = ImVec4(0.00, 0.00, 0.00, 1.00)
+    colors[clr.Border]                 = ImVec4(0.82, 0.77, 0.78, 1.00)
+    colors[clr.BorderShadow]           = ImVec4(0.35, 0.35, 0.35, 0.66)
+    colors[clr.FrameBg]                = ImVec4(1.00, 1.00, 1.00, 0.28)
+    colors[clr.FrameBgHovered]         = ImVec4(0.68, 0.68, 0.68, 0.67)
+    colors[clr.FrameBgActive]          = ImVec4(0.79, 0.73, 0.73, 0.62)
+    colors[clr.TitleBg]                = ImVec4(0.00, 0.00, 0.00, 1.00)
+    colors[clr.TitleBgActive]          = ImVec4(0.46, 0.46, 0.46, 1.00)
+    colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 1.00)
+    colors[clr.MenuBarBg]              = ImVec4(0.00, 0.00, 0.00, 0.80)
+    colors[clr.ScrollbarBg]            = ImVec4(0.00, 0.00, 0.00, 0.60)
+    colors[clr.ScrollbarGrab]          = ImVec4(1.00, 1.00, 1.00, 0.87)
+    colors[clr.ScrollbarGrabHovered]   = ImVec4(1.00, 1.00, 1.00, 0.79)
+    colors[clr.ScrollbarGrabActive]    = ImVec4(0.80, 0.50, 0.50, 0.40)
+    colors[clr.ComboBg]                = ImVec4(0.24, 0.24, 0.24, 0.99)
+    colors[clr.CheckMark]              = ImVec4(0.99, 0.99, 0.99, 0.52)
+    colors[clr.SliderGrab]             = ImVec4(1.00, 1.00, 1.00, 0.42)
+    colors[clr.SliderGrabActive]       = ImVec4(0.76, 0.76, 0.76, 1.00)
+    colors[clr.Button]                 = ImVec4(0.51, 0.51, 0.51, 0.60)
+    colors[clr.ButtonHovered]          = ImVec4(0.68, 0.68, 0.68, 1.00)
+    colors[clr.ButtonActive]           = ImVec4(0.67, 0.67, 0.67, 1.00)
+    colors[clr.Header]                 = ImVec4(0.72, 0.72, 0.72, 0.54)
+    colors[clr.HeaderHovered]          = ImVec4(0.92, 0.92, 0.95, 0.77)
+    colors[clr.HeaderActive]           = ImVec4(0.82, 0.82, 0.82, 0.80)
+    colors[clr.Separator]              = ImVec4(0.73, 0.73, 0.73, 1.00)
+    colors[clr.SeparatorHovered]       = ImVec4(0.81, 0.81, 0.81, 1.00)
+    colors[clr.SeparatorActive]        = ImVec4(0.74, 0.74, 0.74, 1.00)
+    colors[clr.ResizeGrip]             = ImVec4(0.80, 0.80, 0.80, 0.30)
+    colors[clr.ResizeGripHovered]      = ImVec4(0.95, 0.95, 0.95, 0.60)
+    colors[clr.ResizeGripActive]       = ImVec4(1.00, 1.00, 1.00, 0.90)
+    colors[clr.CloseButton]            = ImVec4(0.45, 0.45, 0.45, 0.50)
+    colors[clr.CloseButtonHovered]     = ImVec4(0.70, 0.70, 0.90, 0.60)
+    colors[clr.CloseButtonActive]      = ImVec4(0.70, 0.70, 0.70, 1.00)
+    colors[clr.PlotLines]              = ImVec4(1.00, 1.00, 1.00, 1.00)
+    colors[clr.PlotLinesHovered]       = ImVec4(1.00, 1.00, 1.00, 1.00)
+    colors[clr.PlotHistogram]          = ImVec4(1.00, 1.00, 1.00, 1.00)
+    colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 1.00, 1.00, 1.00)
+    colors[clr.TextSelectedBg]         = ImVec4(1.00, 1.00, 1.00, 0.35)
+    colors[clr.ModalWindowDarkening]   = ImVec4(0.88, 0.88, 0.88, 0.35)
+end
 
 function EXPORTS.OffScript()
     imgui.Process = false

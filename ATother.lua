@@ -33,6 +33,18 @@ local control_wallhack = false
 
 imgui.ToggleButton = require('imgui_addons').ToggleButton
 
+local fai = require "fAwesome5"
+local fai_font = nil  
+local fai_glyph_ranges = imgui.ImGlyphRanges({ fai.min_range, fai.max_range })
+function imgui.BeforeDrawFrame()
+    if fai_font == nil then
+        local font_config = imgui.ImFontConfig() -- to use 'imgui.ImFontConfig.new()' on error
+        font_config.MergeMode = true
+
+        fai_font = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fa-solid-900.ttf', 13.0, font_config, fai_glyph_ranges)
+    end
+end
+
 local fa = require 'faicons'
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
 local target = -1
@@ -197,6 +209,7 @@ local defTable = inicfg.load({
         skeyposX = 0,
         skeyposY = 0,
         fontHelp = 10,
+        translate_cmd = false,
     }
 }, directIni)
 inicfg.save(defTable, directIni)
@@ -209,6 +222,7 @@ local nel = {
         cbEnd = imgui.ImBool(defTable.set.cbEnd),
         infinite_run = imgui.ImBool(defTable.set.infinite_run),
         wallhack = imgui.ImBool(defTable.set.wallhack),
+        translate_cmd = imgui.ImBool(defTable.set.translate_cmd),
     },
     intz = {
         secondToClose = imgui.ImInt(defTable.set.secondToClose),
@@ -450,7 +464,7 @@ end
 
 function inputChat()
 	while true do
-		if(sampIsChatInputActive())then
+		if(sampIsChatInputActive()) and nel.check.translate_cmd.v then
 			local getInput = sampGetChatInputText()
 			if(oldText ~= getInput and #getInput > 0)then
 				local firstChar = string.sub(getInput, 1, 1)
@@ -630,7 +644,7 @@ end
 function EXPORTS.ActiveMenu()
     imgui.Text(fa.ICON_FA_CROSSHAIRS .. u8" Трейсера пуль")
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
     if imgui.ToggleButton('##Tracers', nel.check.bullettracer) then 
         defTable.set.bullettracer = nel.check.bullettracer.v
         save()
@@ -780,9 +794,10 @@ function EXPORTS.ActiveMenu()
 end        
 
 function EXPORTS.InfiniteRun()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
     imgui.Text(fa.ICON_BATTERY_FULL .. u8" Infinite Run") 
     imgui.SameLine()
-    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
     if imgui.ToggleButton('##InfiniteRun', nel.check.infinite_run) then 
         if nel.check.infinite_run.v then  
             showNotification("AdminTool", "Включен Infinite Run")
@@ -828,10 +843,29 @@ function EXPORTS.Notepad()
     end
 end    
 
-function EXPORTS.ActiveWH()
-    imgui.Text(fa.ICON_USER_O .. u8" WallHack")
+function EXPORTS.ActiveWHRe()
+    imgui.Text(fai.ICON_FA_USER_TAG .. u8" WallHack")
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 50)
+    if imgui.ToggleButton('##WallHack', nel.check.wallhack) then 
+        defTable.set.wallhack = nel.check.wallhack.v
+        if nel.check.wallhack.v then 
+            showNotification("AdminTool", "Включен WallHack")
+            nameTagOn()
+            control_wallhack = true
+        else 
+            showNotification("AdminTool", "Выключен WallHack")
+            control_wallhack = false
+            nameTagOff()
+        end	
+        save()
+    end
+end    
+
+function EXPORTS.ActiveWH()
+    imgui.Text(fai.ICON_FA_USER_TAG .. u8" WallHack")
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
     if imgui.ToggleButton('##WallHack', nel.check.wallhack) then 
         defTable.set.wallhack = nel.check.wallhack.v
         if nel.check.wallhack.v then 
@@ -862,15 +896,26 @@ function EXPORTS.kposition()
     sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
 end
 
-function EXPORTS.changefont()
-    imgui.Text(u8"Размер шрифта InputHelper")
-    imgui.PushItemWidth(175)
-    if imgui.SliderInt("##sizehelpfont", nel.intz.fontHelp, 1, 20) then  
-        inputHelpText = renderCreateFont("Arial", tonumber(nel.intz.fontHelp), FCR_BORDER + FCR_BOLD)
-        defTable.set.fontHelp = nel.intz.fontHelp.v  
-        save()  
+function EXPORTS.translatecmd()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
+    imgui.Text(fa.ICON_SIGN_LANGUAGE .. u8" Перевод команд")
+    imgui.SameLine()
+    imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
+    if imgui.ToggleButton("##Translate_cmd", nel.check.translate_cmd) then
+        defTable.set.translate_cmd = nel.check.translate_cmd.v 
+        save() 
     end
-end      
+end   
+
+function EXPORTS.changefont()
+    imgui.Text(u8'Размер шрифта InputHelper')
+    imgui.PushItemWidth(175)
+    if imgui.SliderInt("##sizehelpfont", nel.intz.fontHelp, 1, 20) then
+        inputHelpText = renderCreateFont("Arial", tonumber(nel.intz.fontHelp.v), FCR_BORDER + FCR_BOLD)
+        defTable.set.fontHelp = nel.intz.fontHelp.v
+        save()
+    end	
+end   
 
 function onScriptTerminate(script, quitGame)
 	if script == thisScript() then 
