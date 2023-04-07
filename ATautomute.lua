@@ -647,7 +647,7 @@ function EXPORTS.ActiveAutoMute()
         imgui.OpenPopup('settingautomute')
     end    
     if imgui.BeginPopup('settingautomute') then  
-        if imgui.ToggleButton(u8" Автомут за мут ", ini.automute_mat) then 
+        if imgui.ToggleButton(u8" Автомут за мат ", ini.automute_mat) then 
             cfg.settings.automute_mat = ini.automute_mat.v 
             save() 
         end	

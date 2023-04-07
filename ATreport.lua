@@ -1099,6 +1099,9 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
             nick_rep = text:match("Игрок: {......}(%S+)")
             text_rep = text:match("Жалоба:\n{......}(.*)\n\n{......}")	
 			pid_rep = sampGetPlayerIdByNickname(nick_rep)
+			if pid_rep == nil then  
+				pid_rep = "None"
+			end
 			rep_text = u8:encode(text_rep)
 			id_punish = rep_text:match("(%d+)")
         end
@@ -1242,6 +1245,12 @@ function imgui.OnDrawFrame()
 					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Начал(а) работу по вашей жалобе! ' .. color() .. ' // Приятной игры на сервере RDS <3')
 					wait(200)
 					sampCloseCurrentDialogWithButton(13)
+					if tonumber(id_punish) ~= nil then 
+						sampSendChat("/re " .. id_punish)
+					else 	
+						sampSetChatInputEnabled(true)
+						sampSetChatInputText("/re " )
+					end	
 					rep.imgui.v = false  
 					imgui.ShowCursor = false
 				end)
@@ -1255,6 +1264,12 @@ function imgui.OnDrawFrame()
 					sampSendDialogResponse(2351, 1, 0, '{FFFFFF}Слежу за данным игроком! ' .. color() .. ' // Приятной игры на сервере RDS <3')
 					wait(200)
 					sampCloseCurrentDialogWithButton(13)
+					if tonumber(id_punish) ~= nil then 
+						sampSendChat("/re " .. id_punish)
+					else 	
+						sampSetChatInputEnabled(true)
+						sampSetChatInputText("/re " )
+					end	
 					rep.imgui.v = false  
 					imgui.ShowCursor = false
 				end)
