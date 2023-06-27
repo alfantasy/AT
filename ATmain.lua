@@ -1,16 +1,16 @@
-script_name('AdminTool') -- Г­Г Г§ГўГ Г­ГЁГҐ Г±ГЄГ°ГЁГЇГІГ 
-script_description('Г‘ГЄГ°ГЁГЇГІ Г¤Г«Гї Г®ГЎГ«ГҐГЈГ·ГҐГ­ГЁГї Г°Г ГЎГ®ГІГ» Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г Г¬') -- Г®ГЇГЁГ±Г Г­ГЁГҐ Г±ГЄГ°ГЁГЇГІГ 
+script_name('AdminTool') -- название скрипта
+script_description('Скрипт для облегчения работы администраторам') -- описание скрипта
 
-require "lib.moonloader" -- ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГҐ Г®Г±Г­Г®ГўГ­Г®Г© ГЎГЁГЎГ«ГЁГ®ГІГҐГЄГЁ mooloader
-local ffi 					= require "ffi" -- cГЇГҐГ¶ Г±ГІГ°ГіГЄГІГіГ°Г 
+require "lib.moonloader" -- подключение основной библиотеки mooloader
+local ffi 					= require "ffi" -- cпец структура
 local dlstatus 				= require('moonloader').download_status
-local font_admin_chat 		= require ("moonloader").font_flag -- ГёГ°ГЁГґГІ Г¤Г«Гї Г Г¤Г¬ГЁГ­-Г·Г ГІГ 
-local vkeys 				= require "vkeys" -- Г°ГҐГЈГЁГ±ГІГ° Г¤Г«Гї ГЄГ­Г®ГЇГ®ГЄ
-local imgui 				= require 'imgui' -- Г°ГҐГЈГЁГ±ГІГ° imgui Г®ГЄГ®Г­
-local encoding 				= require 'encoding' -- Г¤ГҐГёГЁГґГ°Г®ГўГЄГ  ГґГ®Г°Г¬Г ГІГ®Гў
-local inicfg 				= require 'inicfg' -- Г°Г ГЎГ®ГІГ  Г± ini
-local sampev 				= require "lib.samp.events" -- ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГҐ Г®Г±Г­Г®ГўГ­Г»Гµ ГЎГЁГЎГ«ГЁГ®ГІГҐГЄ, Г±ГўГїГ§Г Г­Г­Г»ГҐ Г± ГЇГ®ГІГ®ГЄГ Г¬ ГЇГ ГЄГҐГІГ®Гў ГЁГўГҐГ­ГІГ®Гў SA:MP, ГЁ ГЁГµ ГЇГ°ГїГ¬Г®ГҐ Г±Г®ГҐГ¤ГЁГ­ГҐГ­ГЁГҐ Г± LUA
-local tab_board				= import ('lib/scoreboard.lua') -- Г°ГҐГЈГЁГ±ГІГ° Г¤Г«Гї scoreboard
+local font_admin_chat 		= require ("moonloader").font_flag -- шрифт для админ-чата
+local vkeys 				= require "vkeys" -- регистр для кнопок
+local imgui 				= require 'imgui' -- регистр imgui окон
+local encoding 				= require 'encoding' -- дешифровка форматов
+local inicfg 				= require 'inicfg' -- работа с ini
+local sampev 				= require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
+local tab_board				= import ('lib/scoreboard.lua') -- регистр для scoreboard
 local notfy					= import 'lib/lib_imgui_notf.lua'
 local rep_res, rep_pl 		= pcall(import, "ATreport.lua")
 local plugin_res, plugin 	= pcall(import, "module/ATother.lua")
@@ -19,8 +19,8 @@ local plugin2_res, plugin2  = pcall(import, "module/ATautomute.lua")
 local fa 					= require 'faicons'
 
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
-encoding.default = 'CP1251' -- Г±Г¬ГҐГ­Г  ГЄГ®Г¤ГЁГ°Г®ГўГЄГЁ Г­Г  CP1251
-u8 = encoding.UTF8 -- ГЇГҐГ°ГҐГЁГ¬ГҐГ­Г®ГўГЄГ  Г±ГІГ Г­Г¤ГІГ Г°ГІГ­Г®ГЈГ® Г°ГҐГ¦ГЁГ¬Г  ГЄГ®Г¤ГЁГ°Г®ГўГЄГЁ UTF8 - u8
+encoding.default = 'CP1251' -- смена кодировки на CP1251
+u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
 
 function imgui.BeforeDrawFrame()
 	if fa_font == nil then  
@@ -100,32 +100,32 @@ colours = {
 	"0x561A28FF", "0x4E0E27FF", "0x706C67FF", "0x3B3E42FF", "0x2E2D33FF", "0x7B7E7DFF", "0x4A4442FF", "0x28344EFF"
 	}
 
-local mcolor -- Г«Г®ГЄГ Г«ГјГ­Г Гї ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г Гї Г¤Г«Гї Г°ГҐГЈГЁГ±ГІГ°Г Г¶ГЁГЁ Г°Г Г­Г¤Г®Г¬Г­Г®ГЈГ® Г¶ГўГҐГІГ 
+local mcolor -- локальная переменная для регистрации рандомного цвета
 
-local player_info = {} -- ГЁГ­ГґГ  Г® Г·ГҐГ«ГЁГЄГҐ
-local player_to_streamed = {} -- ГЁГ­ГґГ  Г® ГЇГ°ГҐГ±Г«ГҐГ¤ГіГҐГ¬Г»Г¬
-local text_remenu = { "ГЋГ·ГЄГЁ:", "Г‡Г¤Г®Г°Г®ГўГјГҐ:", "ГЃГ°Г®Г­Гї:", "Г•ГЏ Г¬Г ГёГЁГ­Г»:", "Г‘ГЄГ®Г°Г®Г±ГІГј:", "Ping:", "ГЏГ ГІГ°Г®Г­Г»:", "Г‚Г»Г±ГІГ°ГҐГ«Г»:", "Г‚Г°ГҐГ¬Гї ГўГ»Г±ГІГ°ГҐГ«Г®Гў:", "Г‚Г°ГҐГ¬Гї ГЂГ”ГЉ:", "P.Loss:", "VIP:", "Passive ГЊГ®Г¤:", "Turbo:", "ГЉГ®Г«Г«ГЁГ§ГЁГї:" }
-local control_recon_playerid = -1 -- ГЄГ®Г­ГІГ°Г®Г«ГЁГ°ГіГҐГ¬Г Гї ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г Гї Г§Г  ГЁГ¤ ГЁГЈГ°Г®ГЄГ 
-local control_tab_playerid = -1 -- Гў ГІГ ГЎГҐ
-local ip_player = nil -- ip ГЁГЈГ°Г®ГЄГ 
-local control_recon_playernick -- Г­ГЁГЄ
-local next_recon_playerid = nil -- Г±Г«ГҐГ¤ГіГѕГ№ГЁГ© ГЁГ¤
-local control_recon = false -- ГЄГ®Г­ГІГ°Г®Г«ГЁГ°Г®ГўГ Г­ГЁГҐ Г°ГҐГЄГ®Г­Г 
-local control_info_load = false -- ГЄГ®Г­ГІГ°Г®Г«ГЁГ°Г®ГўГ Г­ГЁГҐ Г§Г ГЈГ°ГіГ§ГЄГЁ ГЁГ­ГґГ»
-local right_re_menu = imgui.ImBool(true) -- Г°ГҐГ¬ГҐГ­Гѕ Г±ГЇГ°Г ГўГ 
-local mouse_cursor = true -- Г°Г ГўГҐГ­ Г«ГЁ ГЄГіГ°Г±Г®Г° ГЇГ°Г ГўГ¤ГҐ
-local check_cmd_re = false -- ГЄГ®Г­ГІГ°Г®Г«Гј ГЄГ®Г¬Г Г­Г¤Г» Г® Г±Г«ГҐГ¦ГЄГҐ
-local accept_load = false -- Г§Г ГЈГ°ГіГ§ГЄГ  Г°ГҐГЄГ®Г­Г 
+local player_info = {} -- инфа о челике
+local player_to_streamed = {} -- инфа о преследуемым
+local text_remenu = { "Очки:", "Здоровье:", "Броня:", "ХП машины:", "Скорость:", "Ping:", "Патроны:", "Выстрелы:", "Время выстрелов:", "Время АФК:", "P.Loss:", "VIP:", "Passive Мод:", "Turbo:", "Коллизия:" }
+local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
+local control_tab_playerid = -1 -- в табе
+local ip_player = nil -- ip игрока
+local control_recon_playernick -- ник
+local next_recon_playerid = nil -- следующий ид
+local control_recon = false -- контролирование рекона
+local control_info_load = false -- контролирование загрузки инфы
+local right_re_menu = imgui.ImBool(true) -- ременю справа
+local mouse_cursor = true -- равен ли курсор правде
+local check_cmd_re = false -- контроль команды о слежке
+local accept_load = false -- загрузка рекона
 local tool_re
 
-local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280) -- Г§Г ГµГўГ ГІ ГЇГ®Г§ГЁГ¶ГЁГЁ ГЄГ®Г±ГІГҐГ©
-local chat_logger_text = { } -- ГІГҐГЄГ±ГІ Г«Г®ГЈГЈГҐГ°Г 
+local getBonePosition = ffi.cast("int (__thiscall*)(void*, float*, int, bool)", 0x5E4280) -- захват позиции костей
+local chat_logger_text = { } -- текст логгера
 local text_ru = { }
-local accept_load_clog = false -- ГЇГ°ГЁГ­ГїГІГЁГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г®Г© Г«Г®ГЈГЈГҐГ°Г 
+local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 6 -- Г®Г±Г­Г®ГўГ­Г Гї ГўГҐГ°Г±ГЁГї, ГЇГҐГ°ГҐГµГўГ ГІГ»ГўГ ГҐГ¬Г Гї Г±Г Г©ГІГ®Г¬ ГЁ Г±ГЄГ°ГЁГЇГІГ®Г¬
-local script_version_text = "12.6" -- ГІГҐГЄГ±ГІГ®ГўГ Гї ГўГҐГ°Г±ГЁГї
-local script_path = thisScript().path  -- ГЇГ ГІГ·
+local script_version = 6 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "12.6" -- текстовая версия
+local script_path = thisScript().path  -- патч
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
 local report_path = getWorkingDirectory() .. "ATreport.lua"
 local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATreport.lua"
@@ -136,15 +136,15 @@ local pl1_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATother.lua
 local pl2_path = getWorkingDirectory() .. "\\module\\ATplugin.lua"
 local pl2_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATplugin.lua" 
 
-local update_path = getWorkingDirectory() .. '/upat.ini' -- Г®Г±Г­Г®ГўГ­Г®Г© ГЇГ ГІГ·
-local update_url = "https://raw.githubusercontent.com/alfantasy/AT/main/upat.ini" -- Г§Г ГЈГ°ГіГ§ГЄГ  ГЇГ ГІГ·Г 
+local update_path = getWorkingDirectory() .. '/upat.ini' -- основной патч
+local update_url = "https://raw.githubusercontent.com/alfantasy/AT/main/upat.ini" -- загрузка патча
 local font_fa_url = "https://raw.githubusercontent.com/alfantasy/AdminTool/main/fontawesome-webfont.ttf"
 local font_fa_path = getWorkingDirectory() .. '\\resource\\font\\fontawesome-webfont.ttf'
 local scoreboard_url = 'https://raw.githubusercontent.com/alfantasy/AT/main/scoreboard.lua'
 local scoreboard_path = getWorkingDirectory() .. '\\lib\\scoreboard.lua'
 
-local directIni = "AdminTool\\settings.ini" -- Г±Г®Г§Г¤Г Г­ГЁГҐ Г±ГЇГҐГ¶ГЁГ Г«ГјГ­Г®ГЈГ® ГґГ Г©Г«Г , Г®ГІГўГҐГ·Г ГѕГ№ГҐГЈГ® Г§Г  Г­Г Г±ГІГ°Г®Г©ГЄГЁ.
-local massivIni = "AdminTool\\texts.ini" -- Г±Г®Г§Г¤Г Г­ГЁГҐ Г±ГЇГҐГ¶ГЁГ Г«ГјГ­Г®ГЈГ® ГґГ Г©Г«Г , Г®ГІГўГҐГ·Г ГѕГ№ГҐГЈГ® Г§Г  ГЎГЁГ­Г¤ГҐГ°Г­Г»ГҐ ГЅГ«ГҐГ¬ГҐГ­ГІГ» AT
+local directIni = "AdminTool\\settings.ini" -- создание специального файла, отвечающего за настройки.
+local massivIni = "AdminTool\\texts.ini" -- создание специального файла, отвечающего за биндерные элементы AT
 
 local textcfg = inicfg.load({
 	flood_text = {},
@@ -229,7 +229,7 @@ function showNotification(handle, text_not)
 	notfy.addNotify("{87CEEB}" .. handle, text_not, 2, 1, 6)
 end
 
------ Г‚ГўГҐГ¤ГҐГ­Г­Г»ГҐ Г«Г®ГЄГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ, ГЄГ®ГІГ®Г°Г»ГҐ Г®ГІГўГҐГ·Г ГѕГІ Г§Г  imgui Г®ГЄГ­Г® ГЁ/ГЁГ«ГЁ Г®ГІГ­Г®Г±ГїГІГ±Гї ГЄ Г­ГҐГ¬Гі -------
+----- Введенные локальные переменные, которые отвечают за imgui окно и/или относятся к нему -------
 imgui.ToggleButton = require('imgui_addons').ToggleButton
 imgui.Spinner = require('imgui_addons').Spinner
 imgui.BufferingBar = require('imgui_addons').BufferingBar
@@ -241,31 +241,31 @@ local chat_find = imgui.ImBuffer(256)
 local btn_size = imgui.ImVec2(-0.1, 0)
 local notev = imgui.ImBuffer(1024)
 local colorsImGui = {
-					u8"Г—ГҐГ°Г­Г Гї", -- 0
-					u8"Г‘ГҐГ°Г®-Г·ГҐГ°Г­Г»Г©", -- 1
-					u8"ГЃГҐГ«Г Гї", -- 2
+					u8"Черная", -- 0
+					u8"Серо-черный", -- 1
+					u8"Белая", -- 2
 					u8"Sky Blue", -- 3
-					u8"Г‘ГЁГ­ГЁГ©", -- 4
-					u8"Г’ГҐГ¬Г­Г®-ГЈГ®Г«ГіГЎГ®Г©", -- 5
-					u8"ГЉГ°Г Г±Г­Г»Г©", -- 6
-					u8"Г’ГҐГ¬Г­Г®-ГЄГ°Г Г±Г­Г»Г©", -- 7
-					u8"ГЉГ®Г°ГЁГ·Г­ГҐГўГ»Г©", -- 8
-					u8"Г”ГЁГ®Г«ГҐГІГ®ГўГ»Г©", -- 9
-					u8"Г”ГЁГ®Г«ГҐГІГ®ГўГ Гї v2", -- 10
-					u8"Г‘Г Г«Г ГІГ®ГўГ»Г©", -- 11
-					u8"ГЃГҐГ«Г®-Г§ГҐГ«ГҐГ­Г Гї", -- 12
-					u8"Г†ВёГ«ГІГ®-ГЎГҐГ«Г Гї", -- 13
-					u8"ГЋГ±Г­Г®ГўГ­Г Гї ГІГҐГ¬Г "} -- 14
+					u8"Синий", -- 4
+					u8"Темно-голубой", -- 5
+					u8"Красный", -- 6
+					u8"Темно-красный", -- 7
+					u8"Коричневый", -- 8
+					u8"Фиолетовый", -- 9
+					u8"Фиолетовая v2", -- 10
+					u8"Салатовый", -- 11
+					u8"Бело-зеленая", -- 12
+					u8"Жёлто-белая", -- 13
+					u8"Основная тема"} -- 14
 					
-local tag = "{00BFFF} [AT] " -- Г«Г®ГЄГ Г«ГјГ­Г Гї ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г Гї, ГЄГ®ГІГ®Г°Г Гї Г°ГҐГЈГЁГ±ГІГ°ГЁГ°ГіГҐГІ ГІГЅГЈ AT
+local tag = "{00BFFF} [AT] " -- локальная переменная, которая регистрирует тэг AT
 
 local admins = {}	
 					
 local menuSelect = 0
 local selectRecon = 0
-local combo_select = imgui.ImInt(0) -- Г®ГІГўГҐГ·Г ГҐГІ Г§Г  ГЄГ®Г¬ГЎГ®-ГёГІГіГ·ГЄГЁ
-local sw1, sh1 = getScreenResolution() -- Г®ГІГўГҐГ·Г ГҐГІ Г§Г  ГёГЁГ°ГЁГ­Гі ГЁ Г¤Г«ГЁГ­Гі, ГЄГ®Г°Г®Г·ГҐ ГЈГ®ГўГ®Г°Гї - Г°Г Г§Г¬ГҐГ° Г®ГЄГ­Г .
-local sw, sh = getScreenResolution() -- Г®ГІГўГҐГ·Г ГҐГІ Г§Г  ГўГІГ®Г°Г®Г±ГІГҐГЇГҐГ­Г­ГіГѕ Г¤Г«ГЁГ­Гі ГЁ ГёГЁГ°ГЁГ­Гі Г®ГЄГ®Г­.
+local combo_select = imgui.ImInt(0) -- отвечает за комбо-штучки
+local sw1, sh1 = getScreenResolution() -- отвечает за ширину и длину, короче говоря - размер окна.
+local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
 
 local selectlogin = false
 local scanspawn = false
@@ -315,9 +315,9 @@ local elm = {
 
 local font_ac = renderCreateFont("Arial", tonumber(elm.int.admFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
 
------- Г‚ГўГҐГ¤ГҐГ­Г­Г»ГҐ Г«Г®ГЄГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г Гї, Г®ГІГўГҐГ·Г ГѕГ№ГЁГҐ Г§Г  ГЇГҐГ°ГҐГўГ®Г¤ Г±ГЁГ¬ГўГ®Г«Г®Гў, ГЁГ«ГЁ Г®Г±ГІГ Г«ГјГ­Г»Гµ Г±ГўГ®Г©Г±ГІГў Г·Г ГІГ  -----------
+------ Введенные локальные переменная, отвечающие за перевод символов, или остальных свойств чата -----------
 local russian_characters = {
-    [168] = 'ВЁ', [184] = 'Вё', [192] = 'ГЂ', [193] = 'ГЃ', [194] = 'Г‚', [195] = 'Гѓ', [196] = 'Г„', [197] = 'Г…', [198] = 'Г†', [199] = 'Г‡', [200] = 'Г€', [201] = 'Г‰', [202] = 'ГЉ', [203] = 'Г‹', [204] = 'ГЊ', [205] = 'ГЌ', [206] = 'ГЋ', [207] = 'ГЏ', [208] = 'Гђ', [209] = 'Г‘', [210] = 'Г’', [211] = 'Г“', [212] = 'Г”', [213] = 'Г•', [214] = 'Г–', [215] = 'Г—', [216] = 'Г', [217] = 'Г™', [218] = 'Гљ', [219] = 'Г›', [220] = 'Гњ', [221] = 'Гќ', [222] = 'Гћ', [223] = 'Гџ', [224] = 'Г ', [225] = 'ГЎ', [226] = 'Гў', [227] = 'ГЈ', [228] = 'Г¤', [229] = 'ГҐ', [230] = 'Г¦', [231] = 'Г§', [232] = 'ГЁ', [233] = 'Г©', [234] = 'ГЄ', [235] = 'Г«', [236] = 'Г¬', [237] = 'Г­', [238] = 'Г®', [239] = 'ГЇ', [240] = 'Г°', [241] = 'Г±', [242] = 'ГІ', [243] = 'Гі', [244] = 'Гґ', [245] = 'Гµ', [246] = 'Г¶', [247] = 'Г·', [248] = 'Гё', [249] = 'Г№', [250] = 'Гє', [251] = 'Г»', [252] = 'Гј', [253] = 'ГЅ', [254] = 'Гѕ', [255] = 'Гї',
+    [168] = 'Ё', [184] = 'ё', [192] = 'А', [193] = 'Б', [194] = 'В', [195] = 'Г', [196] = 'Д', [197] = 'Е', [198] = 'Ж', [199] = 'З', [200] = 'И', [201] = 'Й', [202] = 'К', [203] = 'Л', [204] = 'М', [205] = 'Н', [206] = 'О', [207] = 'П', [208] = 'Р', [209] = 'С', [210] = 'Т', [211] = 'У', [212] = 'Ф', [213] = 'Х', [214] = 'Ц', [215] = 'Ч', [216] = 'Ш', [217] = 'Щ', [218] = 'Ъ', [219] = 'Ы', [220] = 'Ь', [221] = 'Э', [222] = 'Ю', [223] = 'Я', [224] = 'а', [225] = 'б', [226] = 'в', [227] = 'г', [228] = 'д', [229] = 'е', [230] = 'ж', [231] = 'з', [232] = 'и', [233] = 'й', [234] = 'к', [235] = 'л', [236] = 'м', [237] = 'н', [238] = 'о', [239] = 'п', [240] = 'р', [241] = 'с', [242] = 'т', [243] = 'у', [244] = 'ф', [245] = 'х', [246] = 'ц', [247] = 'ч', [248] = 'ш', [249] = 'щ', [250] = 'ъ', [251] = 'ы', [252] = 'ь', [253] = 'э', [254] = 'ю', [255] = 'я',
 } 
 
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' -- You will need this for encoding/decoding
@@ -352,430 +352,430 @@ function dec(data)
 end
 
 local translate = {
-	["Г©"] = "q",
-	["Г¶"] = "w",
-	["Гі"] = "e",
-	["ГЄ"] = "r",
-	["ГҐ"] = "t",
-	["Г­"] = "y",
-	["ГЈ"] = "u",
-	["Гё"] = "i",
-	["Г№"] = "o",
-	["Г§"] = "p",
-	["Гµ"] = "[",
-	["Гє"] = "]",
-	["Гґ"] = "a",
-	["Г»"] = "s",
-	["Гў"] = "d",
-	["Г "] = "f",
-	["ГЇ"] = "g",
-	["Г°"] = "h",
-	["Г®"] = "j",
-	["Г«"] = "k",
-	["Г¤"] = "l",
-	["Г¦"] = ";",
-	["ГЅ"] = "'",
-	["Гї"] = "z",
-	["Г·"] = "x",
-	["Г±"] = "c",
-	["Г¬"] = "v",
-	["ГЁ"] = "b",
-	["ГІ"] = "n",
-	["Гј"] = "m",
-	["ГЎ"] = ",",
-	["Гѕ"] = "."
+	["й"] = "q",
+	["ц"] = "w",
+	["у"] = "e",
+	["к"] = "r",
+	["е"] = "t",
+	["н"] = "y",
+	["г"] = "u",
+	["ш"] = "i",
+	["щ"] = "o",
+	["з"] = "p",
+	["х"] = "[",
+	["ъ"] = "]",
+	["ф"] = "a",
+	["ы"] = "s",
+	["в"] = "d",
+	["а"] = "f",
+	["п"] = "g",
+	["р"] = "h",
+	["о"] = "j",
+	["л"] = "k",
+	["д"] = "l",
+	["ж"] = ";",
+	["э"] = "'",
+	["я"] = "z",
+	["ч"] = "x",
+	["с"] = "c",
+	["м"] = "v",
+	["и"] = "b",
+	["т"] = "n",
+	["ь"] = "m",
+	["б"] = ",",
+	["ю"] = "."
 }
 
 function showFlood()
-	imgui.Text(u8"Г„Г Г­Г­Г»ГҐ ГЄГ­Г®ГЇГЄГЁ Г®ГІГўГҐГ·Г ГѕГІ Г§Г  Г¬ГЈГ­Г®ГўГҐГ­Г­ГіГѕ Г®ГІГЇГ°Г ГўГі ГґГ«ГіГ¤Г .") 
-	imgui.Text(u8"Г€Г­ГІГҐГ°ГўГ Г« Г¬ГҐГ¦Г¤Гі ГґГ«ГіГ¤Г®Г¬ 1-5 Г¬ГЁГ­ГіГІ.")
-	imgui.Text(u8"ГЏГ°Г®Г±ГјГЎГ , ГЇГ°ГЁ ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГЁ, Г­Г Г¦Г ГІГј Г«ГЁГёГј ГЋГ„Г€ГЌ Г°Г Г§ Г­Г  ГЄГ­Г®ГЇГЄГі.")
-	imgui.Text(u8"P.S. Г€Г±ГЇГ®Г«ГјГ§ГіГ©ГІГҐ Г·Г Г№ГҐ ГЄГ®Г¬Г Г­Г¤Гі /online Г¤Г«Гї ГўГ»Г¤Г Г·ГЁ ГўГ Г«ГѕГІГ» Г§Г  Г®Г­Г«Г Г©Г­!")
-	imgui.Text(u8"ГЌГ Г¦Г¬ГЁГІГҐ NumPad3 ГЁ ГЇГ°Г®ГЁГ§Г®Г©Г¤ГҐГІ Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГ Гї ГўГ»Г¤Г Г·Г  Г§Г  Г®Г­Г«Г Г©Г­")
+	imgui.Text(u8"Данные кнопки отвечают за мгновенную отправу флуда.") 
+	imgui.Text(u8"Интервал между флудом 1-5 минут.")
+	imgui.Text(u8"Просьба, при использовании, нажать лишь ОДИН раз на кнопку.")
+	imgui.Text(u8"P.S. Используйте чаще команду /online для выдачи валюты за онлайн!")
+	imgui.Text(u8"Нажмите NumPad3 и произойдет автоматическая выдача за онлайн")
 	imgui.Text('  ')
 	imgui.Separator()
 	imgui.Text('  ')
-	if imgui.Button(u8"ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГї /join", imgui.ImVec2(200,0)) then 
+	if imgui.Button(u8"Мероприятия /join", imgui.ImVec2(200,0)) then 
 		imgui.OpenPopup('joinmp')
 	end 
 	imgui.SameLine()
-	if imgui.Button(u8"ГЋГ±ГІГ Г«ГјГ­Г»ГҐ ГґГ«ГіГ¤Г»", imgui.ImVec2(200,0)) then 
+	if imgui.Button(u8"Остальные флуды", imgui.ImVec2(200,0)) then 
 		imgui.OpenPopup('mainflood')
 	end	
-	if imgui.Button(u8"Г”Г«ГіГ¤ ГЇГ°Г® GangWar", imgui.ImVec2(200,0)) then 
+	if imgui.Button(u8"Флуд про GangWar", imgui.ImVec2(200,0)) then 
 		imgui.OpenPopup('floodgw')
 	end 
 	imgui.SameLine()
-	if imgui.Button(u8'ГЌГ ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ Г¶ГўГҐГІГ®Гў ГЄ /mess') then
-		sampAddChatMessage(tag .. "0 - {FFFFFF}ГЎГҐГ«Г»Г©, 1 - {000000}Г·ГҐГ°Г­Г»Г©, 2 - {008000}Г§ГҐГ«ГҐГ­Г»Г©, 3 - {80FF00}Г±ГўГҐГІГ«Г®-Г§ГҐГ«ГҐГ­Г»Г©")
-		sampAddChatMessage(tag .. "4 - {FF0000}ГЄГ°Г Г±Г­Г»Г©, 5 - {0000FF}Г±ГЁГ­ГЁГ©, 6 - {FDFF00}Г¦ГҐГ«ГІГ»Г©, 7 - {FF9000}Г®Г°Г Г­Г¦ГҐГўГ»Г©")
-		sampAddChatMessage(tag .. "8 - {B313E7}ГґГЁГ®Г«ГҐГІГ®ГўГ»Г©, 9 - {49E789}ГЎГЁГ°ГѕГ§Г®ГўГ»Г©, 10 - {139BEC}ГЈГ®Г«ГіГЎГ®Г©")
-		sampAddChatMessage(tag .. "11 - {2C9197}ГІГҐГ¬Г­Г®-Г§ГҐГ«ГҐГ­Г»Г©, 12 - {DDB201}Г§Г®Г«Г®ГІГ®Г©, 13 - {B8B6B6}Г±ГҐГ°Г»Г©, 14 - {FFEE8A}Г±ГўГҐГІГ«Г®-Г¦ГҐГ«ГІГ»Г©")
-		sampAddChatMessage(tag .. "15 - {FF9DB6}Г°Г®Г§Г®ГўГ»Г©, 16 - {BE8A01}ГЄГ®Г°ГЁГ·Г­ГҐГўГ»Г©, 17 - {E6284E}ГІГҐГ¬Г­Г®-Г°Г®Г§Г®ГўГ»Г©")
+	if imgui.Button(u8'Напоминание цветов к /mess') then
+		sampAddChatMessage(tag .. "0 - {FFFFFF}белый, 1 - {000000}черный, 2 - {008000}зеленый, 3 - {80FF00}светло-зеленый")
+		sampAddChatMessage(tag .. "4 - {FF0000}красный, 5 - {0000FF}синий, 6 - {FDFF00}желтый, 7 - {FF9000}оранжевый")
+		sampAddChatMessage(tag .. "8 - {B313E7}фиолетовый, 9 - {49E789}бирюзовый, 10 - {139BEC}голубой")
+		sampAddChatMessage(tag .. "11 - {2C9197}темно-зеленый, 12 - {DDB201}золотой, 13 - {B8B6B6}серый, 14 - {FFEE8A}светло-желтый")
+		sampAddChatMessage(tag .. "15 - {FF9DB6}розовый, 16 - {BE8A01}коричневый, 17 - {E6284E}темно-розовый")
 	end
 	imgui.Text('  ')
 	imgui.Separator()
 	imgui.Text('  ')
-	if imgui.Button(u8"Г‘ГўГ®ГЁ ГґГ«ГіГ¤Г»", imgui.ImVec2(200,0)) then  
+	if imgui.Button(u8"Свои флуды", imgui.ImVec2(200,0)) then  
 		imgui.OpenPopup('yoursmp')
 	end	
 	imgui.SameLine()
-	if imgui.Button(u8"ГђГҐГ¤Г ГЄГІГ®Г° ГґГ«ГіГ¤Г®Гў", imgui.ImVec2(200,0)) then  
+	if imgui.Button(u8"Редактор флудов", imgui.ImVec2(200,0)) then  
 		imgui.OpenPopup('editfloods') 
 	end	
 	imgui.Text('  ')
 	imgui.Separator()
 	imgui.Text('  ')
-	if imgui.CollapsingHeader(u8'ГЏГ®Г¬Г®Г№Гј ГЇГ® Г±Г®Г§Г¤Г Г­ГЁГѕ ГґГ«ГіГ¤Г  / ГўГ±ГЇГ®Г¬Г®ГЈГ Г«ГЄГ ') then 
-		imgui.Text(u8"ГЏГ°ГЁ Г±Г®Г§Г¤Г Г­ГЁГЁ ГґГ«ГіГ¤Г , ГЇГ®Г¬Г­ГЁГІГҐ, Г·ГІГ® Г±ГІГ°Г®Г·ГЄГЁ Г®ГІГ¤ГҐГ«ГїГѕГІГ±Гї ГЇГ°ГЁ ГЇГ®Г¬Г®Г№ГЁ Enter")
-		imgui.Text(u8"Г‚ Г±Г®Г§Г¤Г Г­ГЁГЁ ГЄГ Г¦Г¤Г®Г© Г±ГІГ°Г®Г·ГЄГЁ Г¤Г®Г«Г¦ГҐГ­ ГіГ·Г Г±ГІГўГ®ГўГ ГІГј Г¶ГўГҐГІ /mess (Г®ГІ 0 Г¤Г® 17)")
-		imgui.Text(u8"ГЏГ°ГЁГ¬ГҐГ°: ")
-		imgui.Text(u8" 4 == Г€ГЌГ”ГЋГђГЊГЂГ–Г€Гџ ГђГ„Г‘ ==")
-		imgui.Text(u8" 6 Г‡Г Г¬ГіГ·ГЁГ«ГЁ Г·ГЁГІГҐГ°Г»? ГЏГЁГёГЁГІГҐ Гў Г°ГҐГЇГ®Г°ГІ!")
-		imgui.Text(u8" 4 == Г€ГЌГ”ГЋГђГЊГЂГ–Г€Гџ ГђГ„Г‘ ==")
+	if imgui.CollapsingHeader(u8'Помощь по созданию флуда / вспомогалка') then 
+		imgui.Text(u8"При создании флуда, помните, что строчки отделяются при помощи Enter")
+		imgui.Text(u8"В создании каждой строчки должен участвовать цвет /mess (от 0 до 17)")
+		imgui.Text(u8"Пример: ")
+		imgui.Text(u8" 4 == ИНФОРМАЦИЯ РДС ==")
+		imgui.Text(u8" 6 Замучили читеры? Пишите в репорт!")
+		imgui.Text(u8" 4 == ИНФОРМАЦИЯ РДС ==")
 	end
 	if imgui.BeginPopup('floodgw') then 
 		if imgui.Button(u8"Aztecas vs Ballas") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 3 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 3 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Varios Los Aztecas vs East Side Ballas ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 3 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 3 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		imgui.SameLine()
 		if imgui.Button(u8"Aztecas vs Groove") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 2 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 2 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Varios Los Aztecas vs Groove Street ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 2 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 2 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		if imgui.Button(u8"Aztecas vs Vagos") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 4 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 4 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Varios Los Aztecas vs Los Santos Vagos ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 4 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 4 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		imgui.SameLine()
 		if imgui.Button(u8"Aztecas vs Rifa") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 5 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 5 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Varios Los Aztecas vs The Rifa ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 5 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 5 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		if imgui.Button(u8"Ballas vs Groove") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 6 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 6 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 East Side Ballas vs Groove Street  ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 6 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 6 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		imgui.SameLine()
 		if imgui.Button(u8"Ballas vs Rifa") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 7 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 7 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 East Side Ballas vs The Rifa ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 7 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 7 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		if imgui.Button(u8"Groove vs Rifa") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 8 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 8 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Groove Street  vs The Rifa ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 8 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 8 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		imgui.SameLine()
 		if imgui.Button(u8"Groove vs Vagos") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 9 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 9 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Groove Street vs Los Santos Vagos ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 9 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 9 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		if imgui.Button(u8"Vagos vs Rifa") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 10 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 10 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 Los Santos Vagos vs The Rifa ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 10 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 10 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 		imgui.SameLine()
 		if imgui.Button(u8"Ballas vs Vagos") then  
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
-			sampSendChat("/mess 11 Г€ГЈГ°Г  -  GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
+			sampSendChat("/mess 11 Игра -  GangWar: /gw")
 			sampSendChat("/mess 0 East Side Ballas vs Los Santos Vagos ")
-			sampSendChat("/mess 0 ГЏГ®Г¬Г®ГЈГЁГІГҐ Г±ГўГ®ГЁГ¬ ГЎГ°Г ГІГјГїГ¬, Г§Г ГµГ®Г¤ГЁГІГҐ Г·ГҐГ°ГҐГ§ /gw Г§Г  Г«ГѕГЎГЁГ¬ГіГѕ ГЎГ Г­Г¤Гі")
-			sampSendChat("/mess 11 Г€ГЈГ°Г  - GangWar: /gw")
-			sampSendChat("/mess 13 В•------------------- GangWar -------------------В•")
+			sampSendChat("/mess 0 Помогите своим братьям, заходите через /gw за любимую банду")
+			sampSendChat("/mess 11 Игра - GangWar: /gw")
+			sampSendChat("/mess 13 •------------------- GangWar -------------------•")
 		end
 	imgui.EndPopup()
 	end	
 	if imgui.BeginPopup('mainflood') then 
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® Г°ГҐГЇГ®Г°ГІГ»') then
-			sampSendChat("/mess 4 ===================== | ГђГҐГЇГ®Г°ГІГ» | ====================")
-			sampSendChat("/mess 0 Г‡Г Г¬ГҐГІГЁГ«ГЁ Г·ГЁГІГҐГ°Г  ГЁГ«ГЁ Г­Г Г°ГіГёГЁГІГҐГ«Гї?")
-			sampSendChat("/mess 4 Г‚ГўГ®Г¤ГЁГІГҐ /report, ГЇГЁГёГЁГІГҐ ГІГіГ¤Г  ID Г­Г Г°ГіГёГЁГІГҐГ«Гї/Г·ГЁГІГҐГ°Г !")
-			sampSendChat("/mess 0 ГЌГ ГёГЁ Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г» Г®ГІГўГҐГІГїГІ ГўГ Г¬ ГЁ Г°Г Г§ГЎГҐГ°ГіГІГ±Гї Г± Г­ГЁГ¬ГЁ. <3")
-			sampSendChat("/mess 4 ===================== | ГђГҐГЇГ®Г°ГІГ» | ====================")
+		if imgui.Button(u8'Флуд про репорты') then
+			sampSendChat("/mess 4 ===================== | Репорты | ====================")
+			sampSendChat("/mess 0 Заметили читера или нарушителя?")
+			sampSendChat("/mess 4 Вводите /report, пишите туда ID нарушителя/читера!")
+			sampSendChat("/mess 0 Наши администраторы ответят вам и разберутся с ними. <3")
+			sampSendChat("/mess 4 ===================== | Репорты | ====================")
 		end
 		imgui.SameLine()
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® VIP') then
+		if imgui.Button(u8'Флуд про VIP') then
 			sampSendChat("/mess 2 ===================== | VIP | ====================")
-			sampSendChat("/mess 3 Г‚Г±ГҐГЈГ¤Г  ГµГ®ГІГҐГ« Г±Г¬Г®ГІГ°ГҐГІГј Г­Г  Г«ГѕГ¤ГҐГ© Г±ГўГ»ГёГҐ?")
-			sampSendChat("/mess 2 Г’Г®ГЎГ®Г© ГіГЇГ°Г ГўГ«ГїГҐГІ Г§Г ГўГЁГ±ГІГј? Г“Г±ГІГ°Г Г­ГЁ ГЅГІГ® Г± ГЇГ®Г¬Г®Г№ГјГѕ 10ГЄ Г®Г·ГЄГ®Гў.")
-			sampSendChat("/mess 3 Г‚ГўГ®Г¤ГЁ ГЄГ®Г¬Г Г­Г¤Гі /sellvip ГЁ ГІГ» ГЇГ®Г«ГіГ·ГЁГёГј VIP!")
+			sampSendChat("/mess 3 Всегда хотел смотреть на людей свыше?")
+			sampSendChat("/mess 2 Тобой управляет зависть? Устрани это с помощью 10к очков.")
+			sampSendChat("/mess 3 Вводи команду /sellvip и ты получишь VIP!")
 			sampSendChat("/mess 2 ===================== | VIP | ====================")
 		end
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® Г®ГЇГ«Г ГІГі ГЎГЁГ§Г­ГҐГ±Г /Г¤Г®Г¬Г ') then
-			sampSendChat("/mess 5 ===================== | ГЃГ Г­ГЄ | ====================")
-			sampSendChat("/mess 10 Г„Г®Г¬ ГЁГ«ГЁ ГЎГЁГ§Г­ГҐГ± Г­ГіГ¦Г­Г® Г®ГЇГ«Г Г·ГЁГўГ ГІГј. ГЉГ ГЄ? -> ..")
-			sampSendChat("/mess 0 Г„Г«Гї ГЅГІГ®ГЈГ® Г­ГҐГ®ГЎГµГ®Г¤ГЁГ¬Г®, Г­Г ГЇГЁГ±Г ГІГј /tp, Г§Г ГІГҐГ¬ ГђГ Г§Г­Г®ГҐ -> ГЃГ Г­ГЄ...")
-			sampSendChat("/mess 0 ...ГЇГ®Г±Г«ГҐ ГЅГІГ®ГЈГ® ГЇГ°Г®Г©ГІГЁ Гў ГЃГ Г­ГЄ, Г®ГІГЄГ°Г»ГІГј Г±Г·ГҐГІ ГЁ..")
-			sampSendChat("/mess 10 ..ГЁ Г№ГҐГ«ГЄГ­ГіГІГј ГЇГ® ГЋГЇГ«Г ГІГ  Г¤Г®Г¬Г  ГЁГ«ГЁ ГЋГЇГ«Г ГІГ  ГЎГЁГ§Г­ГҐГ±Г . ГЌГ  ГЅГІГ®Г¬ ГўГ±ГҐ.")
-			sampSendChat("/mess 5 ===================== | ГЃГ Г­ГЄ | ====================")
+		if imgui.Button(u8'Флуд про оплату бизнеса/дома') then
+			sampSendChat("/mess 5 ===================== | Банк | ====================")
+			sampSendChat("/mess 10 Дом или бизнес нужно оплачивать. Как? -> ..")
+			sampSendChat("/mess 0 Для этого необходимо, написать /tp, затем Разное -> Банк...")
+			sampSendChat("/mess 0 ...после этого пройти в Банк, открыть счет и..")
+			sampSendChat("/mess 10 ..и щелкнуть по Оплата дома или Оплата бизнеса. На этом все.")
+			sampSendChat("/mess 5 ===================== | Банк | ====================")
 		end
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® /dt 0-990 (Г°ГҐГ¦ГЁГ¬ ГІГ°ГҐГ­ГЁГ°Г®ГўГЄГЁ)') then
-			sampSendChat("/mess 6 =================== | Г‚ГЁГ°ГІГіГ Г«ГјГ­Г»Г© Г¬ГЁГ° | ==================")
-			sampSendChat("/mess 0 ГЏГҐГ°ГҐГ±ГІГ°ГҐГ«ГЄГЁ ГіГ¬Г®ГІГ Г«Г ? ГЋГЎГ»Г¤ГҐГ­Г­Г»Г© Г„ГЊ, ГўГҐГ·Г­Г Гї Г±ГІГ°ГҐГ«ГјГЎГ ..")
-			sampSendChat("/mess 0 Г’ГҐГЎГҐ ГµГ®Г·ГҐГІГ±Гї Г®ГІГ¤Г®ГµГ­ГіГІГј? ГќГІГ® Г¬Г®Г¦Г­Г® ГЁГ±ГЇГ°Г ГўГЁГІГј! <3")
-			sampSendChat("/mess 0 Г‘ГЄГ®Г°ГҐГҐ ГўГўГ®Г¤ГЁ /dt 0-990. Г—ГЁГ±Г«Г® - ГЅГІГ® ГўГЁГ°ГІГіГ Г«ГјГ­Г»Г© Г¬ГЁГ°.")
-			sampSendChat("/mess 0 ГЌГҐ Г§Г ГЎГіГ¤ГјГІГҐ Г±Г®Г®ГЎГ№ГЁГІГј Г¤Г°ГіГ§ГјГїГ¬ Г±ГўГ®Г© Г¬ГЁГ°. Г“Г¤Г Г·Г­Г®Г© ГЁГЈГ°Г». :3")
-			sampSendChat("/mess 6 =================== | Г‚ГЁГ°ГІГіГ Г«ГјГ­Г»Г© Г¬ГЁГ°  | ==================")
+		if imgui.Button(u8'Флуд про /dt 0-990 (режим тренировки)') then
+			sampSendChat("/mess 6 =================== | Виртуальный мир | ==================")
+			sampSendChat("/mess 0 Перестрелки умотала? Обыденный ДМ, вечная стрельба..")
+			sampSendChat("/mess 0 Тебе хочется отдохнуть? Это можно исправить! <3")
+			sampSendChat("/mess 0 Скорее вводи /dt 0-990. Число - это виртуальный мир.")
+			sampSendChat("/mess 0 Не забудьте сообщить друзьям свой мир. Удачной игры. :3")
+			sampSendChat("/mess 6 =================== | Виртуальный мир  | ==================")
 		end
-			if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® /storm') then
-			sampSendChat("/mess 2 ===================== | ГГІГ®Г°Г¬ | ====================")
-			sampSendChat("/mess 3 Г‚Г±ГҐГЈГ¤Г  ГµГ®ГІГҐГ«ГЁ Г§Г Г°Г ГЎГ®ГІГ ГІГј Г°ГіГЎГ«ГЁ ? Г“ ГўГ Г± ГҐГ±ГІГј ГўГ®Г§Г¬Г®Г¦Г­Г®Г±ГІГј!")
-			sampSendChat("/mess 2 Г‚ГўГ®Г¤ГЁ ГЄГ®Г¬Г Г­Г¤Гі /storm , ГЇГ®Г±Г«ГҐ Г·ГҐГЈГ® ГЇГ®Г¤Г®Г©ГІГЁГІГҐ ГЄ NPC ... ")
-			sampSendChat("/mess 3 ...Г­Г Г¦Г¬ГЁГІГҐ ГЇГ°ГЁГ±Г®ГҐГ¤ГЁГ­ГЁГІГ±Гї ГЄ ГёГІГіГ°Г¬Гі.")
-			sampSendChat("/mess 2 ГЉГ®ГЈГ¤Г  Г­Г ГЎГҐГ°ВёГІГ±Гї Г­ГіГ¦Г­Г®ГҐ ГЄГ®Г«ГЁГ·ГЁГ±ГІГўГ® ГЁГЈГ°Г®ГЄГ®Гў ГёГІГіГ°Г¬ Г­Г Г·Г­ВёГІГ±Гї.")
-			sampSendChat("/mess 2 ===================== | ГГІГ®Г°Г¬ | ====================")
+			if imgui.Button(u8'Флуд про /storm') then
+			sampSendChat("/mess 2 ===================== | Шторм | ====================")
+			sampSendChat("/mess 3 Всегда хотели заработать рубли ? У вас есть возможность!")
+			sampSendChat("/mess 2 Вводи команду /storm , после чего подойтите к NPC ... ")
+			sampSendChat("/mess 3 ...нажмите присоединится к штурму.")
+			sampSendChat("/mess 2 Когда наберётся нужное количиство игроков штурм начнётся.")
+			sampSendChat("/mess 2 ===================== | Шторм | ====================")
 		end
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® /arena') then
-			sampSendChat("/mess 7 ===================== | ГЂГ°ГҐГ­Г  | ====================")
-			sampSendChat("/mess 0 Г•Г®Г·ГҐГёГј ГЁГ±ГЇГ»ГІГ ГІГј Г±ГўГ®ГЁ Г­Г ГўГ»ГЄГЁ Гў Г±ГІГ°ГҐГ«ГјГЎГҐ?")
-			sampSendChat("/mess 7 Г‘ГЄГ®Г°ГҐГҐ ГўГўГ®Г¤ГЁ /arena, ГўГ»ГЎГҐГ°ГЁ Г±ГўГ®ГҐ ГЇГ®Г«ГҐ ГЎГ®Гї.")
-			sampSendChat("/mess 0 ГЏГҐГ°ГҐГ±ГІГ°ГҐГ«ГїГ© ГўГ±ГҐГµ, ГЇГ®ГЎГҐГ¤ГЁ ГЁГµ. ГЏГ®ГЄГ Г¦ГЁ, ГЄГІГ® ГіГ¬ГҐГҐГІ ГЇГ®ГЄГ Г§Г ГІГј Г±ГҐГЎГї. <3")
-			sampSendChat("/mess 7 ===================== | ГЂГ°ГҐГ­Г  | ====================")
-		end
-		imgui.SameLine()
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® VK group') then
-			sampSendChat("/mess 15 ===================== | Г‚ГЉГ®Г­ГІГ ГЄГІГҐ | ====================")
-			sampSendChat("/mess 0 Г‚Г±ГҐГЈГ¤Г  ГµГ®ГІГҐГ« ГЇГ®ГіГ·Г Г±ГІГўГ®ГўГ ГІГј Гў ГЄГ®Г­ГЄГіГ°Г±ГҐ?")
-			sampSendChat("/mess 15 Г‚ ГІГўГ®ГҐГ© ГЈГ®Г«Г®ГўГҐ ГЇГ®ГїГўГЁГ«ГЁГ±Гј Г¬Г»Г±Г«ГЁ, ГЄГ ГЄ ГіГ«ГіГ·ГёГЁГІГј Г±ГҐГ°ГўГҐГ°?")
-			sampSendChat("/mess 0 Г‡Г ГµГ®Г¤ГЁ Гў Г­Г ГёГі ГЈГ°ГіГЇГЇГі Г‚ГЉГ®Г­ГІГ ГЄГІГҐ: https://vk.com/dmdriftgta")
-			sampSendChat("/mess 15 ===================== | Г‚ГЉГ®Г­ГІГ ГЄГІГҐ | ====================")
-		end
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® Г ГўГІГ®Г±Г Г«Г®Г­') then
-			sampSendChat("/mess 12 ===================== | ГЂГўГІГ®Г±Г Г«Г®Г­ | ====================")
-			sampSendChat("/mess 0 Г“ ГІГҐГЎГї ГЇГ®ГїГўГЁГ«ГЁГ±Гј ГЄГ®ГЁГ­Г»? Г’Г» ГµГ®Г·ГҐГёГј Г«ГЁГ·Г­ГіГѕ ГІГ Г·ГЄГі?")
-			sampSendChat("/mess 12 Г‚ГўГ®Г¤ГЁ ГЄГ®Г¬Г Г­Г¤Гі /tp -> ГђГ Г§Г­Г®ГҐ -> ГЂГўГІГ®Г±Г Г«Г®Г­Г»")
-			sampSendChat("/mess 0 Г‚Г»ГЎГЁГ°Г Г© Г­ГіГ¦Г­Г»Г© Г ГўГІГ®Г±Г Г«Г®Г­, ГЄГіГЇГЁ Г¬Г ГёГЁГ­Гі Г§Г  RDS ГЄГ®ГЁГ­Г». Г€ ГЄГ ГІГ Г©Г±Гї :3")
-			sampSendChat("/mess 12 ===================== | ГЂГўГІГ®Г±Г Г«Г®Г­ | ====================")
-		end
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® Г±Г Г©ГІ RDS') then
-			sampSendChat("/mess 8 ===================== | Г„Г®Г­Г ГІ | ====================")
-			sampSendChat("/mess 15 Г•Г®Г·ГҐГёГј Г§Г Г¤Г®Г­Г ГІГЁГІГј Г­Г  Г±ГўГ®Г© Г«ГѕГЎГЁГ¬Г»Г© Г±ГҐГ°ГўГҐГ° RDS? :> ")
-			sampSendChat("/mess 15 Г’Г» ГЅГІГ® Г¬Г®Г¦ГҐГёГј Г±Г¤ГҐГ«Г ГІГј Г± Г°Г Г¤Г®Г±ГІГјГѕ! Г‘Г Г©ГІ: myrds.ru :3 ")
-			sampSendChat("/mess 15 Г€ Г·ГҐГ°ГҐГ§ Г®Г±Г­Г®ГўГ ГІГҐГ«Гї: @empirerosso, ГЁ ГІГ ГЄГ¦ГҐ..")
-			sampSendChat("/mess 15 .. Г·ГҐГ°ГҐГ§ Г­Г ГёГҐГЈГ® Г°ГіГЄГ®ГўГ®Г¤ГЁГІГҐГ«Гї: @sheeeshys ")
-			sampSendChat("/mess 8 ===================== | Г„Г®Г­Г ГІ | ====================")
+		if imgui.Button(u8'Флуд про /arena') then
+			sampSendChat("/mess 7 ===================== | Арена | ====================")
+			sampSendChat("/mess 0 Хочешь испытать свои навыки в стрельбе?")
+			sampSendChat("/mess 7 Скорее вводи /arena, выбери свое поле боя.")
+			sampSendChat("/mess 0 Перестреляй всех, победи их. Покажи, кто умеет показать себя. <3")
+			sampSendChat("/mess 7 ===================== | Арена | ====================")
 		end
 		imgui.SameLine()
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® /gw') then
+		if imgui.Button(u8'Флуд про VK group') then
+			sampSendChat("/mess 15 ===================== | ВКонтакте | ====================")
+			sampSendChat("/mess 0 Всегда хотел поучаствовать в конкурсе?")
+			sampSendChat("/mess 15 В твоей голове появились мысли, как улучшить сервер?")
+			sampSendChat("/mess 0 Заходи в нашу группу ВКонтакте: https://vk.com/dmdriftgta")
+			sampSendChat("/mess 15 ===================== | ВКонтакте | ====================")
+		end
+		if imgui.Button(u8'Флуд про автосалон') then
+			sampSendChat("/mess 12 ===================== | Автосалон | ====================")
+			sampSendChat("/mess 0 У тебя появились коины? Ты хочешь личную тачку?")
+			sampSendChat("/mess 12 Вводи команду /tp -> Разное -> Автосалоны")
+			sampSendChat("/mess 0 Выбирай нужный автосалон, купи машину за RDS коины. И катайся :3")
+			sampSendChat("/mess 12 ===================== | Автосалон | ====================")
+		end
+		if imgui.Button(u8'Флуд про сайт RDS') then
+			sampSendChat("/mess 8 ===================== | Донат | ====================")
+			sampSendChat("/mess 15 Хочешь задонатить на свой любимый сервер RDS? :> ")
+			sampSendChat("/mess 15 Ты это можешь сделать с радостью! Сайт: myrds.ru :3 ")
+			sampSendChat("/mess 15 И через основателя: @empirerosso, и также..")
+			sampSendChat("/mess 15 .. через нашего руководителя: @sheeeshys ")
+			sampSendChat("/mess 8 ===================== | Донат | ====================")
+		end
+		imgui.SameLine()
+		if imgui.Button(u8'Флуд про /gw') then
 			sampSendChat("/mess 10 ===================== | Capture | ====================")
-			sampSendChat("/mess 5 Г’ГҐГЎГҐ Г­Г°Г ГўГЁГІГ±Гї ГЁГЈГ°Г ГІГј Г§Г  ГЎГ Г­Г¤Г» Гў GTA:SA? ГЋГ­ГЁ ГІГіГІ ГІГ®Г¦ГҐ ГҐГ±ГІГј! :>")
-			sampSendChat("/mess 5 Г‘Г¤ГҐГ«Г Г© ГЅГІГ® Г± ГЇГ®Г¬Г®Г№ГјГѕ /gw, ГҐГ¤Гј Г­Г  ГІГҐГ°Г°ГЁГІГ®Г°ГЁГѕ Г± Г¤Г°ГіГ§ГјГїГ¬ГЁ")
-			sampSendChat("/mess 5 Г—ГІГ®ГЎГ» Г­Г Г·Г ГІГј ГўГ®ГҐГўГ ГІГј Г§Г  ГІГҐГ°Г°ГЁГІГ®Г°ГЁГѕ, ГўГўГҐГ¤ГЁ ГЄГ®Г¬Г Г­Г¤Гі /capture XD")
+			sampSendChat("/mess 5 Тебе нравится играть за банды в GTA:SA? Они тут тоже есть! :>")
+			sampSendChat("/mess 5 Сделай это с помощью /gw, едь на территорию с друзьями")
+			sampSendChat("/mess 5 Чтобы начать воевать за территорию, введи команду /capture XD")
 			sampSendChat("/mess 10 ===================== | Capture | ====================")
 		end
-		if imgui.Button(u8"Г”Г«ГіГ¤ ГЇГ°Г® ГЈГ°ГіГЇГЇГі Г‘ГҐГ©Г·Г Г± Г­Г  RDS") then
-			sampSendChat("/mess 2 ================== | Г‘ГўГ®ГЎГ®Г¤Г­Г Гї ГЈГ°ГіГЇГЇГ  RDS | =================")
-			sampSendChat("/mess 11 Г„Г ГўГ­Г® ГµГ®ГІГҐГ«ГЁ Г±ГЄГЁГ­ГіГІГј Г±ГўГ®ГЁ Г±ГЄГ°ГЁГ­Г», ГЁ ГЇГ®ГЄГ Г§Г ГІГј Г¤Г°ГіГЈГЁГ¬?")
-			sampSendChat("/mess 2 ГЏГ®ГЇГ°Г®ГЎГ®ГўГ ГІГј ГЇГ°Г®Г¤Г ГІГј Г·ГІГ®-Г­ГЁГЎГіГ¤Гј, Г­Г® Гў ГЁГЈГ°ГҐ Г­ГЁГЄГІГ® Г­ГҐ Г®ГІГ§Г»ГўГ ГҐГІГ±Гї?")
-			sampSendChat("/mess 11 Г‚Г» Г¬Г®Г¦ГҐГІГҐ ГЇГ®Г±ГҐГІГЁГІГј Г±ГўГ®ГЎГ®Г¤Г­ГіГѕ ГЈГ°ГіГЇГЇГі: https://vk.com/freerds")
-			sampSendChat("/mess 2 ================== | Г‘ГўГ®ГЎГ®Г¤Г­Г Гї ГЈГ°ГіГЇГЇГ  RDS | =================")
+		if imgui.Button(u8"Флуд про группу Сейчас на RDS") then
+			sampSendChat("/mess 2 ================== | Свободная группа RDS | =================")
+			sampSendChat("/mess 11 Давно хотели скинуть свои скрины, и показать другим?")
+			sampSendChat("/mess 2 Попробовать продать что-нибудь, но в игре никто не отзывается?")
+			sampSendChat("/mess 11 Вы можете посетить свободную группу: https://vk.com/freerds")
+			sampSendChat("/mess 2 ================== | Свободная группа RDS | =================")
 		end
-		if imgui.Button(u8"Г”Г«ГіГ¤ ГЇГ°Г® /gangwar") then 
-			sampSendChat("/mess 16 ===================== | Г‘Г°Г Г¦ГҐГ­ГЁГї | ====================")
-			sampSendChat("/mess 13 Г•Г®ГІГҐГ«ГЁ Г±Г°Г Г§ГЁГІГјГ±Гї Г± Г¤Г°ГіГЈГЁГ¬ГЁ ГЎГ Г­Г¤Г Г¬ГЁ? Г‚Г»ГЇГіГ±ГІГЁГІГј ГЈГ­ГҐГў?")
-			sampSendChat("/mess 16 Г‚Г» Г¬Г®Г¦ГҐГІГҐ Г±ГҐГЎГҐ ГЅГІГ® ГЇГ®Г§ГўГ®Г«ГЁГІГј! ГЊГ®Г¦ГҐГІГҐ ГЇГ®ГЎГ®Г°Г®ГІГј Г¤Г°ГіГЈГЁГҐ ГЎГ Г­Г¤Г»")
-			sampSendChat("/mess 13 ГЉГ®Г¬Г Г­Г¤Г  /gangwar, ГўГ»ГЎГЁГ°Г ГҐГІГҐ ГІГҐГ°Г°ГЁГІГ®Г°ГЁГѕ ГЁ Г±Г°Г Г¦Г ГҐГІГҐГ±Гј Г§Г  Г­ГҐВё.")
-			sampSendChat("/mess 16 ===================== | Г‘Г°Г Г¦ГҐГ­ГЁГї | ====================")
+		if imgui.Button(u8"Флуд про /gangwar") then 
+			sampSendChat("/mess 16 ===================== | Сражения | ====================")
+			sampSendChat("/mess 13 Хотели сразиться с другими бандами? Выпустить гнев?")
+			sampSendChat("/mess 16 Вы можете себе это позволить! Можете побороть другие банды")
+			sampSendChat("/mess 13 Команда /gangwar, выбираете территорию и сражаетесь за неё.")
+			sampSendChat("/mess 16 ===================== | Сражения | ====================")
 		end 
 		imgui.SameLine()
-		if imgui.Button(u8"Г”Г«ГіГ¤ ГЇГ°Г® Г°Г ГЎГ®ГІГ»") then
-			sampSendChat("/mess 14 ===================== | ГђГ ГЎГ®ГІГ» | ====================")
-			sampSendChat("/mess 13 ГЌГҐ ГµГўГ ГІГ ГҐГІ Г¤ГҐГ­ГҐГЈ Г­Г  Г®Г°ГіГ¦ГЁГҐ? ГЌГҐ ГµГўГ ГІГ ГҐГІ Г­Г  Г¬Г ГёГЁГ­ГЄГі?")
-			sampSendChat("/mess 13 ГђГ Г¤ГЁ Г­Г ГёГЁГµ Г„ГЊГҐГ°Г®Гў ГЁ Г¤Г°ГЁГґГІГҐГ°Г®Гў, ГЇГ°ГЁГ¤ГіГ¬Г Г­Г» Г°Г ГЎГ®ГІГ» Г¤Г«Гї Г¤ГҐГ­ГјГ¦Г ГІ")
-			sampSendChat("/mess 13 Г—ГҐГ°Г­Г»Г© Г¤ГҐГ­Гј Г®ГІГЄГ°Г»ГІ, ГЇГҐГ°ГҐГµГ®Г¤ГЁ /tp -> ГђГ ГЎГ®ГІГ»")
-			sampSendChat("/mess 14 ===================== | ГђГ ГЎГ®ГІГ» | ====================")
+		if imgui.Button(u8"Флуд про работы") then
+			sampSendChat("/mess 14 ===================== | Работы | ====================")
+			sampSendChat("/mess 13 Не хватает денег на оружие? Не хватает на машинку?")
+			sampSendChat("/mess 13 Ради наших ДМеров и дрифтеров, придуманы работы для деньжат")
+			sampSendChat("/mess 13 Черный день открыт, переходи /tp -> Работы")
+			sampSendChat("/mess 14 ===================== | Работы | ====================")
 		end
-		if imgui.Button(u8"Г”Г«ГіГ¤ Г® Г¬Г®Г¤ГҐ") then  
-			sampSendChat("/mess 13 ===================== | ГЊГ®Г¤ RDS | ====================")
-			sampSendChat("/mess 0 ГЏГ®Г±ГўГїГ№Г ГҐГ¬ ГўГ Г± Гў Г¬Г®Г¤ RDS. ГЏГ°ГҐГ¦Г¤ГҐ ГўГ±ГҐГЈГ®, Г¬Г» Drift Server")
-			sampSendChat("/mess 13 Г’Г ГЄГ¦ГҐ Гі Г­Г Г± ГҐГ±ГІГј Г¤Г®ГЇГ®Г«Г­ГҐГ­ГЁГї, ГЅГІГ® GangWar, DM Г± ГЅГ«ГҐГ¬ГҐГ­ГІГ Г¬ГЁ RPG")
-			sampSendChat("/mess 0 ГЃГ®Г«ГјГёГЁГ­Г±ГІГўГ® ГЄГ®Г¬Г Г­Г¤ ГЁ ГўГ±ГҐ Г®Г±ГІГ Г«ГјГ­Г®ГҐ ГіГЄГ Г§Г Г­Г® Гў /help")
-			sampSendChat("/mess 13 ===================== | ГЊГ®Г¤ RDS | ====================")
+		if imgui.Button(u8"Флуд о моде") then  
+			sampSendChat("/mess 13 ===================== | Мод RDS | ====================")
+			sampSendChat("/mess 0 Посвящаем вас в мод RDS. Прежде всего, мы Drift Server")
+			sampSendChat("/mess 13 Также у нас есть дополнения, это GangWar, DM с элементами RPG")
+			sampSendChat("/mess 0 Большинство команд и все остальное указано в /help")
+			sampSendChat("/mess 13 ===================== | Мод RDS | ====================")
 		end
 		imgui.SameLine()
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® /trade') then
-			sampSendChat("/mess 9 ===================== | Г’Г°ГҐГ©Г¤ | ====================")
-			sampSendChat("/mess 3 Г•Г®ГІГЁГІГҐ Г°Г Г§Г­Г»ГҐ Г ГЄГ±ГҐГ±Г±ГіГ Г°Г», Г  Г¤Г®Г«ГЈГ® ГЁГЈГ°Г ГІГј Г­ГҐ ГµГ®Г·ГҐГІГ±Гї ГЁ ГҐГ±ГІГј ГўГЁГ°ГІГ»/Г®Г·ГЄГЁ/ГЄГ®ГЁГ­Г»/Г°ГіГЎГ«ГЁ?")
-			sampSendChat("/mess 9 Г‚ГўГҐГ¤ГЁГІГҐ /trade, ГЇГ®Г¤Г®Г©Г¤ГЁГІГҐ ГЄ Г§Г Г­ГїГІГ®Г© Г«Г ГўГЄГЁ, Г±ГЇГ°Г®Г±ГЁГІГҐ Гі Г·ГҐГ«Г®ГўГҐГЄГ  ГЁ ГЄГіГЇГЁГІГҐ ГЇГ°ГҐГ¤Г¬ГҐГІ.")
-			sampSendChat("/mess 3 Г’Г ГЄГ¦ГҐ, Г±ГЇГ°Г ГўГ  Г®ГІ Г«Г ГўГ®ГЄ ГҐГ±ГІГј NPC ГЂГ°Г¬Г Г­, Гі Г­ГҐГЈГ® ГІГ ГЄГ¦ГҐ Г¬Г®Г¦Г­Г® Г·ГІГ®-ГІГ® ГўГ§ГїГІГј.")
-			sampSendChat("/mess 9 ===================== | Г’Г°ГҐГ©Г¤ | ====================")
+		if imgui.Button(u8'Флуд про /trade') then
+			sampSendChat("/mess 9 ===================== | Трейд | ====================")
+			sampSendChat("/mess 3 Хотите разные аксессуары, а долго играть не хочется и есть вирты/очки/коины/рубли?")
+			sampSendChat("/mess 9 Введите /trade, подойдите к занятой лавки, спросите у человека и купите предмет.")
+			sampSendChat("/mess 3 Также, справа от лавок есть NPC Арман, у него также можно что-то взять.")
+			sampSendChat("/mess 9 ===================== | Трейд | ====================")
 		end
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® ГґГ®Г°ГіГ¬') then 
-			sampSendChat("/mess 4 ===================== | Г”Г®Г°ГіГ¬ | ====================")
-			sampSendChat('/mess 0 Г…Г±ГІГј Г¦Г Г«Г®ГЎГ» Г­Г  ГЁГЈГ°Г®ГЄГ®Гў/Г Г¤Г¬ГЁГ­Г®Гў? Г…Г±ГІГј ГўГ®ГЇГ°Г®Г±Г»? Г•Г®ГІГЁГІГҐ ГЁГЈГ°Г ГІГј Г± ГІГҐГ«ГҐГґГ®Г­Г ?')
-			sampSendChat('/mess 4 Г“ Г­Г Г± ГҐГ±ГІГј ГґГ®Г°ГіГ¬ - https://forumrds.ru. Г’Г Г¬ ГҐГ±ГІГј ГЇГ®Г«ГҐГ§Г­Г Гї ГЁГ­ГґГ  :D')
-			sampSendChat('/mess 0 ГЉГ°Г®Г¬ГҐ ГЅГІГ®ГЈГ®, ГІГ Г¬ ГҐГ±ГІГј ГЄГіГ°ГЁГ«ГЄГ  ГЁ ГЈГ Г«ГҐГ°ГҐГї. Г‚ГҐГ±ГҐГ«ГЁГІГҐГ±Гј, ГЁГЈГ°Г®ГЄГЁ <3')
-			sampSendChat("/mess 4 ===================== | Г”Г®Г°ГіГ¬  | ====================")
+		if imgui.Button(u8'Флуд про форум') then 
+			sampSendChat("/mess 4 ===================== | Форум | ====================")
+			sampSendChat('/mess 0 Есть жалобы на игроков/админов? Есть вопросы? Хотите играть с телефона?')
+			sampSendChat('/mess 4 У нас есть форум - https://forumrds.ru. Там есть полезная инфа :D')
+			sampSendChat('/mess 0 Кроме этого, там есть курилка и галерея. Веселитесь, игроки <3')
+			sampSendChat("/mess 4 ===================== | Форум  | ====================")
 		end	
-		if imgui.Button(u8'Г”Г«ГіГ¤ ГЇГ°Г® Г­Г ГЎГ®Г° Г Г¤Г¬') then 
-			sampSendChat("/mess 15 ===================== | ГЌГ ГЎГ®Г° | ====================")
-			sampSendChat('/mess 17 Г„Г®Г°Г®ГЈГЁГҐ ГЁГЈГ°Г®ГЄГЁ! Г‚Г» Г§Г­Г ГҐГІГҐ ГЇГ°Г ГўГЁГ«Г  Г­Г ГёГҐГЈГ® ГЇГ°Г®ГҐГЄГІГ ?')
-			sampSendChat('/mess 15 Г…Г±Г«ГЁ ГўГ» ГЄГ®ГЈГ¤Г -ГІГ® ГµГ®ГІГҐГ«ГЁ Г±ГІГ ГІГј Г Г¤Г¬ГЁГ­Г®Г¬, ГІГ® ГЅГІГ® ГўГ Гё ГёГ Г­Г±!')
-			sampSendChat('/mess 17 Г“Г¦ГҐ Г­Г  ГґГ®Г°ГіГ¬ГҐ Г®ГІГЄГ°Г»ГІГ» Г§Г ГїГўГЄГЁ! Г“Г±ГЇГҐГ©ГІГҐ ГЇГ®Г¤Г ГІГј: https://forumrds.ru')
-			sampSendChat("/mess 15 ===================== | ГЌГ ГЎГ®Г° | ====================")
+		if imgui.Button(u8'Флуд про набор адм') then 
+			sampSendChat("/mess 15 ===================== | Набор | ====================")
+			sampSendChat('/mess 17 Дорогие игроки! Вы знаете правила нашего проекта?')
+			sampSendChat('/mess 15 Если вы когда-то хотели стать админом, то это ваш шанс!')
+			sampSendChat('/mess 17 Уже на форуме открыты заявки! Успейте подать: https://forumrds.ru')
+			sampSendChat("/mess 15 ===================== | Набор | ====================")
 		end
-		if imgui.Button(u8'Г‘ГЇГ ГўГ­ ГЄГ Г°Г®Гў Г­Г  15 Г±ГҐГЄГіГ­Г¤') then
-			sampSendChat("/mess 14 Г“ГўГ Г¦Г ГҐГ¬Г»ГҐ ГЁГЈГ°Г®ГЄГЁ. Г‘ГҐГ©Г·Г Г± ГЎГіГ¤ГҐГІ Г°ГҐГ±ГЇГ ГўГ­ ГўГ±ГҐГЈГ® Г±ГҐГ°ГўГҐГ°Г­Г®ГЈГ® ГІГ°Г Г­Г±ГЇГ®Г°ГІГ ")
-			sampSendChat("/mess 14 Г‡Г Г©Г¬ГЁГІГҐ ГўГ®Г¤ГЁГІГҐГ«ГјГ±ГЄГЁГҐ Г¬ГҐГ±ГІГ , ГЁ ГЇГ°Г®Г¤Г®Г«Г¦Г Г©ГІГҐ Г¤Г°ГЁГґГІГЁГІГј, Г­Г ГёГЁ Г«ГѕГЎГЁГ¬Г»ГҐ :3")
+		if imgui.Button(u8'Спавн каров на 15 секунд') then
+			sampSendChat("/mess 14 Уважаемые игроки. Сейчас будет респавн всего серверного транспорта")
+			sampSendChat("/mess 14 Займите водительские места, и продолжайте дрифтить, наши любимые :3")
 			sampSendChat("/delcarall ")
 			sampSendChat("/spawncars 15 ")
-			local tag = "{00BFFF} [AT]" -- Г«Г®ГЄГ Г«ГјГ­Г Гї ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г Гї, ГЄГ®ГІГ®Г°Г Гї Г°ГҐГЈГЁГ±ГІГ°ГЁГ°ГіГҐГІ ГІГЅГЈ AT
-			showNotification(tag, "ГђГҐГ±ГЇГ ГўГ­ ГІ/Г± Г­Г Г·Г Г«Г±Гї")
+			local tag = "{00BFFF} [AT]" -- локальная переменная, которая регистрирует тэг AT
+			showNotification(tag, "Респавн т/с начался")
 		end
-	    if imgui.Button(u8'ГЉГўГҐГ±ГІГ»') then
-		    sampSendChat("/mess 8 =================| ГЉГўГҐГ±ГІГ» NPC |=================")
-		    sampSendChat("/mess 0 ГЌГҐ Г¬Г®Г¦ГҐГІГҐ Г­Г Г©ГІГЁ NPC ГЄГ®ГІГ®Г°Г»ГҐ Г¤Г ГѕГІ ГЄГўГҐГ±ГІГ»? :D")
-		    sampSendChat("/mess 0 Г€ ГІГ ГЄ ГЈГ¤ГҐ Г¦ГҐ ГЁГµ Г­Г Г©ГІГЁ , - ALT(/mm) - Г’ГҐГ«ГҐГЇГ®Г°ГІГ» - ...")
-		    sampSendChat("/mess 0 ...Г‚Г Г±ГЁГ«ГЁГ© ГЂГ­Г¤Г°Г®ГЁГ¤, ГЃГ°Г®Г¤ГїГЈГ  Г„ГЁГ¬Г Г­, ГЁ Г­Г  ГЄГ Г¦Г¤Г®Г¬ Г±ГЇГ ГўГ­ГҐ...")
-		    sampSendChat("/mess 0 ...NPC ГЉГҐГ©Г­. ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г» Г­Г  RDS <3")
-		    sampSendChat("/mess 8 =================| ГЉГўГҐГ±ГІГ» NPC |=================")
+	    if imgui.Button(u8'Квесты') then
+		    sampSendChat("/mess 8 =================| Квесты NPC |=================")
+		    sampSendChat("/mess 0 Не можете найти NPC которые дают квесты? :D")
+		    sampSendChat("/mess 0 И так где же их найти , - ALT(/mm) - Телепорты - ...")
+		    sampSendChat("/mess 0 ...Василий Андроид, Бродяга Диман, и на каждом спавне...")
+		    sampSendChat("/mess 0 ...NPC Кейн. Приятной игры на RDS <3")
+		    sampSendChat("/mess 8 =================| Квесты NPC |=================")
 		end	
 	imgui.EndPopup()
 	end	
 	if imgui.BeginPopup('joinmp') then 
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "Г„ГҐГ°ГЎГЁ" ') then 
+		if imgui.Button(u8'Мероприятие "Дерби" ') then 
 			sampSendChat("/mess 8 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г„ГҐГ°ГЎГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /derby")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г„ГҐГ°ГЎГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /derby")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Дерби»! Желающим: /derby")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Дерби»! Желающим: /derby")
 			sampSendChat("/mess 8 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЏГ Г°ГЄГіГ°" ') then 
+		if imgui.Button(u8'Мероприятие "Паркур" ') then 
 			sampSendChat("/mess 10 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГ Г°ГЄГіГ°В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /parkour")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГ Г°ГЄГіГ°В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /parkour")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Паркур»! Желающим: /parkour")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Паркур»! Желающим: /parkour")
 			sampSendChat("/mess 10 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЃГҐГ©Г±Г¤Г¦Г Г¬ГЇГЁГ­ГЈ" ') then 
+		if imgui.Button(u8'Мероприятие "Бейсджампинг" ') then 
 			sampSendChat("/mess 5 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЃГҐГ©Г±Г¤Г¦Г Г¬ГЇГЁГ­ГЈВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /basejumping")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЃГҐГ©Г±Г¤Г¦Г Г¬ГЇГЁГ­ГЈВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /basejumping")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Бейсджампинг»! Желающим: /basejumping")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Бейсджампинг»! Желающим: /basejumping")
 			sampSendChat("/mess 5 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЊГїГ±Г®Г°ГіГЎГЄГ " ') then 
+		if imgui.Button(u8'Мероприятие "Мясорубка" ') then 
 			sampSendChat("/mess 4 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЊГїГ±Г®Г°ГіГЎГЄГ В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /myasorubka")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЊГїГ±Г®Г°ГіГЎГЄГ В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /myasorubka")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Мясорубка»! Желающим: /myasorubka")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Мясорубка»! Желающим: /myasorubka")
 			sampSendChat("/mess 4 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "PUBG" ') then 
+		if imgui.Button(u8'Мероприятие "PUBG" ') then 
 			sampSendChat("/mess 9 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«PUBGВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /pubg")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«PUBGВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /pubg")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «PUBG»! Желающим: /pubg")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «PUBG»! Желающим: /pubg")
 			sampSendChat("/mess 9 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЏГЁГ°Г ГІГ±ГЄГЁГҐ ГЇГ°ГЁГЄГ«ГѕГ·ГҐГ­ГЁГї" ') then 
+		if imgui.Button(u8'Мероприятие "Пиратские приключения" ') then 
 			sampSendChat("/mess 15 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГЁГ°Г ГІГ±ГЄГЁГҐ ГЇГ°ГЁГЄГ«ГѕГ·ГҐГ­ГЁГїВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /pirate")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГЁГ°Г ГІГ±ГЄГЁГҐ ГЇГ°ГЁГЄГ«ГѕГ·ГҐГ­ГЁГїВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /pirate")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Пиратские приключения»! Желающим: /pirate")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Пиратские приключения»! Желающим: /pirate")
 			sampSendChat("/mess 15 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "DAMAGE DM" ') then 
+		if imgui.Button(u8'Мероприятие "DAMAGE DM" ') then 
 			sampSendChat("/mess 4 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«DAMAGE DEATHMATCHВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /damagedm")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«DAMAGE DEATHMATCHВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /damagedm")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «DAMAGE DEATHMATCH»! Желающим: /damagedm")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «DAMAGE DEATHMATCH»! Желающим: /damagedm")
 			sampSendChat("/mess 4 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "KILL DM" ') then 
+		if imgui.Button(u8'Мероприятие "KILL DM" ') then 
 			sampSendChat("/mess 17 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«KILL DEATHMATCHВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /killdm")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«KILL DEATHMATCHВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /killdm")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «KILL DEATHMATCH»! Желающим: /killdm")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «KILL DEATHMATCH»! Желающим: /killdm")
 			sampSendChat("/mess 17 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЃГ®ГЁ Г­Г  ГЄГіГ«Г ГЄГ Гµ" ') then 
+		if imgui.Button(u8'Мероприятие "Бои на кулаках" ') then 
 			sampSendChat("/mess 3 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЃГ®Г© Г­Г  ГЄГіГ«Г ГЄГ ГµВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /box")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЃГ®Г© Г­Г  ГЄГіГ«Г ГЄГ ГµВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /box")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Бой на кулаках»! Желающим: /box")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Бой на кулаках»! Желающим: /box")
 			sampSendChat("/mess 3 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "Г„Г°ГЁГґГІ ГЈГ®Г­ГЄГЁ" ') then 
+		if imgui.Button(u8'Мероприятие "Дрифт гонки" ') then 
 			sampSendChat("/mess 7 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г„Г°ГЁГґГІ ГЈГ®Г­ГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /drace")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г„Г°ГЁГґГІ ГЈГ®Г­ГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /drace")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Дрифт гонки»! Желающим: /drace")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Дрифт гонки»! Желающим: /drace")
 			sampSendChat("/mess 7 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "PaintBall" ') then 
+		if imgui.Button(u8'Мероприятие "PaintBall" ') then 
 			sampSendChat("/mess 12 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«PaintBallВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /paintball")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«PaintBallВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /paintball")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «PaintBall»! Желающим: /paintball")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «PaintBall»! Желающим: /paintball")
 			sampSendChat("/mess 12 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГѓГ®Г­ГЄГЁ" ') then 
+		if imgui.Button(u8'Мероприятие "Гонки" ') then 
 			sampSendChat("/mess 6 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГѓГ®Г­ГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /race")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГѓГ®Г­ГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /race")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Гонки»! Желающим: /race")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Гонки»! Желающим: /race")
 			sampSendChat("/mess 6 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "Г‡Г®Г¬ГЎГЁ ГЇГ°Г®ГІГЁГў Г«ГѕГ¤ГҐГ©" ') then 
+		if imgui.Button(u8'Мероприятие "Зомби против людей" ') then 
 			sampSendChat("/mess 13 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г‡Г®Г¬ГЎГЁ ГЇГ°Г®ГІГЁГў Г«ГѕГ¤ГҐГ©В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /zombie")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г‡Г®Г¬ГЎГЁ ГЇГ°Г®ГІГЁГў Г«ГѕГ¤ГҐГ©В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /zombie")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Зомби против людей»! Желающим: /zombie")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Зомби против людей»! Желающим: /zombie")
 			sampSendChat("/mess 13 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЌГ®ГўГ®ГЈГ®Г¤Г­ГїГї Г±ГЄГ Г§ГЄГ " ') then 
+		if imgui.Button(u8'Мероприятие "Новогодняя сказка" ') then 
 			sampSendChat("/mess 3 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЌГ®ГўГ®ГЈГ®Г¤Г­ГїГї Г±ГЄГ Г§ГЄГ В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /ny")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЌГ®ГўГ®ГЈГ®Г¤Г­ГїГї Г±ГЄГ Г§ГЄГ В»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /ny")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Новогодняя сказка»! Желающим: /ny")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Новогодняя сказка»! Желающим: /ny")
 			sampSendChat("/mess 3 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "Among Us" ') then 
+		if imgui.Button(u8'Мероприятие "Among Us" ') then 
 			sampSendChat("/mess 16 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Among UsВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /amongus")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Among UsВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /amongus")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Among Us»! Желающим: /amongus")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Among Us»! Желающим: /amongus")
 			sampSendChat("/mess 16 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЏГ°ГїГІГЄГЁ" ') then 
+		if imgui.Button(u8'Мероприятие "Прятки" ') then 
 			sampSendChat("/mess 11 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГ°ГїГІГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /join -> 16 В«ГЏГ°ГїГІГЄГЁВ»")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГ°ГїГІГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /join -> 16 В«ГЏГ°ГїГІГЄГЁВ»")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Прятки»! Желающим: /join -> 16 «Прятки»")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Прятки»! Желающим: /join -> 16 «Прятки»")
 			sampSendChat("/mess 11 ===================| [Event-Game-RDS] |==================")
 		end	
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "Г„Г®ГЈГ®Г­ГїГ«ГЄГЁ" ') then 
+		if imgui.Button(u8'Мероприятие "Догонялки" ') then 
 			sampSendChat("/mess 3 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г„Г®ГЈГ®Г­ГїГ«ГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /catchup")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«Г„Г®ГЈГ®Г­ГїГ«ГЄГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /catchup")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Догонялки»! Желающим: /catchup")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Догонялки»! Желающим: /catchup")
 			sampSendChat("/mess 3 ===================| [Event-Game-RDS] |==================")
 		end
-		if imgui.Button(u8'ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ "ГЏГ®ГЎГҐГЈГіГёГЄГЁ Г§Г  ГїГ©Г¶Г Г¬ГЁ" ') then 
+		if imgui.Button(u8'Мероприятие "Побегушки за яйцами" ') then 
 			sampSendChat("/mess 11 ===================| [Event-Game-RDS] |==================")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГ®ГЎГҐГЈГіГёГЄГЁ Г§Г  ГїГ©Г¶Г Г¬ГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /join -> 18")
-			sampSendChat("/mess 0 [MP-/join] ГЏГ°Г®ГўГ®Г¤ГЁГІГ±Гї Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГҐ В«ГЏГ®ГЎГҐГЈГіГёГЄГЁ Г§Г  ГїГ©Г¶Г Г¬ГЁВ»! Г†ГҐГ«Г ГѕГ№ГЁГ¬: /join -> 18")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Побегушки за яйцами»! Желающим: /join -> 18")
+			sampSendChat("/mess 0 [MP-/join] Проводится мероприятие «Побегушки за яйцами»! Желающим: /join -> 18")
 			sampSendChat("/mess 11 ===================| [Event-Game-RDS] |==================")
 		end	
 	imgui.EndPopup()
@@ -788,38 +788,38 @@ function showFlood()
 				end	
 			end	
 		else 
-			imgui.Text(u8"ГЏГіГ±ГІГ®!")
-			if imgui.Button(u8"Г‘Г®Г§Г¤Г ГІГј!") then  
+			imgui.Text(u8"Пусто!")
+			if imgui.Button(u8"Создать!") then  
 				imgui.OpenPopup(u8'CreateFlood')	 
 			end	
 		end	
 		if imgui.BeginPopupModal(u8'CreateFlood', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
 			imgui.BeginChild("##EditFlood", imgui.ImVec2(600, 225), true)
-			imgui.Text(u8'ГЌГ Г§ГўГ Г­ГЁГҐ ГґГ«ГіГ¤Г :'); imgui.SameLine()
+			imgui.Text(u8'Название флуда:'); imgui.SameLine()
 			imgui.PushItemWidth(130)
 			imgui.InputText("##name_flood", elm.input.fld_name)
 			imgui.PopItemWidth()
 			imgui.PushItemWidth(100)
 			imgui.Separator()
-			imgui.Text(u8'Г’ГҐГЄГ±ГІ ГЎГЁГ­Г¤Г :')
+			imgui.Text(u8'Текст бинда:')
 			imgui.PushItemWidth(300)
 			imgui.InputTextMultiline("##text_flood", elm.input.fld_text, imgui.ImVec2(-1, 110))
 			imgui.PopItemWidth()
 			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
-			if imgui.Button(u8'Г‡Г ГЄГ°Г»ГІГј##bind1', imgui.ImVec2(100,30)) then
+			if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
 				elm.input.fld_name.v, elm.input.fld_text.v = '', ''
 				imgui.CloseCurrentPopup()
 			end
 			imgui.SameLine()
 			if #elm.input.fld_name.v > 0 and #elm.input.fld_text.v > 0 then
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
-				if imgui.Button(u8'Г‘Г®ГµГ°Г Г­ГЁГІГј##bind1', imgui.ImVec2(100,30)) then
+				if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
 					if not EditOldBind then
 						local refresh_text = elm.input.fld_text.v:gsub("\n", "~")
 						table.insert(textcfg.flood_name, elm.input.fld_name.v)
 						table.insert(textcfg.flood_text, refresh_text)
 							if TextSave() then
-								sampAddChatMessage(tag .. 'Г”Г«ГіГ¤"' ..u8:decode(elm.input.fld_name.v).. '" ГіГ±ГЇГҐГёГ­Г® Г±Г®Г§Г¤Г Г­!', -1)
+								sampAddChatMessage(tag .. 'Флуд"' ..u8:decode(elm.input.fld_name.v).. '" успешно создан!', -1)
 								elm.input.fld_name.v, elm.input.fld_text.v = '', ''
 							end
 						imgui.CloseCurrentPopup()
@@ -830,7 +830,7 @@ function showFlood()
 							table.remove(textcfg.flood_name, getpos + 1)
 							table.remove(textcfg.flood_text, getpos + 1)
 						if TextSave() then
-							sampAddChatMessage(tag .. 'ГЃГЁГ­Г¤"' ..u8:decode(elm.input.fld_name.v).. '" ГіГ±ГЇГҐГёГ­Г® Г®ГІГ°ГҐГ¤Г ГЄГІГЁГ°Г®ГўГ Г­!', -1)
+							sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(elm.input.fld_name.v).. '" успешно отредактирован!', -1)
 							elm.input.fld_name.v, elm.input.fld_text.v = '', '', 2500
 						end
 						EditOldBind = false
@@ -849,7 +849,7 @@ function showFlood()
 			for key_bind, name_bind in pairs(textcfg.flood_name) do
 			imgui.Button(name_bind..'##'..key_bind, imgui.ImVec2(270, 22))
 			imgui.SameLine()
-			if imgui.Button(u8'ГђГҐГ¤Г ГЄГІГЁГ°Г®ГўГ ГІГј##'..key_bind, imgui.ImVec2(100, 22)) then
+			if imgui.Button(u8'Редактировать##'..key_bind, imgui.ImVec2(100, 22)) then
 				EditOldBind = true
 				getpos = key_bind
 				local returnwrapped = tostring(textcfg.flood_text[key_bind]):gsub('~', '\n')
@@ -858,50 +858,50 @@ function showFlood()
 				imgui.OpenPopup(u8'CreateFlood')
 			end
 			imgui.SameLine()
-			if imgui.Button(u8'Г“Г¤Г Г«ГЁГІГј##'..key_bind, imgui.ImVec2(60, 22)) then
-				sampAddChatMessage(tag .. 'ГЃГЁГ­Г¤ "' ..u8:decode(textcfg.flood_name[key_bind])..'" ГіГ¤Г Г«ГҐГ­!', -1)
+			if imgui.Button(u8'Удалить##'..key_bind, imgui.ImVec2(60, 22)) then
+				sampAddChatMessage(tag .. 'Бинд "' ..u8:decode(textcfg.flood_name[key_bind])..'" удален!', -1)
 				table.remove(textcfg.flood_name, key_bind)
 				table.remove(textcfg.flood_text, key_bind)
 				TextSave()
 			end
 		end
-		if imgui.Button(u8"Г‘Г®Г§Г¤Г ГІГј!") then  
+		if imgui.Button(u8"Создать!") then  
 			imgui.OpenPopup(u8'CreateFlood')	 
 		end	
 		else
-			imgui.Text(u8('Г‡Г¤ГҐГ±Гј ГЇГ®ГЄГ  ГЇГіГ±ГІГ® :('))
-			if imgui.Button(u8"Г‘Г®Г§Г¤Г ГІГј!") then  
+			imgui.Text(u8('Здесь пока пусто :('))
+			if imgui.Button(u8"Создать!") then  
 				imgui.OpenPopup(u8'CreateFlood')	 
 			end	
 		end
 		if imgui.BeginPopupModal(u8'CreateFlood', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
 			imgui.BeginChild("##EditFlood", imgui.ImVec2(600, 225), true)
-			imgui.Text(u8'ГЌГ Г§ГўГ Г­ГЁГҐ ГґГ«ГіГ¤Г :'); imgui.SameLine()
+			imgui.Text(u8'Название флуда:'); imgui.SameLine()
 			imgui.PushItemWidth(130)
 			imgui.InputText("##name_flood1", elm.input.fld_name)
 			imgui.PopItemWidth()
 			imgui.PushItemWidth(100)
 			imgui.Separator()
-			imgui.Text(u8'Г’ГҐГЄГ±ГІ ГЎГЁГ­Г¤Г :')
+			imgui.Text(u8'Текст бинда:')
 			imgui.PushItemWidth(300)
 			imgui.InputTextMultiline("##text_flood1", elm.input.fld_text, imgui.ImVec2(-1, 110))
 			imgui.PopItemWidth()
 	
 			imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
-			if imgui.Button(u8'Г‡Г ГЄГ°Г»ГІГј##bind1', imgui.ImVec2(100,30)) then
+			if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
 				elm.input.fld_name.v, elm.input.fld_text.v = '', ''
 				imgui.CloseCurrentPopup()
 			end
 			imgui.SameLine()
 			if #elm.input.fld_name.v > 0 and #elm.input.fld_text.v > 0 then
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
-				if imgui.Button(u8'Г‘Г®ГµГ°Г Г­ГЁГІГј##bind1', imgui.ImVec2(100,30)) then
+				if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
 					if not EditOldBind then
 						local refresh_text = elm.input.fld_text.v:gsub("\n", "~")
 						table.insert(textcfg.flood_name, elm.input.fld_name.v)
 						table.insert(textcfg.flood_text, refresh_text)
 						if TextSave() then
-							sampAddChatMessage(tag .. 'Г”Г«ГіГ¤"' ..u8:decode(elm.input.fld_name.v ).. '" ГіГ±ГЇГҐГёГ­Г® Г±Г®Г§Г¤Г Г­!', -1)
+							sampAddChatMessage(tag .. 'Флуд"' ..u8:decode(elm.input.fld_name.v ).. '" успешно создан!', -1)
 							elm.input.fld_name.v, elm.input.fld_text.v = '', ''
 						end
 							imgui.CloseCurrentPopup()
@@ -912,7 +912,7 @@ function showFlood()
 							table.remove(textcfg.flood_name, getpos + 1)
 							table.remove(textcfg.flood_text, getpos + 1)
 						if TextSave() then
-							sampAddChatMessage(tag .. 'ГЃГЁГ­Г¤"' ..u8:decode(elm.input.fld_name.v).. '" ГіГ±ГЇГҐГёГ­Г® Г®ГІГ°ГҐГ¤Г ГЄГІГЁГ°Г®ГўГ Г­!', -1)
+							sampAddChatMessage(tag .. 'Бинд"' ..u8:decode(elm.input.fld_name.v).. '" успешно отредактирован!', -1)
 							elm.input.fld_name.v, elm.input.fld_text.v = '', '', 2500
 						end
 						EditOldBind = false
@@ -924,7 +924,7 @@ function showFlood()
 			imgui.EndPopup()
 		end	
 		imgui.EndChild()
-		if imgui.Button(u8"Г‡Г ГЄГ°Г»ГІГј") then  
+		if imgui.Button(u8"Закрыть") then  
 			imgui.CloseCurrentPopup()
 		end	
 		imgui.EndPopup()
@@ -951,14 +951,14 @@ function sampev.onSendSpawn()
 end	
 
 function sampev.onShowDialog(id, style, title, button1, button2, text)
-	if title == "Mobile" then -- Г±ГѕГ¤Г  Г Г©Г¤ГЁ Г­ГіГ¦Г­Г®ГЈГ® Г¤ГЁГ Г«Г®ГЈГ 
+	if title == "Mobile" then -- сюда айди нужного диалога
         if text:match(control_recon_playernick) then
-           t_online = "ГЊГ®ГЎГЁГ«ГјГ­Г»Г© Г«Г ГіГ­Г·ГҐГ°"
+           t_online = "Мобильный лаунчер"
 		   else
-		   t_online = "ГЉГ«ГЁГҐГ­ГІ SAMP"
+		   t_online = "Клиент SAMP"
         end
 		sampAddChatMessage("")
-		sampAddChatMessage(tag .."Г€ГЈГ°Г®ГЄ {EE1010}".. control_recon_playernick .. "["..control_recon_playerid.."] {CCCCCC}ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІ {EE1010}".. t_online)
+		sampAddChatMessage(tag .."Игрок {EE1010}".. control_recon_playernick .. "["..control_recon_playerid.."] {CCCCCC}использует {EE1010}".. t_online)
 		sampAddChatMessage("")
     end
 	
@@ -969,7 +969,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 	end 
 
 	if elm.checkbox.show_admins.v then 
-		if id == 0 and title:find("ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГї ГЇГ°Г®ГҐГЄГІГ ") then
+		if id == 0 and title:find("Администрация проекта") then
 			admins = {}
 			local j = 0
 			text = text .. "\n"
@@ -979,7 +979,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 					local line = text:sub(j, i)
 					line = line:gsub("{......}", "")
 					if line:match("(.+)%((%d+)%) %((.+)%)") then
-						local nick, id, prefix, lvl, vig, rep = line:match("(.+)%((%d+)%) %((.+)%) | Г“Г°Г®ГўГҐГ­Гј: (%d+) | Г‚Г»ГЈГ®ГўГ®Г°Г»: (%d+) ГЁГ§ 3 | ГђГҐГЇГіГІГ Г¶ГЁГї: (%d+)")
+						local nick, id, prefix, lvl, vig, rep = line:match("(.+)%((%d+)%) %((.+)%) | Уровень: (%d+) | Выговоры: (%d+) из 3 | Репутация: (%d+)")
 						local admin = {
 							nick = nick,
 							id = id,
@@ -990,7 +990,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 						}
 						table.insert(admins, admin)
 					else
-						local nick, id, lvl, vig, rep = line:match("(.+)%((%d+)%) | Г“Г°Г®ГўГҐГ­Гј: (%d+) | Г‚Г»ГЈГ®ГўГ®Г°Г»: (%d+) ГЁГ§ 3 | ГђГҐГЇГіГІГ Г¶ГЁГї: (%d+)")
+						local nick, id, lvl, vig, rep = line:match("(.+)%((%d+)%) | Уровень: (%d+) | Выговоры: (%d+) из 3 | Репутация: (%d+)")
 						local admin = {
 							nick = nick,
 							id = id,
@@ -1021,13 +1021,13 @@ function sampev.onServerMessage(color, text)
     chatlog:write(enc(chatTime .. text) .. "\n")
     chatlog:flush()
 	chatlog:close()
-	if text:find("Г‚Г» Г®ГІГЄГ«ГѕГ·ГЁГ«ГЁ Г¬ГЁГЈГ Г­ГЁГҐ ГўГ ГёГҐГЈГ® Г­ГЁГЄГ­ГҐГ©Г¬Г ") then  
+	if text:find("Вы отключили мигание вашего никнейма") then  
 		elm.checkbox.clist_adm.v = false 
-	elseif text:find("Г‚Г Гё Г­ГЁГЄГ­ГҐГ©Г¬ ГІГҐГЇГҐГ°Гј Г¬ГЁГЈГ ГҐГІ Г°Г Г§Г­Г»Г¬ГЁ Г¶ГўГҐГІГ Г¬ГЁ!")	then 
+	elseif text:find("Ваш никнейм теперь мигает разными цветами!")	then 
 		elm.checkbox.clist_adm.v = true 
 	end	
 
-	if text:find("%[A%] ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г° (.+)%[(%d+)%] %(%d+ level%) Г ГўГІГ®Г°ГЁГ§Г®ГўГ Г«Г±Гї Гў Г Г¤Г¬ГЁГ­ ГЇГ Г­ГҐГ«ГЁ") or text:find("%[A%-(%d+)%] (.+) Г®ГІГЄГ«ГѕГ·ГЁГ«Г±Гї") then 
+	if text:find("%[A%] Администратор (.+)%[(%d+)%] %(%d+ level%) авторизовался в админ панели") or text:find("%[A%-(%d+)%] (.+) отключился") then 
 		if elm.checkbox.show_admins.v then 
 			sampSendChat("/admins ")
 		end	
@@ -1036,16 +1036,16 @@ function sampev.onServerMessage(color, text)
 
 	local check_string = string.match(text, "[^%s]+")
 
-	if check_string == '(Г†Г Г«Г®ГЎГ /Г‚Г®ГЇГ°Г®Г±)' and elm.checkbox.push_report.v then
-		showNotification("[AT - Г“ГўГҐГ¤Г®Г¬Г«ГҐГ­ГЁГҐ]", "ГЏГ®Г±ГІГіГЇГЁГ« Г­Г®ГўГ»Г© Г°ГҐГЇГ®Г°ГІ.")
+	if check_string == '(Жалоба/Вопрос)' and elm.checkbox.push_report.v then
+		showNotification("[AT - Уведомление]", "Поступил новый репорт.")
 		return true
 	end	
 
-	if text == "Г‚Г» Г®ГІГЄГ«ГѕГ·ГЁГ«ГЁ Г¬ГҐГ­Гѕ ГЇГ°ГЁ Г­Г ГЎГ«ГѕГ¤ГҐГ­ГЁГЁ" and elm.checkbox.atrecon.v then
+	if text == "Вы отключили меню при наблюдении" and elm.checkbox.atrecon.v then
 		sampSendChat("/remenu")
 		return false
 	end
-	if text == "Г‚Г» ГўГЄГ«ГѕГ·ГЁГ«ГЁ Г¬ГҐГ­Гѕ ГЇГ°ГЁ Г­Г ГЎГ«ГѕГ¤ГҐГ­ГЁГЁ" then
+	if text == "Вы включили меню при наблюдении" then
 		control_recon = true
 		if recon_to_player then
 			control_info_load = true
@@ -1053,13 +1053,13 @@ function sampev.onServerMessage(color, text)
 		end
 		return false
 	end
-	if text == "Г‚Г» Г®ГІГЄГ«ГѕГ·ГЁГ«ГЁ Г¬ГҐГ­Гѕ ГЇГ°ГЁ Г­Г ГЎГ«ГѕГ¤ГҐГ­ГЁГЁ" and not elm.checkbox.atrecon.v then
+	if text == "Вы отключили меню при наблюдении" and not elm.checkbox.atrecon.v then
 		control_recon = false
 		return false
 	end
-	if text == "Г€ГЈГ°Г®ГЄ Г­ГҐ Гў Г±ГҐГІГЁ" and recon_to_player then
+	if text == "Игрок не в сети" and recon_to_player then
 		recon_to_player = false
-		showNotification(tag, "Г€ГЈГ°Г®ГЄ Г­ГҐ Гў Г±ГҐГІГЁ!")
+		showNotification(tag, "Игрок не в сети!")
 		if elm.checkbox.keysync.v then 
 			lua_thread.create(function()
 				wait(1)
@@ -1082,28 +1082,28 @@ end
 function main()
 	while not isSampAvailable() do wait(100) end
 	sampRegisterChatCommand("prf1", function(arg)
-		sampSendChat("/prefix " .. arg .. " Г•ГҐГ«ГЇГҐГ° " .. elm.input.prefix_Helper.v)
+		sampSendChat("/prefix " .. arg .. " Хелпер " .. elm.input.prefix_Helper.v)
 	end)
 	sampRegisterChatCommand("prf2", function(arg)
-		sampSendChat("/prefix " .. arg .. " ГЊГ®Г¤ГҐГ°Г ГІГ®Г° " .. elm.input.prefix_Moderator.v)
+		sampSendChat("/prefix " .. arg .. " Модератор " .. elm.input.prefix_Moderator.v)
 	end)
 	sampRegisterChatCommand("prf3", function(arg)
-		sampSendChat("/prefix " .. arg .. " ГЊГ«.ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г° " .. elm.input.prefix_Madm.v)
+		sampSendChat("/prefix " .. arg .. " Мл.Администратор " .. elm.input.prefix_Madm.v)
 	end)
 	sampRegisterChatCommand("prf4", function(arg)
-		sampSendChat("/prefix " .. arg .. " ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г° " .. elm.input.prefix_adm.v)
+		sampSendChat("/prefix " .. arg .. " Администратор " .. elm.input.prefix_adm.v)
 	end)
 	sampRegisterChatCommand("prf5", function(arg)
-		sampSendChat("/prefix " .. arg .. " Г‘ГІ.ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г° " .. elm.input.prefix_STadm.v)
+		sampSendChat("/prefix " .. arg .. " Ст.Администратор " .. elm.input.prefix_STadm.v)
 	end)
 	sampRegisterChatCommand("prf6", function(arg)
-		sampSendChat("/prefix " .. arg .. " ГЏГ®Г¬Г®Г№Г­ГЁГЄ.ГѓГ«Г Гў.ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г  " .. elm.input.prefix_PGAadm.v)
+		sampSendChat("/prefix " .. arg .. " Помощник.Глав.Администратора " .. elm.input.prefix_PGAadm.v)
 	end)
 	sampRegisterChatCommand("prf7", function(arg)
-		sampSendChat("/prefix " .. arg .. " Г‡Г Г¬.ГѓГ«Г Гў.ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г  " .. elm.input.prefix_ZGAadm.v)
+		sampSendChat("/prefix " .. arg .. " Зам.Глав.Администратора " .. elm.input.prefix_ZGAadm.v)
 	end)
 	sampRegisterChatCommand("prf8", function(arg)
-		sampSendChat("/prefix " .. arg .. " ГѓГ«Г ГўГ­Г»Г©.ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°. " .. elm.input.prefix_GAadm.v)
+		sampSendChat("/prefix " .. arg .. " Главный.Администратор. " .. elm.input.prefix_GAadm.v)
 	end)
 
 	_, watermark_id = sampGetPlayerIdByCharHandle(playerPed)
@@ -1113,7 +1113,7 @@ function main()
 		updateIni = inicfg.load(nil, update_path)
 		if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
 			if tonumber(updateIni.info.version) > script_version then 
-				sampAddChatMessage(tag .. " Г„Г®Г±ГІГіГЇГ­Г® Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ. Г„Г«Гї Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГҐГ°ГҐГ©Г¤ГЁГІГҐ Гў Г¬ГҐГ­Гѕ -> В«ГЌГ Г±ГІГ°Г®Г©ГЄГЁВ» -> В«ГЋГЎГ­Г®ГўГЁГІГјВ»", -1)
+				sampAddChatMessage(tag .. " Доступно обновление. Для обновление перейдите в меню -> «Настройки» -> «Обновить»", -1)
 			end
 		end
 	end)
@@ -1148,14 +1148,14 @@ function main()
 		local waitsc = 6000
 		local delay = 500
 		lua_thread.create(function()
-		sampAddChatMessage(tag .. "Г„Г®Г°Г®ГЈГ®Г© Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°, ГЇГ°Г®ГЁГ§ГўГ®Г¤ГЁГІГ±Гї Г§Г ГЇГіГ±ГЄ ГґГ®Г°Г¬ ГЁГ§ ГґГ Г©Г«Г  rpforms.txt")
+		sampAddChatMessage(tag .. "Дорогой администратор, производится запуск форм из файла rpforms.txt")
 		wait(1000)
 		if fileonrp then
 			for line in fileonrp:lines() do
 				sampSendChat(u8:decode(line))
 				wait(delay)
 			end
-			sampAddChatMessage(tag .. "Г‚Г»Г¤Г Г·Г  ГґГ®Г°Г¬ Г§Г ГўГҐГ°ГёГҐГ­Г ")
+			sampAddChatMessage(tag .. "Выдача форм завершена")
 		end
 		end)
 		end)
@@ -1163,13 +1163,13 @@ function main()
 		fileonrp = io.open(getGameDirectory().."//moonloader//config//AdminTool//rpforms.txt","r+");
 		if fileonrp == nil then 
 				fileonrp = io.open(getGameDirectory().."//moonloader//config//AdminTool//rpforms.txt","w"); 
-			  	sampAddChatMessage(tag .. "Г”Г Г©Г« rpforms.txt Г®ГІГ±ГіГ±ГІГўГіГҐГІ. ГЌГ Г·ГЁГ­Г Гѕ ГҐГЈГ® Г±Г®Г§Г¤Г Г­ГЁГҐ.")
+			  	sampAddChatMessage(tag .. "Файл rpforms.txt отсуствует. Начинаю его создание.")
 			  	fileonrp:close();
 		   end;
 	sampRegisterChatCommand("tpcord", tpcord)
 	sampRegisterChatCommand("delch", delch)
 	sampRegisterChatCommand("tpad", function()
-		sampAddChatMessage(tag .. " Г’ГҐГ«ГҐГЇГ®Г°ГІГ Г¶ГЁГї Г­Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГЁГўГ­Г»Г© Г®Г±ГІГ°Г®Гў.. ")
+		sampAddChatMessage(tag .. " Телепортация на административный остров.. ")
 		setCharCoordinates(PLAYER_PED,3321,2308,35)
 	end)
 	sampRegisterChatCommand("ahi", function()
@@ -1181,7 +1181,7 @@ function main()
 		imgui.Process = ATToolsMenu.v 
 	end)
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¬ГіГІГ®Гў -------
+	------- Команды исключительно для мутов -------
 	sampRegisterChatCommand("fd1", cmd_fd1)
 	sampRegisterChatCommand("fd2", cmd_fd2)
 	sampRegisterChatCommand("fd3", cmd_fd3)
@@ -1214,9 +1214,9 @@ function main()
 	sampRegisterChatCommand("ia", cmd_ia)
 	sampRegisterChatCommand("rz", cmd_rz)
 	sampRegisterChatCommand("zs", cmd_zs)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¬ГіГІГ®Гў -------
+	------- Команды исключительно для мутов -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¬ГіГІГ®Гў Г°ГҐГЇГ®Г°ГІГ  -------
+	------- Команды исключительно для мутов репорта -------
 	sampRegisterChatCommand("rrz", cmd_rrz)
 	sampRegisterChatCommand("roa", cmd_roa)
 	sampRegisterChatCommand("ror", cmd_ror)
@@ -1246,9 +1246,9 @@ function main()
 	sampRegisterChatCommand("rup", cmd_rup)
 	sampRegisterChatCommand("rok", cmd_rok)
 	sampRegisterChatCommand("rm", cmd_rm)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¬ГіГІГ®Гў Г°ГҐГЇГ®Г°ГІГ  -------
+	------- Команды исключительно для мутов репорта -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¤Г¦Г Г©Г«Г®Гў -------
+	------- Команды исключительно для джайлов -------
 	sampRegisterChatCommand("sk", cmd_sk)
 	sampRegisterChatCommand("dz", cmd_dz)
 	sampRegisterChatCommand("dz1", cmd_dz1)
@@ -1268,27 +1268,27 @@ function main()
 	sampRegisterChatCommand("sch", cmd_sch)
 	sampRegisterChatCommand("jcw", cmd_jcw)
 	sampRegisterChatCommand("tdbz", cmd_tdbz)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¤Г¦Г Г©Г«Г®Гў -------
+	------- Команды исключительно для джайлов -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї ГЎГ Г­Г®Гў -------
+	------- Команды исключительно для банов -------
 	sampRegisterChatCommand('bosk', function(param)
         lua_thread.create(function()
             if param:match("(%d+)") then
                 if sampIsPlayerConnected(param) then
                     sampSendChat('/getip ' .. param)
                     wait(100)
-                    sampSendChat("/sban " .. param .. " 30 ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ ГЇГ°Г®ГҐГЄГІГ ")
+                    sampSendChat("/sban " .. param .. " 30 Оскорбление проекта")
                     if ip1 then
-                        sampSendChat("/banip " .. ip1 .. " 30 ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ ГЇГ°Г®ГҐГЄГІГ ")
+                        sampSendChat("/banip " .. ip1 .. " 30 Оскорбление проекта")
                     else
-                        sampAddChatMessage(tag .. " Try again | ГќГІГ  Г®ГёГЁГЎГЄГ  Г®Г§Г­Г Г·Г ГҐГІ.. ", -1)
-						sampAddChatMessage(tag .. " ..Г·ГІГ® Г±ГЄГ°ГЁГЇГІ Г­ГҐ ГўГЁГ¤ГЁГІ Г±ГІГ°Г®Г·ГЄГЁ IP, Г«ГЁГЎГ® Г­ГҐ Г­Г ГёГҐГ« ГҐВё", -1)
+                        sampAddChatMessage(tag .. " Try again | Эта ошибка означает.. ", -1)
+						sampAddChatMessage(tag .. " ..что скрипт не видит строчки IP, либо не нашел её", -1)
                     end
                 else
-                    sampAddChatMessage(tag .. " Г€ГЈГ°Г®ГЄ Г­ГҐ ГЇГ®Г¤ГЄГ«ГѕГ·ВёГ­!", -1)
+                    sampAddChatMessage(tag .. " Игрок не подключён!", -1)
                 end
             else
-                sampAddChatMessage(tag .. ' Г‚Г» Г­ГҐ ГўГўГҐГ«ГЁ ID!', -1)
+                sampAddChatMessage(tag .. ' Вы не ввели ID!', -1)
             end
         end)
     end)
@@ -1298,17 +1298,17 @@ function main()
                 if sampIsPlayerConnected(param) then
                     sampSendChat('/getip ' .. param)
                     wait(100)
-                    sampSendChat("/sban " .. param .. " 999 ГђГҐГЄГ«Г Г¬Г  ГЁГ­Г®ГЈГ® ГЇГ°Г®ГҐГЄГІГ ")
+                    sampSendChat("/sban " .. param .. " 999 Реклама иного проекта")
                     if ip1 then
-                        sampSendChat("/banip " .. ip1 .. " 999 ГђГҐГЄГ«Г Г¬Г  ГЁГ­Г®ГЈГ® ГЇГ°Г®ГҐГЄГІГ ")
+                        sampSendChat("/banip " .. ip1 .. " 999 Реклама иного проекта")
                     else
-						showNotification(tag, "ГЏГ®ГЇГ°Г®ГЎГіГ©ГІГҐ ГҐГ№Вё Г°Г Г§! \n IP Г­ГҐ ГЎГ»Г« Г§Г ГµГўГ Г·ГҐГ­")
+						showNotification(tag, "Попробуйте ещё раз! \n IP не был захвачен")
                     end
                 else
-					showNotification(tag, "Г€ГЈГ°Г®ГЄ Г­ГҐ ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­!")
+					showNotification(tag, "Игрок не подключен!")
                 end
             else
-				showNotification(tag, "Г€Г±ГЇГ®Г«ГјГ§ГіГ©ГІГҐ /brekl [PlayerID]")
+				showNotification(tag, "Используйте /brekl [PlayerID]")
             end
         end)
     end)
@@ -1320,9 +1320,9 @@ function main()
 	sampRegisterChatCommand("menk", cmd_menk)
 	sampRegisterChatCommand("gcnk", cmd_gcnk)
 	sampRegisterChatCommand("bnm", cmd_bnm)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї ГЎГ Г­Г®Гў -------
+	------- Команды исключительно для банов -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¬ГіГІГ®Гў Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+	------- Команды исключительно для мутов в оффлайне -------
 	sampRegisterChatCommand("am", cmd_am)
 	sampRegisterChatCommand("aok", cmd_aok)
 	sampRegisterChatCommand("afd", cmd_afd)
@@ -1337,9 +1337,9 @@ function main()
 	sampRegisterChatCommand("akl", cmd_akl)
 	sampRegisterChatCommand("arz", cmd_arz)
 	sampRegisterChatCommand("azs", cmd_azs)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¬ГіГІГ®Гў Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+	------- Команды исключительно для мутов в оффлайне -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¤Г¦Г Г©Г«Г®Гў Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+	------- Команды исключительно для джайлов в оффлайне -------
 	sampRegisterChatCommand("ajcw", cmd_ajcw)
 	sampRegisterChatCommand("ask", cmd_ask)
 	sampRegisterChatCommand("adz", cmd_adz)
@@ -1357,17 +1357,17 @@ function main()
 	sampRegisterChatCommand("ajch", cmd_ajch)
 	sampRegisterChatCommand("apmx", cmd_apmx)
 	sampRegisterChatCommand("asch", cmd_asch)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї Г¤Г¦Г Г©Г«Г®Гў Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+	------- Команды исключительно для джайлов в оффлайне -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї ГЄГЁГЄГ®Гў -------
+	------- Команды исключительно для киков -------
 	sampRegisterChatCommand("dj", cmd_dj)
 	sampRegisterChatCommand("gnk1", cmd_gnk1)
 	sampRegisterChatCommand("gnk2", cmd_gnk2)
 	sampRegisterChatCommand("gnk3", cmd_gnk3)
 	sampRegisterChatCommand("cafk", cmd_cafk)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї ГЄГЁГЄГ®Гў -------
+	------- Команды исключительно для киков -------
 
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї ГЎГ Г­Г®Гў Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+	------- Команды исключительно для банов в оффлайне -------
 	sampRegisterChatCommand("aob", cmd_aob)
 	sampRegisterChatCommand("ahl", cmd_ahl)
 	sampRegisterChatCommand("ahli", cmd_ahli)
@@ -1381,9 +1381,9 @@ function main()
 	sampRegisterChatCommand("rdsob", cmd_rdsob)
 	sampRegisterChatCommand("rdsip", cmd_rdsip)
 	sampRegisterChatCommand("abnm", cmd_abnm)
-	------- ГЉГ®Г¬Г Г­Г¤Г» ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® Г¤Г«Гї ГЎГ Г­Г®Гў Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+	------- Команды исключительно для банов в оффлайне -------
 	
-	------ ГЉГ®Г¬Г Г­Г¤Г», ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГ¬Г»ГҐ Гў ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ Г±Г«ГіГ·Г ГїГµ -------
+	------ Команды, используемые в вспомогательных случаях -------
 	sampRegisterChatCommand("u", cmd_u)
 	sampRegisterChatCommand("uu", cmd_uu)
 	sampRegisterChatCommand("uj", cmd_uj)
@@ -1410,7 +1410,7 @@ function main()
 			sampCloseCurrentDialogWithButton(0)
 		end)
 	end)
-	------ ГЉГ®Г¬Г Г­Г¤Г», ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГ¬Г»ГҐ Гў ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ Г±Г«ГіГ·Г ГїГµ -------
+	------ Команды, используемые в вспомогательных случаях -------
 
 	sampRegisterChatCommand('spp', function()
 	local playerid_to_stream = playersToStreamZone()
@@ -1418,7 +1418,7 @@ function main()
 	sampSendChat('/aspawn ' .. v)
 	end
 	end)
-	-- Г§Г Г±ГЇГ ГўГ­ГЁ ГўГ±ГҐГµ ГўГ®ГЄГ°ГіГЈГҐ Г±ГІГ°ГЁГ¬Г 
+	-- заспавни всех вокруге стрима
 
 	sampRegisterChatCommand('cfind', function(param)
 		if param == nil then
@@ -1437,15 +1437,15 @@ function main()
 		end
 		load_chat_log:run()
 	end)
-	-- Г ГЄГІГЁГўГ Г¶ГЁГї Г·Г ГІ-Г«Г®ГЈГЈГҐГ°Г 
+	-- активация чат-логгера
 
 	sampRegisterChatCommand("sendpass", function()
-		sampAddChatMessage(tag .. "ГЏГ Г°Г®Г«Гј: " .. u8:decode(elm.input.ATAdminPass.v))
+		sampAddChatMessage(tag .. "Пароль: " .. u8:decode(elm.input.ATAdminPass.v))
 	end)
 
-	------------------ ГЏГ®ГЄГ Г§ Г§Г ГЇГіГ±ГЄГ  Г±ГЄГ°ГЁГЇГІГ  -------------------------
-	sampAddChatMessage(tag .. " Г‘ГЄГ°ГЁГЇГІ ГЎГ»Г« ГЁГ­ГЁГ¶ГЁГ Г«ГЁГ§ГЁГ°Г®ГўГ Г­! Г„Г«Гї ГЇГ°Г®ГўГҐГ°ГЄГЁ ГўГўГҐГ¤ГЁГІГҐ /tool")
-	------------------ ГЏГ®ГЄГ Г§ Г§Г ГЇГіГ±ГЄГ  Г±ГЄГ°ГЁГЇГІГ  -------------------------
+	------------------ Показ запуска скрипта -------------------------
+	sampAddChatMessage(tag .. " Скрипт был инициализирован! Для проверки введите /tool")
+	------------------ Показ запуска скрипта -------------------------
 
 	_, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	nick = sampGetPlayerNickname(id)
@@ -1478,7 +1478,7 @@ function main()
 			-- 	end
 			-- end)
 			wait(10000)
-			sampAddChatMessage(tag .. "ГЂГўГІГ®Г°ГЁГ§ГЁГ°ГіГѕГ±Гј ГЇГ®Г¤ Г Г¤Г¬ГЁГ­ГЄГ®Г©!", -1)
+			sampAddChatMessage(tag .. "Авторизируюсь под админкой!", -1)
 			if sampIsChatInputActive() == false and sampIsDialogActive() == false and elm.input.ATAdminPass.v and selectlogin == false then  
 				wait(3000)
 				sampSendChat("/alogin " .. u8:decode(elm.input.ATAdminPass.v))
@@ -1486,7 +1486,7 @@ function main()
 				scanspawn = false
 			end
 		end
-		-- Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁГ© ГўГўГ®Г¤ ГЇГ Г°Г®Г«Гї
+		-- автоматический ввод пароля
 
 		if isKeyDown(strToIdKeys(ATcfg.keys.ATOnline)) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and ATToolsMenu.v == false then
 			sampSendChat("/online")
@@ -1496,30 +1496,30 @@ function main()
 			sampCloseCurrentDialogWithButton(0)
 			wait(650)
 		end
-		-- ГўГўГҐГ¤ГҐГ­Г­Г»Г© ГЄГ«ГѕГ· ГЄГ«Г ГўГЁГёГЁ ГЇГ® ГўГ»Г¤Г Г·ГҐ Г§Г  online
+		-- введенный ключ клавиши по выдаче за online
 
 		if isKeyJustPressed(strToIdKeys(ATcfg.keys.ATTool)) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) then
 			wait(100)
 			ATToolsMenu.v = not ATToolsMenu.v
 			imgui.Process = ATToolsMenu.v
 		end
-		-- ГўГўГҐГ¤ГҐГ­Г­Г»Г© ГЄГ«ГѕГ· ГЄГ«Г ГўГЁГёГЁ ГЇГ® /tool
+		-- введенный ключ клавиши по /tool
 
 		if isKeyDown(strToIdKeys(ATcfg.keys.ATReportRP)) and sampIsDialogActive() and ATToolsMenu.v == false then 
 			local string = string.sub(sampGetCurrentDialogEditboxText(), 0, string.len(sampGetCurrentDialogEditboxText()) - 1)
-			sampSetCurrentDialogEditboxText(string .. color() .. " | ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г» Г­Г  RDS <3 ")
+			sampSetCurrentDialogEditboxText(string .. color() .. " | Приятной игры на RDS <3 ")
 			wait(650)
 		end 
-		-- ГўГўГҐГ¤ГҐГ­Г­Г»Г© ГЄГ«ГѕГ· ГЄГ«Г ГўГЁГёГЁ ГЇГ® /ans
+		-- введенный ключ клавиши по /ans
 		
 		if isKeyDown(strToIdKeys(ATcfg.keys.ATReportRP1)) and sampIsDialogActive() and ATToolsMenu.v == false then 
 			local string = string.sub(sampGetCurrentDialogEditboxText(), 0, string.len(sampGetCurrentDialogEditboxText()) - 1)
-			sampSetCurrentDialogEditboxText(string .. color() .. " | Г“Г¤Г Г·Г­Г®ГЈГ® ГўГ°ГҐГ¬ГїГЇГ°ГҐГЇГ°Г®ГўГ®Г¦Г¤ГҐГ­ГЁГї. ")
+			sampSetCurrentDialogEditboxText(string .. color() .. " | Удачного времяпрепровождения. ")
 			wait(650)
 		end
-		-- ГўГўГҐГ¤ГҐГ­Г­Г»Г© ГЄГ«ГѕГ· ГЄГ«Г ГўГЁГёГЁ ГЇГ® NumPad / (/ans)
+		-- введенный ключ клавиши по NumPad / (/ans)
 
-		if sampGetCurrentDialogEditboxText() == '.Г±Г¶' or sampGetCurrentDialogEditboxText() == '/cw' then  
+		if sampGetCurrentDialogEditboxText() == '.сц' or sampGetCurrentDialogEditboxText() == '/cw' then  
 			sampSetCurrentDialogEditboxText(elm.input.ATColor.v)
 		end  
 
@@ -1529,7 +1529,7 @@ function main()
 
 		if isKeyDown(strToIdKeys(ATcfg.keys.ATReportRP2)) and sampIsChatInputActive() and ATToolsMenu.v == false then
 			local string = string.sub(sampGetChatInputText(), 0, string.len(sampGetChatInputText()) - 1)
-			sampSetChatInputText(string .. " | ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г» Г­Г  RDS! <3")
+			sampSetChatInputText(string .. " | Приятной игры на RDS! <3")
 			wait(650)
 		end
 
@@ -1623,7 +1623,7 @@ function main()
 			sampSetChatInputEnabled(false)
 		end	
 
-		if sampGetDialogCaption() == "{ff8587}ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГї ГЇГ°Г®ГҐГЄГІГ  (Г®Г­Г«Г Г©Г­)" and elm.checkbox.show_admins.v then 
+		if sampGetDialogCaption() == "{ff8587}Администрация проекта (онлайн)" and elm.checkbox.show_admins.v then 
 			sampCloseCurrentDialogWithButton(0)
 		end	
 	end
@@ -1649,7 +1649,7 @@ function change_show_admins()
 		ATcfg.setting.acX = elm.ac.X 
 		ATcfg.setting.acY = elm.ac.Y
 		save()
-		showNotification("AdminTool - Save Settings", "ГЌГ Г±ГІГ°Г®Г©ГЄГЁ Г±Г®ГµГ°Г Г­ГҐГ­Г» ГіГ±ГЇГҐГёГ­Г®")
+		showNotification("AdminTool - Save Settings", "Настройки сохранены успешно")
 	else
 		elm.ac.X, elm.ac.Y = getCursorPos()
 	end
@@ -1681,10 +1681,10 @@ function tpcord(coords)
 	local x, y, z = coords:match('(.+) (.+) (.+)') 
 	setCharCoordinates(PLAYER_PED, x, y, z)
 end  
--- ГІГҐГ«ГҐГЇГ®Г°ГІГ Г¶ГЁГї ГЇГ® ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ Г¬
+-- телепортация по координатам
 
 function delch(arg)
-	notfy.addNotify("{87CEEB}AdminTool", 'Г‚ГЁГ§ГіГ Г«ГјГ­Г Гї Г®Г·ГЁГ±ГІГЄГ  Г·Г ГІГ  Г­Г Г·Г Г«Г Г±Гј', 2, 1, 6)
+	notfy.addNotify("{87CEEB}AdminTool", 'Визуальная очистка чата началась', 2, 1, 6)
 	sampAddChatMessage("", -1)
 	sampAddChatMessage("", -1)
 	sampAddChatMessage("", -1)
@@ -1712,7 +1712,7 @@ function delch(arg)
 	sampAddChatMessage("", -1)
 end
 
-function color() -- ГґГіГ­ГЄГ¶ГЁГї, ГўГ»ГЇГ®Г«Г­ГїГѕГ№Г Гї Г°Г Г­Г¤Г®Г¬Г­ГЁГ§Г Г¶ГЁГѕ ГЁ ГўГ»ГўГ®Г¤ Г°Г Г­Г¤Г®Г¬Г­Г®ГЈГ® Г¶ГўГҐГІГ  Г± ГЇГ®Г¬Г®Г№ГјГѕ Г±ГЇГҐГ¶ГЁГ Г«ГјГ­Г®ГЈГ® os.time()
+function color() -- функция, выполняющая рандомнизацию и вывод рандомного цвета с помощью специального os.time()
 	mcolor = "{"
 	math.randomseed( os.time() )
 	for i = 1, 6 do
@@ -1778,9 +1778,9 @@ function renderAdmins()
 					local admin = admins[i]
 					local text
 					if admin.prefix then
-						text = string.format("%s[%s] %s | %s ГіГ°Г®ГўГҐГ­Гј | %s ГўГ»ГЈГ®ГўГ®Г°Г®Гў | %s Г°ГҐГЇГіГІГ Г¶ГЁГЁ.", admin.nick, admin.id, admin.prefix, admin.lvl, admin.vig, admin.rep)
+						text = string.format("%s[%s] %s | %s уровень | %s выговоров | %s репутации.", admin.nick, admin.id, admin.prefix, admin.lvl, admin.vig, admin.rep)
 					else
-						text = string.format("%s[%s] | %s ГіГ°Г®ГўГҐГ­Гј | %s ГўГ»ГЈГ®ГўГ®Г°Г®Гў | %s Г°ГҐГЇГіГІГ Г¶ГЁГЁ.", admin.nick, admin.id, admin.lvl, admin.vig, admin.rep)
+						text = string.format("%s[%s] | %s уровень | %s выговоров | %s репутации.", admin.nick, admin.id, admin.lvl, admin.vig, admin.rep)
 					end
 					text = text:gsub("\n", "")
 					renderFontDrawText(font_ac, elm.input.ATColor_admins.v .. text, elm.ac.X, elm.ac.Y+(elm.int.admFont.v+4)*(i+12), 0xFF9999FF)
@@ -1793,277 +1793,277 @@ end
 
 function cmd_zs(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 600 " .. " Г‡Г«Г®ГіГЇ.Г±ГЁГ¬ГўГ®Г«Г Г¬ГЁ ")
+		sampSendChat("/mute " .. arg .. " 600 " .. " Злоуп.символами ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd1(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 120 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤")
+		sampSendChat("/mute " .. arg .. " 120 " .. " Спам/Флуд")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd2(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 240 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x2 ")
+		sampSendChat("/mute " .. arg .. " 240 " .. " Спам/Флуд - x2 ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd3(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 360 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x3 ")
+		sampSendChat("/mute " .. arg .. " 360 " .. " Спам/Флуд - x3 ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 
 end
 
 function cmd_fd4(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 480 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x4 ")
+		sampSendChat("/mute " .. arg .. " 480 " .. " Спам/Флуд - x4 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd5(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 600 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x5 ")
+		sampSendChat("/mute " .. arg .. " 600 " .. " Спам/Флуд - x5 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd6(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 720 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x6 ")
+		sampSendChat("/mute " .. arg .. " 720 " .. " Спам/Флуд - x6 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd7(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 840 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x7 ")
+		sampSendChat("/mute " .. arg .. " 840 " .. " Спам/Флуд - x7 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd8(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 960 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x8 ")
+		sampSendChat("/mute " .. arg .. " 960 " .. " Спам/Флуд - x8 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd9(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 1080 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x9 ")
+		sampSendChat("/mute " .. arg .. " 1080 " .. " Спам/Флуд - x9 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fd10(arg)
 	if #arg > 0 then 
-		sampSendChat("/mute " .. arg .. " 1200 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤ - x10 ")
+		sampSendChat("/mute " .. arg .. " 1200 " .. " Спам/Флуд - x10 ")
 	else
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po1(arg)
 	if #arg > 0 then
-		sampSendChat("/mute "  .. arg .. " 120 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ®")
+		sampSendChat("/mute "  .. arg .. " 120 " .. " Попрошайничество")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po2(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 240 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x2")
+		sampSendChat("/mute " .. arg .. " 240 " .. " Попрошайничество - x2")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po3(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 360 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x3")
+		sampSendChat("/mute " .. arg .. " 360 " .. " Попрошайничество - x3")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po4(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 480 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x4")
+		sampSendChat("/mute " .. arg .. " 480 " .. " Попрошайничество - x4")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po5(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 600 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x5")
+		sampSendChat("/mute " .. arg .. " 600 " .. " Попрошайничество - x5")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po6(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 720 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x6")
+		sampSendChat("/mute " .. arg .. " 720 " .. " Попрошайничество - x6")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po7(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 840 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x7")
+		sampSendChat("/mute " .. arg .. " 840 " .. " Попрошайничество - x7")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po8(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 960 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x8")
+		sampSendChat("/mute " .. arg .. " 960 " .. " Попрошайничество - x8")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po9(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 1080 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x9")
+		sampSendChat("/mute " .. arg .. " 1080 " .. " Попрошайничество - x9")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_po10(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 1200 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x10")
+		sampSendChat("/mute " .. arg .. " 1200 " .. " Попрошайничество - x10")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 
 function cmd_m(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 300 " .. " ГЌГҐГ¶ГҐГ­Г§ГіГ°Г­Г Гї Г«ГҐГЄГ±ГЁГЄГ . ")
+		sampSendChat("/mute " .. arg .. " 300 " .. " Нецензурная лексика. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_ia(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " ..  arg .. " 2500 " .. " Г‚Г»Г¤Г Г·Г  Г±ГҐГЎГї Г§Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГѕ ")
+		sampSendChat("/mute " ..  arg .. " 2500 " .. " Выдача себя за администрацию ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_kl(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 3000 " .. " ГЉГ«ГҐГўГҐГІГ  Г­Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГѕ ")
+		sampSendChat("/mute " .. arg .. " 3000 " .. " Клевета на администрацию ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_oa(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 2500 " .. " ГЋГ±ГЄ/Г“Г­ГЁГ¦.Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ  ")
+		sampSendChat("/mute " .. arg .. " 2500 " .. " Оск/Униж.администрации  ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_ok(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 400 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ. ")
+		sampSendChat("/mute " .. arg .. " 400 " .. " Оскорбление/Унижение. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_nm1(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 2500 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/mute " .. arg .. " 2500 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_nm2(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 5000 " ..  " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/mute " .. arg .. " 5000 " ..  " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_or(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 5000 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ Г°Г®Г¤Г­Г»Гµ ")
+		sampSendChat("/mute " .. arg .. " 5000 " .. " Оскорбление/Упоминание родных ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_nm(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 900 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/mute " .. arg .. " 900 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_up(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 1000 " .. " Г“ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ Г±ГІГ®Г°Г®Г­Г­ГЁГµ ГЇГ°Г®ГҐГЄГІГ®Гў ")
+		sampSendChat("/mute " .. arg .. " 1000 " .. " Упоминание сторонних проектов ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rz(arg)
 	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 5000 " .. " ГђГ®Г§Г¦ГЁГЈ Г¬ГҐГ¦Г­Г Г¶. Г°Г®Г§Г­ГЁ")
+		sampSendChat("/mute " .. arg .. " 5000 " .. " Розжиг межнац. розни")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end	
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¬ГіГІГ Г¬ -------
+------- Функции, относящиеся к мутам -------
 
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¬ГіГІГ Г¬ Г§Г  Г°ГҐГЇГ®Г°ГІ -------
+------- Функции, относящиеся к мутам за репорт -------
 function cmd_rup(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 1000 " .. " Г“ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ Г±ГІГ®Г°Г®Г­Г­ГЁГµ ГЇГ°Г®ГҐГЄГІГ®Гў. ")
+		sampSendChat("/rmute " .. arg .. " 1000 " .. " Упоминание сторонних проектов. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_ror(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 5000 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ Г°Г®Г¤Г­Г»Гµ ")
+		sampSendChat("/rmute " .. arg .. " 5000 " .. " Оскорбление/Упоминание родных ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2071,7 +2071,7 @@ function cmd_cp(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 120 " .. " caps/offtop in report ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2079,7 +2079,7 @@ function cmd_cp2(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 240 " .. " caps/offtop in report - x2")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2087,7 +2087,7 @@ function cmd_cp3(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 360 " .. " caps/offtop in report - x3")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2095,7 +2095,7 @@ function cmd_cp4(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 480 " .. " caps/offtop in report - x4")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2103,7 +2103,7 @@ function cmd_cp5(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 600 " .. " caps/offtop in report - x5")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2111,7 +2111,7 @@ function cmd_cp6(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 720 " .. " caps/offtop in report - x6")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2119,7 +2119,7 @@ function cmd_cp7(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 840 " .. " caps/offtop in report - x7")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2127,7 +2127,7 @@ function cmd_cp8(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 960 " .. " caps/offtop in report - x8")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2135,7 +2135,7 @@ function cmd_cp9(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 1080 " .. " caps/offtop in report - x9")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2143,153 +2143,153 @@ function cmd_cp10(arg)
 	if #arg > 0 then
 		sampSendChat("/rmute " .. arg .. " 1200 " .. " caps/offtop in report - x10")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 120 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® ")
+		sampSendChat("/rmute " .. arg .. " 120 " .. " Попрошайничество ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo2(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 240 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x2")
+		sampSendChat("/rmute " .. arg .. " 240 " .. " Попрошайничество - x2")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo3(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 360 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x3")
+		sampSendChat("/rmute " .. arg .. " 360 " .. " Попрошайничество - x3")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo4(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 480 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x4")
+		sampSendChat("/rmute " .. arg .. " 480 " .. " Попрошайничество - x4")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo5(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 600 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x5")
+		sampSendChat("/rmute " .. arg .. " 600 " .. " Попрошайничество - x5")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo6(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 720 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x6")
+		sampSendChat("/rmute " .. arg .. " 720 " .. " Попрошайничество - x6")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo7(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 840 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x7")
+		sampSendChat("/rmute " .. arg .. " 840 " .. " Попрошайничество - x7")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo8(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 960 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x8")
+		sampSendChat("/rmute " .. arg .. " 960 " .. " Попрошайничество - x8")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo9(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 1080 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x9")
+		sampSendChat("/rmute " .. arg .. " 1080 " .. " Попрошайничество - x9")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rpo10(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 1200 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® - x10")
+		sampSendChat("/rmute " .. arg .. " 1200 " .. " Попрошайничество - x10")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rm(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 300 " .. " ГЌГҐГ¶ГҐГ­Г§ГіГ°Г­Г Гї Г«ГҐГЄГ±ГЁГЄГ . ")
+		sampSendChat("/rmute " .. arg .. " 300 " .. " Нецензурная лексика. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_roa(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 2500 " .. " ГЋГ±ГЄ/Г“Г­ГЁГ¦.Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ  ")
+		sampSendChat("/rmute " .. arg .. " 2500 " .. " Оск/Униж.администрации  ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rnm(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 900 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/rmute " .. arg .. " 900 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rnm1(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 2500 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/rmute " .. arg .. " 2500 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rnm2(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 5000 " ..  " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/rmute " .. arg .. " 5000 " ..  " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rok(arg)
 	if #arg > 0 then
-		sampSendChat("/rmute " .. arg .. " 400 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ. ")
+		sampSendChat("/rmute " .. arg .. " 400 " .. " Оскорбление/Унижение. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_rrz(arg)
 	if #arg > 0 then 
-		sampSendChat("/rmute " .. arg .. " 5000 " .. " ГђГ®Г§Г¦ГЁГЈ Г¬ГҐГ¦Г­Г Г¶. Г°Г®Г§Г­ГЁ")
+		sampSendChat("/rmute " .. arg .. " 5000 " .. " Розжиг межнац. розни")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end	
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¬ГіГІГ Г¬ Г§Г  Г°ГҐГЇГ®Г°ГІ -------
+------- Функции, относящиеся к мутам за репорт -------
 
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¤Г¦Г Г©Г«Г Г¬ -------
+------- Функции, относящиеся к джайлам -------
 function cmd_sk(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 300 " .. " Spawn Kill")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2297,7 +2297,7 @@ function cmd_dz(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 300 " .. " DM/DB in zz")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2305,7 +2305,7 @@ function cmd_dz1(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 600 " .. " DM/DB in zz x2")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2313,7 +2313,7 @@ function cmd_dz2(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 900 " .. " DM/DB in zz x3")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2321,7 +2321,7 @@ function cmd_dz3(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 1200 " .. " DM/DB in zz x4")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2329,23 +2329,23 @@ function cmd_td(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 300 " .. " DB/car in trade ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_jm(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 300 " .. " ГЌГ Г°ГіГёГҐГ­ГЁГҐ ГЇГ°Г ГўГЁГ« ГЊГЏ ")
+		sampSendChat("/jail " .. arg .. " 300 " .. " Нарушение правил МП ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_pmx(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 300 " .. " Г‘ГҐГ°ГјГҐГ§Г­Г Гї ГЇГ®Г¬ГҐГµГ  ГЁГЈГ°Г®ГЄГ Г¬ ")
+		sampSendChat("/jail " .. arg .. " 300 " .. " Серьезная помеха игрокам ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2353,211 +2353,211 @@ function cmd_skw(arg)
 	if #arg > 0 then
 		sampSendChat("/jail " .. arg .. " 600 " .. " SK in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_dgw(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 500 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г­Г Г°ГЄГ®ГІГЁГЄГ®Гў in /gw ")
+		sampSendChat("/jail " .. arg .. " 500 " .. " Использование наркотиков in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_ngw(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 600 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»Гµ ГЄГ®Г¬Г Г­Г¤ in /gw ")
+		sampSendChat("/jail " .. arg .. " 600 " .. " Использование запрещенных команд in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_dbgw(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 600 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ ГўГҐГ°ГІГ®Г«ГҐГІГ  in /gw ")
+		sampSendChat("/jail " .. arg .. " 600 " .. " Использование вертолета in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_fsh(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ SpeedHack/FlyCar ")
+		sampSendChat("/jail " .. arg .. " 900 " .. " Использование SpeedHack/FlyCar ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_bag(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 300 " .. " Г€ГЈГ°Г®ГўГ®Г© ГЎГ ГЈГ®ГѕГ§ (deagle in car)")
+		sampSendChat("/jail " .. arg .. " 300 " .. " Игровой багоюз (deagle in car)")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_pk(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ ГЇГ Г°ГЄГіГ° Г¬Г®Г¤Г  ")
+		sampSendChat("/jail " .. arg .. " 900 " .. " Использование паркур мода ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_jch(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 3000 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г·ГЁГІГҐГ°Г±ГЄГ®ГЈГ® Г±ГЄГ°ГЁГЇГІГ /ГЏГЋ ")
+		sampSendChat("/jail " .. arg .. " 3000 " .. " Использование читерского скрипта/ПО ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_zv(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " ..  arg .. " 3000 " .. " Г‡Г«Г®ГіГЇГ®ГІГ°ГҐГЎГ«ГҐГ­ГЁГҐ VIP`om ")
+		sampSendChat("/jail " ..  arg .. " 3000 " .. " Злоупотребление VIP`om ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_sch(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»Гµ Г±ГЄГ°ГЁГЇГІГ®Гў ")
+		sampSendChat("/jail " .. arg .. " 900 " .. " Использование запрещенных скриптов ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_jcw(arg)
 	if #arg > 0 then
-		sampSendChat("/jail " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ ClickWarp/Metla (Г€Г—Г‘)")
+		sampSendChat("/jail " .. arg .. " 900 " .. " Использование ClickWarp/Metla (ИЧС)")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_tdbz(arg)
 	if #arg > 0 then  
-		sampSendChat("/jail " .. arg .. " 900 " .. " Г„ГЃ Г± ГЉГ®ГўГёГ®Г¬ (zz)")
+		sampSendChat("/jail " .. arg .. " 900 " .. " ДБ с Ковшом (zz)")
 	else  
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)	
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)	
 	end 
 end	
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¤Г¦Г Г©Г«Г Г¬ -------
+------- Функции, относящиеся к джайлам -------
 
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ ГЎГ Г­Г Г¬ -------
+------- Функции, относящиеся к банам -------
 function cmd_hl(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/iban " .. arg .. " 3 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ/ГЊГ ГІ Гў ГµГҐГ«ГЇГҐГ°ГҐ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/iban " .. arg .. " 3 " .. " Оскорбление/Унижение/Мат в хелпере")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)	
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)	
 	end
 end
 
 function cmd_pl(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/ban " .. arg .. " 7 " .. " ГЏГ«Г ГЈГЁГ ГІ Г­ГЁГЄГ  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г  ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/ban " .. arg .. " 7 " .. " Плагиат ника администратора ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_ob(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/iban " .. arg .. " 7 " .. " ГЋГЎГµГ®Г¤ ГЇГ°Г®ГёГ«Г®ГЈГ® ГЎГ Г­Г  ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/iban " .. arg .. " 7 " .. " Обход прошлого бана ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end 	
 
 function cmd_ch(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/iban " .. arg .. " 7 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г·ГЁГІГҐГ°Г±ГЄГ®ГЈГ® Г±ГЄГ°ГЁГЇГІГ /ГЏГЋ. ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/iban " .. arg .. " 7 " .. " Использование читерского скрипта/ПО. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_gcnk(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/iban " .. arg .. " 7 " .. " ГЃГ Г­Г¤Г , Г±Г®Г¤ГҐГ°Г¦Г Г№Г Гї Г­ГҐГ¶ГҐГ­Г§ГіГ°Г­ГіГѕ Г«ГҐГЄГ±ГЁГ­Гі ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/iban " .. arg .. " 7 " .. " Банда, содержащая нецензурную лексину ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_menk(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/ban " .. arg .. " 7 " .. " ГЌГЁГЄ, Г±Г®Г¤ГҐГ°Г¦Г ГѕГ№ГЁГ© Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»ГҐ Г±Г«Г®ГўГ  ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/ban " .. arg .. " 7 " .. " Ник, содержающий запрещенные слова ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_nk(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/ban " .. arg .. " 7 " .. " ГЌГЁГЄ, Г±Г®Г¤ГҐГ°Г¦Г Г№ГЁГ© Г­ГҐГ¶ГҐГ­Г§ГіГ°Г­ГіГѕ Г«ГҐГЄГ±ГЁГЄГі ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/ban " .. arg .. " 7 " .. " Ник, содержащий нецензурную лексику ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_bnm(arg)
 	if #arg > 0 then
-		sampSendChat("/ans " .. arg .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-		sampSendChat("/ans " .. arg .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-		sampSendChat("/iban " .. arg .. " 7 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ")
+		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		sampSendChat("/iban " .. arg .. " 7 " .. " Неадекватное поведение")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end	
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ ГЎГ Г­Г Г¬ -------
+------- Функции, относящиеся к банам -------
 
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¤Г¦Г Г©Г«Г Г¬ Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+------- Функции, относящиеся к джайлам в оффлайне -------
 function cmd_asch(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»Гµ Г±ГЄГ°ГЁГЇГІГ®Гў ")
+		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Использование запрещенных скриптов ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_ajch(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 3000 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г·ГЁГІГҐГ°Г±ГЄГ®ГЈГ® Г±ГЄГ°ГЁГЇГІГ /ГЏГЋ ")
+		sampSendChat("/prisonakk " .. arg .. " 3000 " .. " Использование читерского скрипта/ПО ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_azv(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " ..  arg .. " 3000 " .. " Г‡Г«Г®ГіГЇГ®ГІГ°ГҐГЎГ«ГҐГ­ГЁГҐ VIP`om ")
+		sampSendChat("/prisonakk " ..  arg .. " 3000 " .. " Злоупотребление VIP`om ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_adgw(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 500 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г­Г Г°ГЄГ®ГІГЁГЄГ®Гў in /gw ")
+		sampSendChat("/prisonakk " .. arg .. " 500 " .. " Использование наркотиков in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2565,7 +2565,7 @@ function cmd_ask(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 300 " .. " SpawnKill ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2573,7 +2573,7 @@ function cmd_adz(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 300 " .. " DM/DB in zz ")	
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2581,7 +2581,7 @@ function cmd_adz1(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 600 " .. " DM/DB in zz x2")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2589,7 +2589,7 @@ function cmd_adz2(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 900 " .. " DM/DB in zz x3")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2597,7 +2597,7 @@ function cmd_adz3(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 1200 " .. " DM/DB in zz x4")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2605,23 +2605,23 @@ function cmd_atd(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 300 " .. " DB/car in trade ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_ajm(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 300 " .. " ГЌГ Г°ГіГёГҐГ­ГЁГҐ ГЇГ°Г ГўГЁГ« ГЊГЏ ")
+		sampSendChat("/prisonakk " .. arg .. " 300 " .. " Нарушение правил МП ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_apmx(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 300 " .. " Г‘ГҐГ°ГјГҐГ§Г­Г Гї ГЇГ®Г¬ГҐГµГ  ГЁГЈГ°Г®ГЄГ Г¬ ")
+		sampSendChat("/prisonakk " .. arg .. " 300 " .. " Серьезная помеха игрокам ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
@@ -2629,203 +2629,203 @@ function cmd_askw(arg)
 	if #arg > 0 then
 		sampSendChat("/prisonakk " .. arg .. " 600 " .. " SK in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_angw(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 600 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»Гµ ГЄГ®Г¬Г Г­Г¤ in /gw ")
+		sampSendChat("/prisonakk " .. arg .. " 600 " .. " Использование запрещенных команд in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_adbgw(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 600 " .. " db-ГўГҐГ°ГІ, Г±ГІГ°ГҐГ«ГјГЎГ  Г± Г ГўГІ/Г¬Г®ГІГ®/ГЄГ°Г»ГёГЁ in /gw ")
+		sampSendChat("/prisonakk " .. arg .. " 600 " .. " db-верт, стрельба с авт/мото/крыши in /gw ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_afsh(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ SpeedHack/FlyCar ")
+		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Использование SpeedHack/FlyCar ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_abag(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 300 " .. " Г€ГЈГ°Г®ГўГ®Г© ГЎГ ГЈГ®ГѕГ§ (deagle in car)")
+		sampSendChat("/prisonakk " .. arg .. " 300 " .. " Игровой багоюз (deagle in car)")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_apk(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ ГЇГ Г°ГЄГіГ° Г¬Г®Г¤Г  ")
+		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Использование паркур мода ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_ajcw(arg)
 	if #arg > 0 then
-		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ ClickWarp/Metla (Г€Г—Г‘)")
+		sampSendChat("/prisonakk " .. arg .. " 900 " .. " Использование ClickWarp/Metla (ИЧС)")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¤Г¦Г Г©Г«Г Г¬ Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+------- Функции, относящиеся к джайлам в оффлайне -------
 
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¬ГіГІГ Г¬ Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+------- Функции, относящиеся к мутам в оффлайне -------
 function cmd_azs(arg)
 	if #arg > 0 then  
-		sampSendChat("/muteakk"  .. arg .. " 600 " .. " Г‡Г«Г®ГіГЇ.Г±ГЁГ¬ГўГ®Г«Г Г¬ГЁ")
+		sampSendChat("/muteakk"  .. arg .. " 600 " .. " Злоуп.символами")
 	else  
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end 
 end		
 
 function cmd_afd(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 120 " .. " Г‘ГЇГ Г¬/Г”Г«ГіГ¤")
+		sampSendChat("/muteakk " .. arg .. " 120 " .. " Спам/Флуд")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_apo(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 120 " .. " ГЏГ®ГЇГ°Г®ГёГ Г©Г­ГЁГ·ГҐГ±ГІГўГ® ")
+		sampSendChat("/muteakk " .. arg .. " 120 " .. " Попрошайничество ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_am(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 300 " .. " ГЌГҐГ¶ГҐГ­Г§ГіГ°Г­Г Гї Г«ГҐГЄГ±ГЁГЄГ .")
+		sampSendChat("/muteakk " .. arg .. " 300 " .. " Нецензурная лексика.")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_aok(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 400 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ. ")
+		sampSendChat("/muteakk " .. arg .. " 400 " .. " Оскорбление/Унижение. ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_anm(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 900 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/muteakk " .. arg .. " 900 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_anm1(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 2500 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/muteakk " .. arg .. " 2500 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_anm2(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 5000 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ ")
+		sampSendChat("/muteakk " .. arg .. " 5000 " .. " Неадекватное поведение ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_aoa(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 2500 " .. " ГЋГ±ГЄ/Г“Г­ГЁГ¦.Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ ")
+		sampSendChat("/muteakk " .. arg .. " 2500 " .. " Оск/Униж.администрации ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_aor(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 5000 " .. " ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ Г°Г®Г¤Г­Г»Гµ ")
+		sampSendChat("/muteakk " .. arg .. " 5000 " .. " Оскорбление/Упоминание родных ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_aup(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 1000 " .. " Г“ГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ ГЁГ­Г®ГЈГ® ГЇГ°Г®ГҐГЄГІГ  ")
+		sampSendChat("/muteakk " .. arg .. " 1000 " .. " Упоминание иного проекта ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end 
 
 function cmd_aia(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 2500 " .. " Г‚Г»Г¤Г Г·Г  Г±ГҐГЎГї Г§Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г  ")
+		sampSendChat("/muteakk " .. arg .. " 2500 " .. " Выдача себя за администратора ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_akl(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 3000 " .. " ГЉГ«ГҐГўГҐГІГ  Г­Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГѕ ")
+		sampSendChat("/muteakk " .. arg .. " 3000 " .. " Клевета на администрацию ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_arz(arg)
 	if #arg > 0 then
-		sampSendChat("/muteakk " .. arg .. " 5000 " .. " ГђГ®Г§Г¦ГЁГЈ Г¬ГҐГ¦Г­Г Г¶. Г°Г®Г§Г­ГЁ ")
+		sampSendChat("/muteakk " .. arg .. " 5000 " .. " Розжиг межнац. розни ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end	
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ Г¬ГіГІГ Г¬ Гў Г®ГґГґГ«Г Г©Г­ГҐ -------
+------- Функции, относящиеся к мутам в оффлайне -------
 
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ ГЄГЁГЄГ Г¬ -------
+------- Функции, относящиеся к кикам -------
 function cmd_dj(arg)
 	if #arg > 0 then
 		sampSendChat("/kick " .. arg .. " dm in jail ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_gnk1(arg)
 	if #arg > 0 then
-		sampSendChat("/kick " .. arg .. " Г‘Г¬ГҐГ­ГЁГІГҐ Г­ГЁГЄГ­ГҐГ©Г¬. 1/3 ")
+		sampSendChat("/kick " .. arg .. " Смените никнейм. 1/3 ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_gnk2(arg)
 	if #arg > 0 then
-		sampSendChat("/kick " .. arg .. " Г‘Г¬ГҐГ­ГЁГІГҐ Г­ГЁГЄГ­ГҐГ©Г¬. 2/3 ")
+		sampSendChat("/kick " .. arg .. " Смените никнейм. 2/3 ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
 function cmd_gnk3(arg)
 	if #arg > 0 then
-		sampSendChat("/kick " .. arg .. " Г‘Г¬ГҐГ­ГЁГІГҐ Г­ГЁГЄГ­ГҐГ©Г¬. 3/3 ")
+		sampSendChat("/kick " .. arg .. " Смените никнейм. 3/3 ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
 
@@ -2833,135 +2833,135 @@ function cmd_cafk(arg)
 	if #arg > 0 then
 		sampSendChat("/kick " .. arg .. " AFK in /arena ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести ID нарушителя! ", -1)
 	end
 end
-------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ ГЄГЁГЄГ Г¬ -------
+------- Функции, относящиеся к кикам -------
 
--------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ ГЎГ Г­Г Г¬ Гў Г®ГґГґГ«Г Г©Г­ГҐ -----------
+-------- Функции, относящиеся к банам в оффлайне -----------
 function cmd_amenk(arg)
 	if #arg > 0 then
-		sampSendChat("/banakk " .. arg .. " 7 " .. " ГЌГЁГЄ, Г±Г®Г¤ГҐГ°Г¦Г ГѕГ№ГЁГ© Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»ГҐ Г±Г«Г®ГўГ  ")
+		sampSendChat("/banakk " .. arg .. " 7 " .. " Ник, содержающий запрещенные слова ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 
 function cmd_ahl(arg)
 	if #arg > 0 then
-		sampSendChat("/offban " .. arg .. " 3 " .. " ГЋГ±ГЄ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ/ГЊГ ГІ Гў ГµГҐГ«ГЇГҐГ°ГҐ")
+		sampSendChat("/offban " .. arg .. " 3 " .. " Оск/Унижение/Мат в хелпере")
 		sampSendChat("/offstats " .. arg)
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_ahli(arg)
 	if #arg > 0 then
-		sampSendChat("/banip " .. arg .. " 3 " .. " ГЋГ±ГЄ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ/ГЊГ ГІ Гў ГµГҐГ«ГЇГҐГ°ГҐ")
+		sampSendChat("/banip " .. arg .. " 3 " .. " Оск/Унижение/Мат в хелпере")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ IP Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести IP нарушителя! ", -1)
 	end
 end
 
 function cmd_aob(arg)
 	if #arg > 0 then
-		sampSendChat("/offban " .. arg .. " 7 " .. " ГЋГЎГµГ®Г¤ ГЎГ Г­Г  ")
+		sampSendChat("/offban " .. arg .. " 7 " .. " Обход бана ")
 		sampSendChat("/offstats " .. arg)
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_apl(arg)
 	if #arg > 0 then
-		sampSendChat("/offban " .. arg .. " 7 " .. " ГЏГ«Г ГЈГЁГ ГІ Г­ГЁГЄГ­ГҐГ©Г¬Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г ")
+		sampSendChat("/offban " .. arg .. " 7 " .. " Плагиат никнейма администратора")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_ach(arg)
 	if #arg > 0 then
-		sampSendChat("/offban " .. arg .. " 7 " .. "  Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г·ГЁГІГҐГ°Г±ГЄГ®ГЈГ® Г±ГЄГ°ГЁГЇГІГ /ГЏГЋ ")
+		sampSendChat("/offban " .. arg .. " 7 " .. "  Использование читерского скрипта/ПО ")
 		sampSendChat("/offstats " .. arg)
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_achi(arg)
 	if #arg > 0 then
-		sampSendChat("/banip " .. arg .. " 7 " .. " Г€Г—Г‘/ГЏГЋ (ip) ") 
+		sampSendChat("/banip " .. arg .. " 7 " .. " ИЧС/ПО (ip) ") 
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ IP Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести IP нарушителя! ", -1)
 	end
 end
 
 function cmd_ank(arg)
 	if #arg > 0 then
-		sampSendChat("/banakk " .. arg .. " 7 " .. " ГЌГЁГЄ, Г±Г®Г¤ГҐГ°Г¦Г Г№ГЁГ© Г­ГҐГ¶ГҐГ­Г§ГіГ°Г№ГЁГ­Гі ")
+		sampSendChat("/banakk " .. arg .. " 7 " .. " Ник, содержащий нецензурщину ")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_agcnk(arg)
 	if #arg > 0 then
-		sampSendChat("/banakk " .. arg .. " 7 " .. " ГЃГ Г­Г¤Г , Г±Г®Г¤ГҐГ°Г¦ГЁГІ Г­ГҐГ¶ГҐГ­Г§ГіГ°Г№ГЁГ­Гі")
+		sampSendChat("/banakk " .. arg .. " 7 " .. " Банда, содержит нецензурщину")
 		sampSendChat("/offstats " .. arg)
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end
 
 function cmd_agcnkip(arg)
 	if #arg > 0 then
-		sampSendChat("/banip " .. arg .. " 7 "  .. " ГЃГ Г­Г¤Г , Г±Г®Г¤ГҐГ°Г¦ГЁГІ Г­ГҐГ¶ГҐГ­Г§ГіГ°Г№ГЁГ­Гі (ip)")
+		sampSendChat("/banip " .. arg .. " 7 "  .. " Банда, содержит нецензурщину (ip)")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ IP Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести IP нарушителя! ", -1)
 	end
 end
 
 function cmd_rdsob(arg)
 	if #arg > 0 then
-		sampSendChat("/banakk " .. arg .. " 30 " .. " ГЋГЎГ¬Г Г­ Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ/ГЁГЈГ°Г®ГЄГ®Гў")
+		sampSendChat("/banakk " .. arg .. " 30 " .. " Обман администрации/игроков")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ NICK Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести NICK нарушителя! ", -1)
 	end
 end	
 
 function cmd_rdsip(arg)
 	if #arg > 0 then
-		sampSendChat("/banip " .. arg .. " 30 " .. " ГЋГЎГ¬Г Г­ Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ/ГЁГЈГ°Г®ГЄГ®Гў")
+		sampSendChat("/banip " .. arg .. " 30 " .. " Обман администрации/игроков")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ IP Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести IP нарушителя! ", -1)
 	end
 end	
 
 function cmd_abnm(arg)
 	if #arg > 0 then
-		sampSendChat("/banakk " .. arg .. " 7 " .. " ГЌГҐГ Г¤ГҐГЄГўГ ГІГ­Г®ГҐ ГЇГ®ГўГҐГ¤ГҐГ­ГЁГҐ")
+		sampSendChat("/banakk " .. arg .. " 7 " .. " Неадекватное поведение")
 	else 
-		sampAddChatMessage(tag .. "Г‚Г» Г§Г ГЎГ»Г«ГЁ ГўГўГҐГ±ГІГЁ IP Г­Г Г°ГіГёГЁГІГҐГ«Гї! ", -1)
+		sampAddChatMessage(tag .. "Вы забыли ввести IP нарушителя! ", -1)
 	end
 end	
--------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГ­Г®Г±ГїГ№ГЁГҐГ±Гї ГЄ ГЎГ Г­Г Г¬ Гў Г®ГґГґГ«Г Г©Г­ГҐ -----------
+-------- Функции, относящиеся к банам в оффлайне -----------
 
------- Г”ГіГ­ГЄГ¶ГЁГЁ, ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГ¬Г»ГҐ Гў ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ Г±Г«ГіГ·Г ГїГµ -------
+------ Функции, используемые в вспомогательных случаях -------
 function cmd_u(arg)
 	sampSendChat("/unmute " .. arg)
 end  
 
 function cmd_uu(arg)
 	sampSendChat("/unmute " .. arg)
-	sampSendChat("/ans " .. arg .. " Г€Г§ГўГЁГ­ГїГҐГ¬Г±Гї Г§Г  Г®ГёГЁГЎГЄГі, Г­Г ГЄГ Г§Г Г­ГЁГҐ Г±Г­ГїГІГ®. ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г»")
+	sampSendChat("/ans " .. arg .. " Извиняемся за ошибку, наказание снято. Приятной игры")
 end
 
 function cmd_uj(arg)
 	sampSendChat("/unjail " .. arg)
-	sampSendChat("/ans " .. arg .. " Г€Г§ГўГЁГ­ГїГҐГ¬Г±Гї Г§Г  Г®ГёГЁГЎГЄГі, Г­Г ГЄГ Г§Г Г­ГЁГҐ Г±Г­ГїГІГ®. ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г»")
+	sampSendChat("/ans " .. arg .. " Извиняемся за ошибку, наказание снято. Приятной игры")
 end
 
 function cmd_stw(arg)
@@ -2973,12 +2973,12 @@ function cmd_as(arg)
 end
 
 function cmd_ru(arg)
-	sampSendChat("/rmute " .. arg .. " 5 " .. "  Mistake/ГЋГёГЁГЎГЄГ ")
-	sampSendChat("/ans " .. arg .. " Г€Г§ГўГЁГ­ГїГҐГ¬Г±Гї Г§Г  Г®ГёГЁГЎГЄГі, Г­Г ГЄГ Г§Г Г­ГЁГҐ Г±Г­ГїГІГ®. ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г».")
+	sampSendChat("/rmute " .. arg .. " 5 " .. "  Mistake/Ошибка")
+	sampSendChat("/ans " .. arg .. " Извиняемся за ошибку, наказание снято. Приятной игры.")
 end
------- Г”ГіГ­ГЄГ¶ГЁГЁ, ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГ¬Г»ГҐ Гў ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ Г±Г«ГіГ·Г ГїГµ -------
+------ Функции, используемые в вспомогательных случаях -------
 
-------------------- ГђГ Г§Г¤ГҐГ« Г®ГІГўГҐГ·Г ГѕГ№ГЁГ© Г§Г  Г·ГІГҐГ­ГЁГҐ/Г§Г ГЇГЁГ±Гј ChatLogger ------------------------
+------------------- Раздел отвечающий за чтение/запись ChatLogger ------------------------
 function readRussian()
     for key,v in pairs(chat_logger_text) do 
         local text = u8:encode(dec(v))
@@ -2989,12 +2989,12 @@ end
 function readChatlog()
 	local file_check = assert(io.open(getWorkingDirectory() .. "\\config\\AdminTool\\chatlog\\" .. os.date("!*t").day .. "-" .. os.date("!*t").month .. "-" .. os.date("!*t").year .. ".txt", "r"))
 	local t = file_check:read("*all")
-	sampAddChatMessage(tag .. " Г—ГІГҐГ­ГЁГҐ ГґГ Г©Г«Г . ", -1)
+	sampAddChatMessage(tag .. " Чтение файла. ", -1)
 	file_check:close()
 	t = t:gsub("{......}", "")
 	local final_text = {}
 	final_text = string.split(t, "\n")
-	sampAddChatMessage(tag .. " Г”Г Г©Г« ГЇГ°Г®Г·ГЁГІГ Г­. ", -1)
+	sampAddChatMessage(tag .. " Файл прочитан. ", -1)
 		return final_text
 end
 
@@ -3014,7 +3014,7 @@ function  getFileName()
         return file  
     end
 end
-------------------- ГђГ Г§Г¤ГҐГ« Г®ГІГўГҐГ·Г ГѕГ№ГЁГ© Г§Г  Г·ГІГҐГ­ГЁГҐ/Г§Г ГЇГЁГ±Гј ChatLogger ------------------------
+------------------- Раздел отвечающий за чтение/запись ChatLogger ------------------------
 
 function string.rlower(s)
     s = s:lower()
@@ -3026,7 +3026,7 @@ function string.rlower(s)
         local ch = s:byte(i)
         if ch >= 192 and ch <= 223 then -- upper russian characters
             output = output .. russian_characters[ch + 32]
-        elseif ch == 168 then -- ВЁ
+        elseif ch == 168 then -- Ё
             output = output .. russian_characters[184]
         else
             output = output .. string.char(ch)
@@ -3045,7 +3045,7 @@ function string.rupper(s)
         local ch = s:byte(i)
         if ch >= 224 and ch <= 255 then -- lower russian characters
             output = output .. russian_characters[ch - 32]
-        elseif ch == 184 then -- Вё
+        elseif ch == 184 then -- ё
             output = output .. russian_characters[168]
         else
             output = output .. string.char(ch)
@@ -3065,9 +3065,9 @@ function string.split(inputstr, sep)
     end
     return t
 end
------------------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГўГҐГ·Г ГѕГ№ГЁГҐ Г§Г  ГЇГҐГ°ГҐГўГ®Г¤ Г±ГЁГ¬ГўГ®Г«Г®Гў --------------------------------
+------------------ Функции, отвечающие за перевод символов --------------------------------
 
------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГўГҐГ·Г ГѕГ№ГЁГҐ Г§Г  RGB-color ----------
+------ Функции, отвечающие за RGB-color ----------
 function join_argb(a, r, g, b)
 	local argb = b  -- b
 	argb = bit.bor(argb, bit.lshift(g, 8))  -- g
@@ -3089,9 +3089,9 @@ function explode_argb(argb)
     local b = bit.band(argb, 0xFF)
     return a, r, g, b
 end
------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГўГҐГ·Г ГѕГ№ГЁГҐ Г§Г  RGB-color ----------
+------ Функции, отвечающие за RGB-color ----------
 
-------------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГўГҐГ·Г ГѕГ№ГЁГҐ Г§Г  ГЇГ°ГЁГўГїГ§ГЄГі/Г®ГІГўГїГ§ГЄГі ГЄГ«Г ГўГЁГё -----------------
+------------- Функции, отвечающие за привязку/отвязку клавиш -----------------
 function getDownKeys()
     local curkeys = ""
     local bool = false
@@ -3185,7 +3185,7 @@ function isKeysDown(keylist, pressed)
     end
     return bool
 end
-------------- Г”ГіГ­ГЄГ¶ГЁГЁ, Г®ГІГўГҐГ·Г ГѕГ№ГЁГҐ Г§Г  ГЇГ°ГЁГўГїГ§ГЄГі/Г®ГІГўГїГ§ГЄГі ГЄГ«Г ГўГЁГё -----------------
+------------- Функции, отвечающие за привязку/отвязку клавиш -----------------
 
 function textSplit(str, delim, plain)
     local tokens, pos, plain = {}, 1, not (plain == false) --[[ delimiter is plain text by default ]]
@@ -3223,7 +3223,8 @@ function sampev.onShowTextDraw(id, data)
 	or id == 160 or id == 2052 or id == 179 or id == 165 or id == 437
 	or id == 164 or id == 180 or id == 162 or id == 178 or id == 181 or id == 166 or id == 170 
 	or id == 174 or id == 182 or id == 172 or id == 175 or id == 171 or id == 183 or id == 184 
-	or id == 177 or id == 171 or id == 161 or id == 169 or id == 167 or id == 176 or id == 413) and elm.checkbox.atrecon.v then
+	or id == 177 or id == 171 or id == 161 or id == 169 or id == 167 or id == 176 or id == 413 or id == 437
+	or id == 163 or id == 168 or id == 173) and elm.checkbox.atrecon.v then
 		return false
 	end
 	if id == 2059 then  
@@ -3407,14 +3408,14 @@ function imgui.CenterText(text)
 end
 
 local helloText = [[
-	Г„Г®ГЎГ°Г®ГЈГ® ГўГ°ГҐГ¬ГҐГ­ГЁ Г±ГіГІГ®ГЄ. Г‘ГЇГ Г±ГЁГЎГ® Г§Г  Г±ГЄГ Г·ГЁГўГ Г­ГЁГҐ Г¤Г Г­Г­Г®ГЈГ® Г±ГЄГ°ГЁГЇГІГ ! 
-	{00BFFF}AdminTool {FFFFFF}ГЇГ°ГҐГ¤Г­Г Г§Г­Г Г·ГҐГ­ Г¤Г«Гї ГІГ®ГЈГ®, Г·ГІГ®ГЎГ» ГіГЇГ°Г®Г±ГІГЁГІГј Г°Г ГЎГ®ГІГі Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ.
-	Г‘ГўГ®ГЁ ГЇГ°ГҐГ¤Г«Г®Г¦ГҐГ­ГЁГї ГЇГ® ГЇГ®ГўГ®Г¤Гі Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГ© Г¬Г®Г¦Г­Г® Г­Г ГЇГЁГ±Г ГІГј Гў ГЈГ°ГіГЇГЇГі VK:
+	Доброго времени суток. Спасибо за скачивание данного скрипта! 
+	{00BFFF}AdminTool {FFFFFF}предназначен для того, чтобы упростить работу администрации.
+	Свои предложения по поводу обновлений можно написать в группу VK:
 	https://vk.com/infsy
-	Г‚Г» Г­Г ГµГ®Г¤ГЁГІГҐГ±Гј Гў Г­ГіГ«ГҐГўГ®Г¬ Г®ГЄГ­ГҐ Г®Г±Г­Г®ГўГ­Г®ГЈГ® Г¬ГҐГ­Гѕ! Г—ГІГ®ГЎГ» ГЇГҐГ°ГҐГ©ГІГЁ Г¤Г Г«ГјГёГҐ
-	ГЇГ°Г®Г±ГІГ® ГЇГҐГ°ГҐГµГ®Г¤ГЁГІГҐ ГЇГ® ГЇГіГ­ГЄГІГ Г¬ Г±Г«ГҐГўГ , ГЄГ®ГІГ®Г°Г»ГҐ ГўГ» ГўГЁГ¤ГЁГІГҐ
-	ГЂГўГІГ®Г° Г¤Г Г­Г­Г®ГЈГ® Г±ГЄГ°ГЁГЇГІГ : Г…ГЈГ®Г° Г”ГҐГ¤Г®Г±ГҐГҐГў, VK: {00BFFF}https://vk.com/alfantasy
-	Г•Г®Г°Г®ГёГҐГ© Г°Г ГЎГ®ГІГ» ГўГ Г¬, ГЄГ®Г«Г«ГҐГЈГ ! :3
+	Вы находитесь в нулевом окне основного меню! Чтобы перейти дальше
+	просто переходите по пунктам слева, которые вы видите
+	Автор данного скрипта: Егор Федосеев, VK: {00BFFF}https://vk.com/alfantasy
+	Хорошей работы вам, коллега! :3
 ]]
 
 function imgui.OnDrawFrame()
@@ -3500,55 +3501,55 @@ function imgui.OnDrawFrame()
 		if imgui.Button(fai.ICON_FA_USER_COG, imgui.ImVec2(27,0)) then
 			menuSelect = 1
 		end
-		imgui.Tooltip(u8"ГЋГ±Г­Г®ГўГ­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ AT")
+		imgui.Tooltip(u8"Основные функции AT")
 		if imgui.Button(fa.ICON_ADDRESS_BOOK, imgui.ImVec2(27,0)) then  
 			menuSelect = 12
 		end	
-		imgui.Tooltip(u8"ГЂГ¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГЁГўГ­Г Гї Г±ГІГ ГІГЁГ±ГІГЁГЄГ ")
+		imgui.Tooltip(u8"Административная статистика")
         if imgui.Button(fa.ICON_FA_KEYBOARD, imgui.ImVec2(27,0)) then
             menuSelect = 2
         end
-		imgui.Tooltip(u8"ГѓГ®Г°ГїГ·ГЁГҐ ГЄГ«Г ГўГЁГёГЁ")
+		imgui.Tooltip(u8"Горячие клавиши")
 		if imgui.Button(fa.ICON_FA_CROSSHAIRS, imgui.ImVec2(27,0)) then 
 			menuSelect = 5 
 		end	
-		imgui.Tooltip(u8"Г’Г°ГҐГ©Г±ГҐГ° ГЇГіГ«Гј")
+		imgui.Tooltip(u8"Трейсер пуль")
         if imgui.Button(fa.ICON_RSS, imgui.ImVec2(27,0)) then
             menuSelect = 3
         end
-		imgui.Tooltip(u8"ГЏГ®Г¬Г®Г№Гј ГЇГ® /ans")
+		imgui.Tooltip(u8"Помощь по /ans")
         if imgui.Button(fa.ICON_FA_LIST, imgui.ImVec2(27,0)) then
             menuSelect = 4
         end
-		imgui.Tooltip(u8"Г”Г«ГіГ¤Г»")
+		imgui.Tooltip(u8"Флуды")
         if imgui.Button(fa.ICON_FILE_TEXT, imgui.ImVec2(27,0)) then
 			menuSelect = 9
         end
-		imgui.Tooltip(u8"ГЃГ«Г®ГЄГ­Г®ГІ")
+		imgui.Tooltip(u8"Блокнот")
         if imgui.Button(fa.ICON_FA_TEXT_HEIGHT, imgui.ImVec2(27,0)) then
             menuSelect = 6
         end
-		imgui.Tooltip(u8"ГЊГҐГ°Г®ГЇГ°ГЁГїГІГЁГї")
+		imgui.Tooltip(u8"Мероприятия")
         if imgui.Button(fa.ICON_FA_COMMENTS, imgui.ImVec2(27,0)) then
             menuSelect = 7
         end
-		imgui.Tooltip(u8"ГЌГ ГЄГ Г§Г Г­ГЁГї")
+		imgui.Tooltip(u8"Наказания")
 		if imgui.Button(fa.ICON_FA_REPLY, imgui.ImVec2(27,0)) then
             menuSelect = 8
         end
-		imgui.Tooltip(u8"Г‘ГЇГҐГ¶ГЁГ Г«ГјГ­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ")
+		imgui.Tooltip(u8"Специальные функции")
 		if imgui.Button(fa.ICON_CALCULATOR, imgui.ImVec2(27,0)) then  
 			menuSelect = 13
 		end	
-		imgui.Tooltip(u8"ГЃГЁГ­Г¤ГҐГ°")
+		imgui.Tooltip(u8"Биндер")
         if imgui.Button(fa.ICON_FA_COGS, imgui.ImVec2(27,0)) then
             menuSelect = 10
         end
-		imgui.Tooltip(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ")
+		imgui.Tooltip(u8"Настройки")
 		if imgui.Button(fa.ICON_POWER_OFF, imgui.ImVec2(27,0)) then  
 			lua_thread.create(function()
 				wait(200)
-				sampAddChatMessage(tag .. " Г‚Г»ГЈГ°ГіГ§ГЄГ  ГЇГ°Г®Г¶ГҐГ±Г±Г  AdminTool! ГЏГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГ : ALT+R")
+				sampAddChatMessage(tag .. " Выгрузка процесса AdminTool! Перезагрузка: ALT+R")
 				ATToolsMenu.v = false
 				wait(200)
 				plre.OffScript()
@@ -3558,7 +3559,7 @@ function imgui.OnDrawFrame()
 				thisScript():unload()
 			end)
 		end  
-		imgui.Tooltip(u8"Г‚Г»ГЄГ«ГѕГ·ГҐГ­ГЁГҐ ГўГ±ГҐГЈГ® AT.\nГ…Г±Г«ГЁ Г­ГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЁГІГј, ГІГ® Г­Г Г¦Г¬ГЁГІГҐ ALT+R")
+		imgui.Tooltip(u8"Выключение всего AT.\nЕсли необходимо перезагрузить, то нажмите ALT+R")
 		imgui.PopStyleVar(1)
 		imgui.PopStyleVar(1)
         imgui.EndChild()
@@ -3568,21 +3569,21 @@ function imgui.OnDrawFrame()
             imgui.TextColoredRGB(u8(helloText))
         end
 		if menuSelect == 1 then 
-			imgui.Text(fa.ICON_REPLY .. u8" ГЏГ Г°Г®Г«Гј Г®ГІ Г Г¤Г¬ГЁГ­ГЄГЁ ")
+			imgui.Text(fa.ICON_REPLY .. u8" Пароль от админки ")
 			imgui.SameLine()
 			if imgui.InputText("", elm.input.ATAdminPass, imgui.InputTextFlags.Password) then 
 				ATcfg.setting.ATAdminPass = elm.input.ATAdminPass.v
 				save() 
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЏГ°ГЁ ГўГўГ®Г¤ГҐ, ГЇГ Г°Г®Г«Гј Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ Г±Г®ГµГ°Г Г­ГїГҐГІГ±Гї Гў ГЄГ®Г­ГґГЁГЈ\nГЏГ°ГЁ ГЁГ­ГІГҐГ°ГґГҐГ©Г±ГҐ ГЁ ГўГўГ®Г¤ГҐ, ГЎГіГ¤ГіГІ ГЇГ®ГЄГ Г§Г»ГўГ ГІГјГ±Гї *********')	
-			if imgui.Button(fa.ICON_REFRESH .. u8"  ГЋГЎГ­Г®ГўГЁГІГј ##REFRESHTHISPASSWORD") then  
+			imgui.TextQuestion('(?)', u8'При вводе, пароль автоматически сохраняется в конфиг\nПри интерфейсе и вводе, будут показываться *********')	
+			if imgui.Button(fa.ICON_REFRESH .. u8"  Обновить ##REFRESHTHISPASSWORD") then  
 				elm.input.ATAdminPass.v = ''
 				ATcfg.setting.ATAdminPass = elm.input.ATAdminPass.v  
 				save()
 			end	
 			imgui.Separator()
-			imgui.TextColoredRGB(fa.ICON_USER_CIRCLE .. u8' ГЃГҐГ±Г±Г¬ГҐГ°ГІГЁГҐ {808080}(/agm)')
+			imgui.TextColoredRGB(fa.ICON_USER_CIRCLE .. u8' Бессмертие {808080}(/agm)')
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
 			if imgui.ToggleButton('##AGM', elm.checkbox.god_mode) then 
@@ -3594,7 +3595,7 @@ function imgui.OnDrawFrame()
 			end	
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
-			imgui.Text(fai.ICON_FA_GEM .. u8" On/Off Г¬ГЁГЈ.ГЄГ«ГЁГ±ГІ")
+			imgui.Text(fai.ICON_FA_GEM .. u8" On/Off миг.клист")
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
 			if imgui.ToggleButton("##Aclist", elm.checkbox.clist_adm) then 
@@ -3610,7 +3611,7 @@ function imgui.OnDrawFrame()
 			end		
 			plugin2.autoMP()
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЏГ°ГЁ Г®ГІГЄГ°Г»ГІГЁГЁ Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГї Г·ГҐГ°ГҐГ§ AT\nГ ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ Г±Г®Г§Г¤Г ГҐГІ ГІГҐГ«ГҐГЇГ®Г°ГІ Г­Г  ГЊГЏ')
+			imgui.TextQuestion('(?)', u8'При открытии мероприятия через AT\nавтоматически создает телепорт на МП')
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
 			imgui.Text(fai.ICON_FA_SIGN_IN_ALT .. u8" AutoALogin")
@@ -3621,8 +3622,8 @@ function imgui.OnDrawFrame()
 				save() 
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЂГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ Г ГўГІГ®Г°ГЁГ§ГіГҐГІГ±Гї ГЇГ®Г¤ Г Г¤Г¬ГЁГ­ГЄГі ГЇГ°ГЁ ГўГўГ®Г¤ГҐ /alogin\nГЏГ Г°Г®Г«Гј Г¬Г®Г¦Г­Г® ГўГ»Г±ГІГ ГўГЁГІГј Гў Г­Г Г·Г Г«ГҐ!')
-			imgui.Text(fa.ICON_BELL ..  u8" Г“ГўГҐГ¤Г®Г¬Г«ГҐГ­ГЁГї Г® Г°ГҐГЇГ®Г°ГІГҐ")
+			imgui.TextQuestion('(?)', u8'Автоматически авторизуется под админку при вводе /alogin\nПароль можно выставить в начале!')
+			imgui.Text(fa.ICON_BELL ..  u8" Уведомления о репорте")
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
 			if imgui.ToggleButton("##Push_Report", elm.checkbox.push_report) then 
@@ -3630,10 +3631,10 @@ function imgui.OnDrawFrame()
 				save() 
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'Г“ГўГҐГ¤Г®Г¬Г«ГїГҐГІ Г® ГЇГ°ГЁГёГҐГ¤ГёГЁГµ Г°ГҐГЇГ®Г°ГІГ Гµ.')
+			imgui.TextQuestion('(?)', u8'Уведомляет о пришедших репортах.')
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
-			imgui.Text(fa.ICON_ADDRESS_BOOK .. u8" Г—Г ГІ-Г«Г®ГЈГЈГҐГ°")
+			imgui.Text(fa.ICON_ADDRESS_BOOK .. u8" Чат-логгер")
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
 			if imgui.ToggleButton("##Chat_Logger", elm.checkbox.chat_logger) then 
@@ -3641,28 +3642,28 @@ function imgui.OnDrawFrame()
 				save() 
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'Г‚Г»ГўГ®Г¤ГЁГІ Г·Г ГІ-Г«Г®ГЈ ГўГ Г¬ Гў Г®ГЄГ­Г® // Г«Г®ГЈГЁГ°ГіГҐГІ Г·Г ГІ ГЁГЈГ°Г»')
+			imgui.TextQuestion('(?)', u8'Выводит чат-лог вам в окно // логирует чат игры')
 			plugin2.ActiveAutoMute()
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Г‡Г¤ГҐГ±Гј Г§Г ГЄГ«ГѕГ·ГҐГ­ Г ГўГІГ®Г¬ГіГІ Г§Г  Г¬Г ГІ ГЁ Г ГўГІГ®Г¬ГіГІ Г§Г  Г®Г±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГї!")
+			imgui.TextQuestion('(?)', u8"Здесь заключен автомут за мат и автомут за оскорбления!")
 			imgui.SameLine()
 			plugin.translatecmd()
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЏГ°ГЁ ГўГўГ®Г¤ГҐ ГЄГ®Г¬Г Г­Г¤Г» Г­Г  Г°ГіГ±Г±ГЄГ®Г¬, ГЇГҐГ°ГҐГўГ®Г¤ГЁГІ ГҐВё Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ ГЇГ°Г ГўГЁГ«ГјГ­Г®\nГЏГ°ГЁГ¬ГҐГ°: .Г±ГґГЄ - /car')
-			imgui.Text(fa.ICON_OBJECT_GROUP .. u8" Г‘ustom ScoreBoard (TAB)")
+			imgui.TextQuestion('(?)', u8'При вводе команды на русском, переводит её автоматически правильно\nПример: .сфк - /car')
+			imgui.Text(fa.ICON_OBJECT_GROUP .. u8" Сustom ScoreBoard (TAB)")
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
 			if imgui.ToggleButton("##AT_CTAB", elm.checkbox.custom_tab) then 
 				if elm.checkbox.custom_tab.v then  
-					showNotification("AdminTool", "Г‚ГЄГ«ГѕГ·ГҐГ­ Custom ScoreBoard (TAB)")
+					showNotification("AdminTool", "Включен Custom ScoreBoard (TAB)")
 				else 	
-					showNotification("AdminTool", "Г‚Г»ГЄГ«ГѕГ·ГҐГ­ Custom ScoreBoard (TAB)")
+					showNotification("AdminTool", "Выключен Custom ScoreBoard (TAB)")
 				end	
 				ATcfg.setting.AT_CTAB = elm.checkbox.custom_tab.v 
 				save() 
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЉГ«Г Г±Г±ГЁГ·ГҐГ±ГЄГЁГ© ScoreBoard (TAB) Г§Г Г¬ГҐГ­ГїГҐГІГ±Гї ScoreBoard Г®ГІ alfantasyz feat. SatanHolograms')
+			imgui.TextQuestion('(?)', u8'Классический ScoreBoard (TAB) заменяется ScoreBoard от alfantasyz feat. SatanHolograms')
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
 			imgui.Text(fa.ICON_ADDRESS_CARD .. u8" Custom Recon-Menu")
@@ -3672,22 +3673,22 @@ function imgui.OnDrawFrame()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
 			if imgui.ToggleButton('##RanReMenu', elm.checkbox.atrecon) then 
 				if elm.checkbox.atrecon.v then  
-					showNotification("AdminTool", "Г‚ГЄГ«ГѕГ·ГҐГ­ Custom Recon-Menu")
+					showNotification("AdminTool", "Включен Custom Recon-Menu")
 				else 	
-					showNotification("AdminTool", "Г‚Г»ГЄГ«ГѕГ·ГҐГ­ Custom Recon-Menu")
+					showNotification("AdminTool", "Выключен Custom Recon-Menu")
 				end	
 				ATcfg.setting.recon_menu = elm.checkbox.atrecon.v
 				save()
 			end
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЉГ«Г Г±Г±ГЁГ·ГҐГ±ГЄГ®ГҐ (Г±ГҐГ°ГўГҐГ°Г­Г®ГҐ) Г°ГҐГЄГ®Г­-Г¬ГҐГ­Гѕ Г§Г Г¬ГҐГ­ГїГҐГІГ±Гї Г°ГҐГЄГ®Г­Г®Г¬-Г¬ГҐГ­Гѕ Г®ГІ alfantasyz feat. SatanHolograms')	
+			imgui.TextQuestion('(?)', u8'Классическое (серверное) рекон-меню заменяется реконом-меню от alfantasyz feat. SatanHolograms')	
 			plugin.ActiveWH()
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЂГЄГІГЁГўГЁГ°ГіГҐГІ WallHack, ГЅГІГ® ГЇГҐГ°ГҐГЄГ«ГѕГ·Г ГІГҐГ«Гј \n Г…Г±ГІГј ГҐГ№Вё ГЄГ®Г¬Г Г­Г¤Г  /wh')	
+			imgui.TextQuestion('(?)', u8'Активирует WallHack, это переключатель \n Есть ещё команда /wh')	
 			imgui.SameLine()
 			plugin.InfiniteRun()
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'ГЂГЄГІГЁГўГЁГ°ГіГҐГІ ГЎГҐГ±ГЄГ®Г­ГҐГ·Г­Г»Г© ГЎГҐГЈ ГўГ ГёГҐГ¬Гі ГЇГҐГ°Г±Г®Г­Г Г¦Гі.')	
+			imgui.TextQuestion('(?)', u8'Активирует бесконечный бег вашему персонажу.')	
 			imgui.Text(fa.ICON_USER .. u8" Render /admins")
 			imgui.SameLine()
 			if imgui.Button(fa.ICON_FA_COGS .. "##AdminShow") then   
@@ -3700,10 +3701,10 @@ function imgui.OnDrawFrame()
 				save() 
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"ГђГҐГ­Г¤ГҐГ°ГЁГІ /admins Г®ГІГ¤ГҐГ«ГјГ­Г®, Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ Г§Г ГЄГ°Г»ГўГ Гї Г¤ГЁГ Г«Г®ГЈ\n Г”ГіГ­ГЄГ¶ГЁГї Г­Г ГµГ®Г¤ГЁГІГ±Гї Г­Г  Г±ГІГ Г¤ГЁГЁ ГІГҐГ±ГІГЁГ°Г®ГўГ Г­ГЁГї/Г°Г Г§Г°Г ГЎГ®ГІГЄГЁ. \nГ„Г«Гї ГўГ»ГўГ®Г¤Г  Г°ГҐГ­Г¤ГҐГ°Г , Г­ГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® ГЇГ°Г®ГЇГЁГ±Г»ГўГ ГІГј /admins (Г‚ГђГ…ГЊГ…ГЌГЌГЋ)")
+			imgui.TextQuestion('(?)', u8"Рендерит /admins отдельно, автоматически закрывая диалог\n Функция находится на стадии тестирования/разработки. \nДля вывода рендера, необходимо прописывать /admins (ВРЕМЕННО)")
 			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
-			imgui.Text(fa.ICON_FA_KEYBOARD .. u8" Г‘ГЁГ­ГµГ°Г®Г­ГЁГ§.ГЄГ«Г ГўГ» ГЁГЈГ°Г®ГЄГ ")
+			imgui.Text(fa.ICON_FA_KEYBOARD .. u8" Синхрониз.клавы игрока")
 			imgui.SameLine()
 			if imgui.Button(fa.ICON_FA_COGS .. u8" ##ChangePos") then  
 				imgui.OpenPopup('keypos')
@@ -3715,28 +3716,28 @@ function imgui.OnDrawFrame()
 				save()
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"ГЏГ®ГЄГ Г§Г»ГўГ ГҐГІ Г­Г Г¦Г ГІГ»ГҐ ГЄГ«Г ГўГЁГёГЁ ГЁГЈГ°Г®ГЄГ  Гў Г°ГҐГЄГ®Г­ГҐ.")
+			imgui.TextQuestion('(?)', u8"Показывает нажатые клавиши игрока в реконе.")
 			imgui.SameLine()
 			if imgui.BeginPopup("keypos") then  
-				if imgui.Button(fa.ICON_FA_COGS .. u8" Г€Г§Г¬ГҐГ­ГҐГ­ГЁГҐ ГЇГ®Г«Г®Г¦ГҐГ­ГЁГї Г®ГЄГ­Г ") then  
+				if imgui.Button(fa.ICON_FA_COGS .. u8" Изменение положения окна") then  
 					plugin.kposition()
 				end	
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup("adminshow") then   
-				if imgui.Button(u8"Г€Г§Г¬ГҐГ­ГҐГ­ГЁГҐ ГЇГ®Г«Г®Г¦ГҐГ­ГЁГї Г°ГҐГ­Г¤ГҐГ°Г ") then  
+				if imgui.Button(u8"Изменение положения рендера") then  
 					render.acX = elm.ac.X; render.acY = elm.ac.Y
 					render.acpos = true 
 				end
 				imgui.Separator()
-				imgui.Text(u8" Г–ГўГҐГІ Г°ГҐГ­Г¤ГҐГ°Г ")
-				imgui.Text(u8"ГЊГ®Г¦ГҐГІГҐ ГўГўГҐГ±ГІГЁ Г±ГўГ®Г© Г¶ГўГҐГІ Г°ГҐГ­Г¤ГҐГ°Г , ГЁГ±ГЇГ®Г«ГјГ§ГіГї Г¶ГўГҐГІГ  HTML ГЁ {} \n ГІГ®-ГҐГ±ГІГј, ГЄ ГЇГ°ГЁГ¬ГҐГ°Гі Г§ГҐГ«ГҐГ­Г»Г© ГЁ Г­ГіГ¦Г­Г® ГўГўГҐГ±ГІГЁ {008000}")
+				imgui.Text(u8" Цвет рендера")
+				imgui.Text(u8"Можете ввести свой цвет рендера, используя цвета HTML и {} \n то-есть, к примеру зеленый и нужно ввести {008000}")
 				if imgui.InputText("", elm.input.ATColor_admins) then 
 					ATcfg.setting.ATColor_admin = elm.input.ATColor_admins.v 
 					save() 
 				end	
 				imgui.Separator()
-				imgui.Text(u8'ГђГ Г§Г¬ГҐГ° ГёГ°ГЁГґГІГ ')
+				imgui.Text(u8'Размер шрифта')
 				if imgui.SliderInt("##sizeAcFont", elm.int.admFont, 1, 20) then
 					font_ac = renderCreateFont("Arial", tonumber(elm.int.admFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
 					ATcfg.setting.admFont = elm.int.admFont.v
@@ -3747,246 +3748,246 @@ function imgui.OnDrawFrame()
 		end	
 		if menuSelect == 2 then 
 			imgui.Text("")
-			imgui.Text(u8"Г‡Г Г¦Г ГІГ»ГҐ ГЄГ­Г®ГЇГЄГЁ: ")
+			imgui.Text(u8"Зажатые кнопки: ")
 			imgui.SameLine()
 			imgui.Text(getDownKeysText())
 			imgui.Text("")
 			imgui.Separator()
-			imgui.Text(u8"ГЋГІГЄГ°Г»ГІГЁГҐ ГЁГ­ГІГҐГ°ГґГҐГ©Г±Г  (/tool): ")
+			imgui.Text(u8"Открытие интерфейса (/tool): ")
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATTool)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 1", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 1", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATTool = getDownKeysText()
 				save()
 			end 
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 1") then 
+			if imgui.Button(u8"Очистить. ## 1") then 
 				ATcfg.keys.ATTool = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8"Г‚Г»Г¤Г Г·Г  Г§Г  Г®Г­Г«Г Г©Г­: ")
+			imgui.Text(u8"Выдача за онлайн: ")
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATOnline)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 2", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 2", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATOnline = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 2 ") then 
+			if imgui.Button(u8"Очистить. ## 2 ") then 
 				ATcfg.keys.ATOnline = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8"ГЋГІГЄГ°Г»ГІГЁГҐ /ans: ")
+			imgui.Text(u8"Открытие /ans: ")
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATReportAns)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 3", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 3", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportAns = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 3 ") then 
+			if imgui.Button(u8"Очистить. ## 3 ") then 
 				ATcfg.keys.ATReportAns = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8'Г‚Г»ГўГ®Г¤ "ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г»" Гў /ans: ' )
+			imgui.Text(u8'Вывод "Приятной игры" в /ans: ' )
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATReportRP)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 4", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 4", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportRP = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 4 ") then 
+			if imgui.Button(u8"Очистить. ## 4 ") then 
 				ATcfg.keys.ATReportRP = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8"Г‘ГІГ ГІГЁГ±ГІГЁГЄГ  ГЁГЈГ°Г®ГЄГ  ГЇГ°ГЁ Г±Г«ГҐГ¦ГЄГҐ: ")
+			imgui.Text(u8"Статистика игрока при слежке: ")
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.Re_menu)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 5", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 5", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.Re_menu = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 5 ") then 
+			if imgui.Button(u8"Очистить. ## 5 ") then 
 				ATcfg.keys.ATRe_menu = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8'Г‚Г»ГўГ®Г¤ "ГЏГ°ГЁГїГІГ­Г®ГЈГ® ГўГ°ГҐГ¬ГїГЇГ°ГҐГЇГ°Г®ГўГ®Г¦Г¤ГҐГ­ГЁГї" Гў /ans: ' )
+			imgui.Text(u8'Вывод "Приятного времяпрепровождения" в /ans: ' )
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATReportRP1)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 6", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 6", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportRP1 = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 6 ") then 
+			if imgui.Button(u8"Очистить. ## 6 ") then 
 				ATcfg.keys.ATReportRP1 = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8'Г‚Г»ГўГ®Г¤ "ГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г»" Гў Г·Г ГІ: ' )
+			imgui.Text(u8'Вывод "Приятной игры" в чат: ' )
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATReportRP2)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 7", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 7", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportRP2 = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 7 ") then 
+			if imgui.Button(u8"Очистить. ## 7 ") then 
 				ATcfg.keys.ATReportRP2 = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8'Г‚ГЄГ«ГѕГ·ГҐГ­ГЁГҐ/ГўГ»ГЄГ«ГѕГ·ГҐГ­ГЁГҐ WallHack: ' )
+			imgui.Text(u8'Включение/выключение WallHack: ' )
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATWHkeys)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 8", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 8", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATWHkeys = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 8 ") then 
+			if imgui.Button(u8"Очистить. ## 8 ") then 
 				ATcfg.keys.ATWHkeys = "None"
 				save()
 			end	
 			imgui.Separator()
-			imgui.Text(u8'ГЂГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГ®ГҐ Г­Г ГЇГЁГ±Г Г­ГЁГҐ /re Гў Г·Г ГІ: ')
+			imgui.Text(u8'Автоматическое написание /re в чат: ')
 			imgui.SameLine()
 			imgui.Text(ATcfg.keys.ATRecon)
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
-			if imgui.Button(u8"Г‡Г ГЇГЁГ±Г ГІГј. ## 9", imgui.ImVec2(75, 0)) then
+			if imgui.Button(u8"Записать. ## 9", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATRecon = getDownKeysText()
 				save()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј. ## 9 ") then 
+			if imgui.Button(u8"Очистить. ## 9 ") then 
 				ATcfg.keys.ATRecon = "None"
 				save()
 			end	
 		end	
 		if menuSelect == 3 then 
-			imgui.Text(u8"Г’Г»ГЄГ Г©ГІГҐ Г­Г  ГЄГ­Г®ГЇГЄГі, Г®ГІГЄГ°Г®ГҐГІГ±Гї Г±ГЇГ°Г ГўГ®Г·Г­ГЁГЄ :D")
+			imgui.Text(u8"Тыкайте на кнопку, откроется справочник :D")
 			imgui.Separator()
-			if imgui.Button(u8"Г†Г Г«Г®ГЎГ» Г­Г  ГЄГ®ГЈГ®-ГІГ®/Г·ГІГ®-ГІГ®") then
-				imgui.OpenPopup(u8'Г†Г Г«Г®ГЎГ» Г­Г  ГЄГ®ГЈГ®/Г·ГІГ®-ГІГ®')
+			if imgui.Button(u8"Жалобы на кого-то/что-то") then
+				imgui.OpenPopup(u8'Жалобы на кого/что-то')
 			end 
 			imgui.SameLine()
-			if imgui.Button(u8"Г‚Г®ГЇГ°Г®Г±Г» ГЇГ® ГЄГ®Г¬Г Г­Г¤Г Г¬, /help") then 
+			if imgui.Button(u8"Вопросы по командам, /help") then 
 				imgui.OpenPopup(u8'helpcmd')
 			end	
-			if imgui.Button(u8"ГЏГ®Г¬Г®Г№Гј ГЇГ® ГЎГ Г­Г¤ГҐ/Г±ГҐГ¬ГјГҐ") then 
+			if imgui.Button(u8"Помощь по банде/семье") then 
 				imgui.OpenPopup(u8'helpgang')
 			end	
 			imgui.SameLine()
-			if imgui.Button(u8"ГЏГ®Г¬Г®Г№Гј ГЇГ® ГІГҐГ«ГҐГЇГ®Г°ГІГ Г¶ГЁГЁ") then 
+			if imgui.Button(u8"Помощь по телепортации") then 
 				imgui.OpenPopup(u8'helptp')
 			end	
-			if imgui.Button(u8"ГЏГ®Г¬Г®Г№Гј ГЇГ® ГЇГ°Г®Г¤Г Г¦ГҐ/ГЇГ®ГЄГіГЇГЄГҐ") then 
+			if imgui.Button(u8"Помощь по продаже/покупке") then 
 				imgui.OpenPopup(u8'helpsell')
 			end	
 			imgui.SameLine()
-			if imgui.Button(u8"ГЏГ®Г¬Г®Г№Гј ГЇГ® ГЇГҐГ°ГҐГ¤Г Г·ГҐ Г·ГҐГЈГ®-ГІГ®") then 
+			if imgui.Button(u8"Помощь по передаче чего-то") then 
 				imgui.OpenPopup(u8'helpgive')
 			end	
-			if imgui.Button(u8"ГЋГ±ГІГ Г«ГјГ­Г»ГҐ ГўГ®ГЇГ°Г®Г±Г»") then 
+			if imgui.Button(u8"Остальные вопросы") then 
 				imgui.OpenPopup(u8'otherqu')
 			end	
 			imgui.SameLine()
-			if imgui.Button(u8"Г‘ГЄГЁГ­Г»") then 
+			if imgui.Button(u8"Скины") then 
 				imgui.OpenPopup(u8'skins')
 			end	
 			imgui.SameLine()
-			if imgui.Button(u8"ГѓГ®Г°ГїГ·ГЁГҐ ГЄГ«Г ГўГЁГёГЁ") then 
+			if imgui.Button(u8"Горячие клавиши") then 
 				imgui.OpenPopup(u8'hotkeys')
 			end	
 			if imgui.BeginPopup(u8'helpcmd') then 
-				imgui.Text(u8"/h7 - vip ($ .ГЇ7 ), /h8 - ГЄГ¬Г¤ Г­Г  Г±ГўГ Г¤ГјГЎГ» ($ .ГЇ8 )\n/h13 - Г§Г Г°Г ГЎГ®ГІГ®ГЄ ($ .ГЇ13 ) ")
-				imgui.Text(u8"/int - Г€Г­ГґГ  Гў ГЁГ­ГҐГІГҐ ($ .ГЁГ­Гґ ) \n/vp1 - /vp4 - ГЇГ°ГЁГўГҐГ«ГҐГЈГЁГЁ Г®ГІ Premuim Г¤Г® Г‹ГЁГ·Г­Г®ГЈГ® ($ .ГўГЇ1 - .ГўГЇ4)")
-				imgui.Text(u8"/gadm - ГЇГ®Г«ГіГ·ГҐГ­ГЁГҐ Г Г¤Г¬ ($ .ГЇГ Г¤Г¬)")
+				imgui.Text(u8"/h7 - vip ($ .п7 ), /h8 - кмд на свадьбы ($ .п8 )\n/h13 - заработок ($ .п13 ) ")
+				imgui.Text(u8"/int - Инфа в инете ($ .инф ) \n/vp1 - /vp4 - привелегии от Premuim до Личного ($ .вп1 - .вп4)")
+				imgui.Text(u8"/gadm - получение адм ($ .падм)")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'helpgang') then 
-				imgui.Text(u8"/fp - ГЄГ ГЄ Г®ГІГЄГ°Г»ГІГј Г¬ГҐГ­Гѕ Г±ГҐГ¬ГјГЁ ($ .Г®ГІГґ )\n/mg - ГЄГ ГЄ Г®ГІГЄГ°Г»ГІГј Г¬ГҐГ­Гѕ ГЎГ Г­Г¤Г» ($ .Г®ГІГЎ )")
-				imgui.Text(u8"/ugf - ГЄГ ГЄ ГЁГ±ГЄГ«ГѕГ·ГЁГІГј Г·ГҐГ«Г®ГўГҐГЄГ  ГЁГ§ ГЎГ Г­Г¤Г»/Г±ГҐГ¬ГјГЁ ($ .ГіГЈГЎ )")
-				imgui.Text(u8"/igf - ГЄГ ГЄ ГЇГ°ГЁГЈГ«Г Г±ГЁГІГј ГЁГЈГ°Г®ГЄГ®Гў Гў ГЎГ Г­Г¤Гі/Г±ГҐГ¬ГјГѕ ($ .ГЇГЈГЎ )")
-				imgui.Text(u8"/lgf - ГЇГ®ГЄГЁГ­ГіГІГј Г¬Г ГґГЁГѕ ($ .ГЇГ«Г¬ ) \n/pgf - ГўГ»Г©ГІГЁ ГЁГ§ ГЎГ Г­Г¤Г»/Г±ГҐГ¬ГјГЁ ($ .ГЇГЈГґ )")
-				imgui.Text(u8"/vgf - ГўГ»ГЈГ®ГўГ®Г° ГіГ·Г Г±ГІГ­ГЁГЄГі ГЎГ Г­Г¤Г» ($ .ГўГіГЎ ) ")
+				imgui.Text(u8"/fp - как открыть меню семьи ($ .отф )\n/mg - как открыть меню банды ($ .отб )")
+				imgui.Text(u8"/ugf - как исключить человека из банды/семьи ($ .угб )")
+				imgui.Text(u8"/igf - как пригласить игроков в банду/семью ($ .пгб )")
+				imgui.Text(u8"/lgf - покинуть мафию ($ .плм ) \n/pgf - выйти из банды/семьи ($ .пгф )")
+				imgui.Text(u8"/vgf - выговор участнику банды ($ .вуб ) ")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'helptp') then 
-				imgui.Text(u8"/avt - /tp Г ГўГІГ®Г±Г Г«Г®Г­ ($ .ГІГ Г± ) | ")
-				imgui.Text(u8"/avt1 - /tp Г ГўГІГ®Г¬Г Г±ГІГҐГ°Г±ГЄГ Гї ($ .ГІГ Г¬ ) | /bk - tp in bank ($ .ГЎГЄ ) ")
-				imgui.Text(u8"/ktp - ГЄГ ГЄ ГІГҐГ«ГҐГЇГ®Г°ГІГЁГ°Г®ГўГ ГІГјГ±Гї ($ .ГЄГІГЇ ) \n/og - Г®ГЈГ°Г ГЎ.ГЎГ Г­ГЄГ  ($ .Г®ГЈ )")
+				imgui.Text(u8"/avt - /tp автосалон ($ .тас ) | ")
+				imgui.Text(u8"/avt1 - /tp автомастерская ($ .там ) | /bk - tp in bank ($ .бк ) ")
+				imgui.Text(u8"/ktp - как телепортироваться ($ .ктп ) \n/og - ограб.банка ($ .ог )")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'helpsell') then 
-				imgui.Text(u8"/gak - ГЄГ ГЄ ГЇГ°Г®Г¤Г ГІГј Г ГЄГ±ГҐГ±Г±ГіГ Г°Г» ($ .ГЄГЇГ  )")
-				imgui.Text(u8"/tcm - Г®ГЎГ¬ГҐГ­ Г®Г·ГЄГ®Гў/ГЄГ®ГЁГ­Г®Гў/Г°ГіГЎГ«ГҐГ© ($ .Г®ГЎГ¬ )")
-				imgui.Text(u8"/smc - ГЇГ°Г®Г¤Г Г¦Г  Г¬Г ГёГЁГ­Г» ($ .ГЇГ¬ ) | /smh - ГЇГ°Г®Г¤Г Г¦Г  Г¤Г®Г¬Г  ($ .ГЇГ¤ )")
+				imgui.Text(u8"/gak - как продать аксессуары ($ .кпа )")
+				imgui.Text(u8"/tcm - обмен очков/коинов/рублей ($ .обм )")
+				imgui.Text(u8"/smc - продажа машины ($ .пм ) | /smh - продажа дома ($ .пд )")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'helpgive') then 
-				imgui.Text(u8"/gvm - ГЇГҐГ°ГҐГ¤Г Г·Г  Г¤ГҐГ­ГҐГЈ ($ .ГЈГўГ¬ ) | /gvs - ГЇГҐГ°ГҐГ¤Г Г·Г  Г®Г·ГЄГ®Гў ($ .ГЈГўГ± )")
-				imgui.Text(u8"/gvr - ГЇГҐГ°ГҐГ¤Г Г·Г  Г°ГіГЎГ«ГҐГ© ($ .ГЈГўГ°) | /gvc - ГЇГҐГ°ГҐГ¤Г Г·Г  ГЄГ®ГЁГ­Г®Гў ($ .ГЈГўГЄ)")
+				imgui.Text(u8"/gvm - передача денег ($ .гвм ) | /gvs - передача очков ($ .гвс )")
+				imgui.Text(u8"/gvr - передача рублей ($ .гвр) | /gvc - передача коинов ($ .гвк)")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'otherqu') then 
-				imgui.Text(u8"/html - Г¶ГўГҐГІГ  ($ .Г¶ГўГҐГІ ) | /cr - /car ($ .ГЄГ Г° ) ")
-				imgui.Text(u8"/gn - ГЄГ ГЄ ГўГ§ГїГІГј Г®Г°ГіГ¦ГЁГҐ ($ .ГЈГ Г­ ) \n/pd - ГЄГ ГЄ ГўГ§ГїГІГј ГЇГ°ГҐГ¤Г¬ГҐГІГ» ($ .ГЇГҐГ¤ )")
-				imgui.Text(u8"/dtl - ГЄГ ГЄ ГЁГ±ГЄГ ГІГј Г¤ГҐГІГ Г«ГЁ ($ .ГЁГ±ГЄ ) \n/krb - ГЄГ Г§ГЁГЄ, Г°Г ГЎГ®ГІГ», ГЁ ГЎГЁГ§Г­ГҐГ± ($ .ГЄГ°ГЎ )  ")
-				imgui.Text(u8"/kmd - ГЄГ Г§ГЁГЄ, Г¬ГЇ, Г®ГЎГ¬ГҐГ­ Г­Г  trade, Г¤Г®Г±ГІГЁГ¦ГҐГ­ГЁГї ($ .ГЄГ¬Г¤ )")
+				imgui.Text(u8"/html - цвета ($ .цвет ) | /cr - /car ($ .кар ) ")
+				imgui.Text(u8"/gn - как взять оружие ($ .ган ) \n/pd - как взять предметы ($ .пед )")
+				imgui.Text(u8"/dtl - как искать детали ($ .иск ) \n/krb - казик, работы, и бизнес ($ .крб )  ")
+				imgui.Text(u8"/kmd - казик, мп, обмен на trade, достижения ($ .кмд )")
 				imgui.Text(u8"/gvk - (no id)")
-				imgui.Text(u8"/cpt - Г­Г Г·Г ГІГј ГЄГ ГЇГІ ($ .ГЄГЇГІ ) | /psv - ГЇГ Г±Г±ГЁГўГ­Г»Г© Г°ГҐГ¦ГЁГ¬ ($ .ГЇГ±Гў )")
-				imgui.Text(u8"/stp - /statpl (ГЇГ®ГЄГ Г§ ГЄГ®ГЁГ­Г®Гў, ГўГЁГ°ГІГ®Гў) ($ .Г±ГІГЇ )")
-				imgui.Text(u8"/msp - ГЄГ ГЄ Г±ГЇГ ГўГ­ГЁГІГј Г¬Г ГёГЁГ­Гі ($ .Г¬Г±ГЇ ) \n/chap - Г±Г¬ГҐГ­Г  ГЇГ Г°Г®Г«Гї ($ .Г±ГЇГ° )")
-				imgui.Text(u8"/hin - ГЄГ ГЄ Г¤Г®ГЎГ ГўГЁГІГј Г·ГҐГ«Г®ГўГҐГЄГ  Гў Г¤Г®Г¬ ($ .Г¤Г·Г¤ )")
-				imgui.Text(u8"/ctun - ГЄГ ГЄ ГЇГ°Г®ГІГѕГ­ГЁГІГј Г¬Г ГёГЁГ­Гі ($ .ГІГѕГ­ )\n /zsk - Г§Г Г±ГІГ°ГїГ« Г·ГҐГ«Г®ГўГҐГЄ ($ .Г§Г· )")
-				imgui.Text(u8"/tdd - ГўГЁГ°ГІГіГ Г«ГјГ­Г»Г© Г¬ГЁГ° ($ .Г¤ГІГІ )")
+				imgui.Text(u8"/cpt - начать капт ($ .кпт ) | /psv - пассивный режим ($ .псв )")
+				imgui.Text(u8"/stp - /statpl (показ коинов, виртов) ($ .стп )")
+				imgui.Text(u8"/msp - как спавнить машину ($ .мсп ) \n/chap - смена пароля ($ .спр )")
+				imgui.Text(u8"/hin - как добавить человека в дом ($ .дчд )")
+				imgui.Text(u8"/ctun - как протюнить машину ($ .тюн )\n /zsk - застрял человек ($ .зч )")
+				imgui.Text(u8"/tdd - виртуальный мир ($ .дтт )")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'skins') then 
-				imgui.Text(u8"/cops - ГЄГ®ГЇГ» ($ .ГЄГ®ГЇГ» ) \n/bal - ГЎГ Г«Г«Г Г±Г» ($ .ГЎГ Г« ) | /cro - ГЈГ°ГіГў ($ .ГЈГ°ГіГў ) ")
-				imgui.Text(u8"/vg - ГўГ ГЈГ®Г±Г» ($ .ГўГ ГЈ ) \n/rumf - ru.Г¬Г ГґГЁГї ($ .Г°ГіГ¬Гґ ) | /var - ГўГ Г°ГЁГ®Г±Г» ($ .ГўГ Г° )")
-				imgui.Text(u8"/triad - ГІГ°ГЁГ Г¤Г  ($ .ГІГ°ГЁГ Г¤ ) \n/mf - Г¬Г ГґГЁГї ($ .Г¬Гґ )")
+				imgui.Text(u8"/cops - копы ($ .копы ) \n/bal - балласы ($ .бал ) | /cro - грув ($ .грув ) ")
+				imgui.Text(u8"/vg - вагосы ($ .ваг ) \n/rumf - ru.мафия ($ .румф ) | /var - вариосы ($ .вар )")
+				imgui.Text(u8"/triad - триада ($ .триад ) \n/mf - мафия ($ .мф )")
 				imgui.EndPopup()
 			end	
 			if imgui.BeginPopup(u8'hotkeys') then 
-				imgui.Text(u8"ГЉГ­Г®ГЇГЄГ  HOME - Г¦ГҐГ«Г ГҐГІ Гў Г·Г ГІ ГЇГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г»")
-				imgui.Text(u8"ГЌГЁГ¦ГҐ ГўГ±ГҐ ГЄГ«Г ГўГЁГёГЁ Г¬Г®Г¦Г­Г® Г±Г¬ГҐГ­ГЁГІГј! // Г‚ Г­Г Г±ГІГ°Г®Г©ГЄГ Гµ.")
-				imgui.Text(u8"Numpad {.} - ГўГ»ГўГ®Г¤ ГЇГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г» Г± Г¶ГўГҐГІГ®Г¬ \nNumpad {/} - ГўГ»ГўГ®Г¤ ГіГ¤Г Г·Г­Г®ГЈГ®.. ")
-				imgui.Text(u8"..ГўГ°ГҐГ¬ГїГЇГ°ГҐГЇГ°Г®ГўГ®Г¦Г¤ГҐГ­ГЁГї Г± Г¶ГўГҐГІГ®Г¬ ")
-				imgui.Text(u8"Numpad {-} - ГўГ»ГўГ®Г¤ ГЇГ°ГЁГїГІГ­Г®ГЈГ® ГўГ°ГҐГ¬ГїГЇГ°ГҐГЇГ°Г®ГўГ®Г¦Г¤ГҐГ­ГЁГї.. \nГ­Г  Г±ГҐГ°ГўГҐГ°ГҐ Г± Г¶ГўГҐГІГ®Г¬.")
-				imgui.Text(u8"ГџГ°ГЄГЁГ© ГЇГ°ГЁГ¬ГҐГ° ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГї... \nГЏГ°ГЁ Г°ГіГ·Г­Г®Г¬ ГўГўГ®Г¤ГҐ Г®ГІГўГҐГІГ  Гў Г¤ГЁГ Г«Г®ГЈГ®ГўГ®Г¬ Г®ГЄГ­ГҐ /ans, ")
-				imgui.Text(u8"ГўГ» ГІГ»ГЄГ ГҐГІГҐ Numpad {.} ГЁ Гі ГўГ Г± ГўГ»ГўГҐГ¤ГҐГІГ±Гї:\nГЏГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г» Г­Г  RDS Г± Г¶ГўГҐГІГ®Г¬.")
+				imgui.Text(u8"Кнопка HOME - желает в чат приятной игры")
+				imgui.Text(u8"Ниже все клавиши можно сменить! // В настройках.")
+				imgui.Text(u8"Numpad {.} - вывод приятной игры с цветом \nNumpad {/} - вывод удачного.. ")
+				imgui.Text(u8"..времяпрепровождения с цветом ")
+				imgui.Text(u8"Numpad {-} - вывод приятного времяпрепровождения.. \nна сервере с цветом.")
+				imgui.Text(u8"Яркий пример использования... \nПри ручном вводе ответа в диалоговом окне /ans, ")
+				imgui.Text(u8"вы тыкаете Numpad {.} и у вас выведется:\nПриятной игры на RDS с цветом.")
 				imgui.EndPopup()
 			end	
-			if imgui.BeginPopup(u8'Г†Г Г«Г®ГЎГ» Г­Г  ГЄГ®ГЈГ®/Г·ГІГ®-ГІГ®') then 
-				imgui.Text(u8"/c - Г­Г Г·Г Г«(Г ) Г°Г ГЎГ®ГІГ ГІГј ГЇГ® Г¦Г Г«Г®ГЎГҐ ($ .Г­Г· ) | /hg - ГЇГ®Г¬Г®ГЈГ«ГЁ ГўГ Г¬ ")
-				imgui.Text(u8" .Г±Г« - Г±Г«ГҐГ¦Гі Г§Г  ГЁГЈГ°Г®ГЄГ®Г¬ (ГЁГ±ГЄГ«ГѕГ·ГЁГІГҐГ«ГјГ­Г® $)  \n/tm - Г®Г¦ГЁГ¤Г Г©ГІГҐ ($ .Г®Г¦ )")
-				imgui.Text(u8"/zba - Г¦Г Г«Г®ГЎГ  Г­Г  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г  ($ .Г¦ГЎГ  ) \n/zbp - Г¦Г Г«Г®ГЎГ  Г­Г  ГЁГЈГ°Г®ГЄГ  ($ .Г¦ГЎГЁ )")
-				imgui.Text(u8"/vrm - ГЇГ°ГЁГїГІГ­Г®ГЈГ® ГўГ°ГҐГ¬ГїГЇГ°ГҐГЇГ°Г®ГўГ®Г¦Г¤ГҐГ­ГЁГї (no ID) \n/cl - ГЁГЈГ°Г®ГЄ Г·ГЁГ±ГІ ")
-				imgui.Text(u8"-ГЇГ° - ГЇГ°ГЁГїГІГ­Г®Г© ГЁГЈГ°Г» (no ID) | /dis - ГЁГЈГ°Г®ГЄ Г­ГҐ Гў Г±ГҐГІГЁ ($ .Г­Гў )")
-				imgui.Text(u8"/yt - ГіГІГ®Г·Г­ГЁГІГҐ ГўГ Гё ГўГ®ГЇГ°Г®Г±/Г§Г ГЇГ°Г®Г± ($ .ГіГІ) \n/n - Г­ГҐГІ Г­Г Г°ГіГёГҐГ­ГЁГ© Гі ГЁГЈГ°Г®ГЄГ  ($ .Г­Г­ )")
-				imgui.Text(u8"/rid - ГіГІГ®Г·Г­ГҐГ­ГЁГҐ ID ($.ГіГЁГ¤ ) | /nac - ГЁГЈГ°Г®ГЄ Г­Г ГЄГ Г§Г Г­ ($ .Г­Г ГЄ )")
-				imgui.Text(u8"/msid - Г®ГёГЁГЎГЄГ  Гў ID | /pg - ГЇГ°Г®ГўГҐГ°ГЁГ¬ ($ .ГЇГ° ) \n/gm - ГЈГ¬ Г­ГҐ Г°Г®ГЎГЁГІ ($ .ГЈГ¬ )")
-				imgui.Text(u8"/enk - Г­ГЁГЄГ ГЄ ($ .Г­ГЄ ) | /nz - Г­ГҐ Г§Г ГЇГ°ГҐГ№ГҐГ­Г® ($ .Г­Г§ ) \n/en - Г­ГҐ Г§Г­Г ГҐГ¬ ($ .Г­ГҐГ§ )")
-				imgui.Text(u8"/yes - Г¤Г  ($ .Г¦Г¤Г  ) | /net - Г­ГҐГІ ($ .Г¦Г­ГҐ ) \n/of - Г­ГҐ Г®ГґГґГІГ®ГЇГЁГІГј ($ .Г®ГґГґ ) | /nv - Г­ГҐ ГўГ»Г¤Г ГҐГ¬ ($ .Г­ГўГ¤")
-				imgui.Text(u8"/vbg - Г±ГЄГ®Г°ГҐГ© ГўГ±ГҐГЈГ® - ГЎГ ГЈ ($ .ГЎГ ГЈ ) | /plg - ГЇГҐГ°ГҐГ§Г Г©Г¤ГЁГІГҐ ($ .Г°Г«ГЈ )")
-				imgui.Text(u8"/trp - Г¦Г Г«Г®ГЎГі Гў /report")
+			if imgui.BeginPopup(u8'Жалобы на кого/что-то') then 
+				imgui.Text(u8"/c - начал(а) работать по жалобе ($ .нч ) | /hg - помогли вам ")
+				imgui.Text(u8" .сл - слежу за игроком (исключительно $)  \n/tm - ожидайте ($ .ож )")
+				imgui.Text(u8"/zba - жалоба на администратора ($ .жба ) \n/zbp - жалоба на игрока ($ .жби )")
+				imgui.Text(u8"/vrm - приятного времяпрепровождения (no ID) \n/cl - игрок чист ")
+				imgui.Text(u8"-пр - приятной игры (no ID) | /dis - игрок не в сети ($ .нв )")
+				imgui.Text(u8"/yt - уточните ваш вопрос/запрос ($ .ут) \n/n - нет нарушений у игрока ($ .нн )")
+				imgui.Text(u8"/rid - уточнение ID ($.уид ) | /nac - игрок наказан ($ .нак )")
+				imgui.Text(u8"/msid - ошибка в ID | /pg - проверим ($ .пр ) \n/gm - гм не робит ($ .гм )")
+				imgui.Text(u8"/enk - никак ($ .нк ) | /nz - не запрещено ($ .нз ) \n/en - не знаем ($ .нез )")
+				imgui.Text(u8"/yes - да ($ .жда ) | /net - нет ($ .жне ) \n/of - не оффтопить ($ .офф ) | /nv - не выдаем ($ .нвд")
+				imgui.Text(u8"/vbg - скорей всего - баг ($ .баг ) | /plg - перезайдите ($ .рлг )")
+				imgui.Text(u8"/trp - жалобу в /report")
 				imgui.EndPopup()
 			end	
 		end	
@@ -4000,219 +4001,219 @@ function imgui.OnDrawFrame()
 			plugin2.ActiveMP()
 		end	
 		if menuSelect == 7 then 
-			imgui.Text(u8"Г—ГІГ®ГЎГ» ГўГ»Г¤Г ГІГј Г­Г ГЄГ Г§Г Г­ГЁГї, ГўГўГҐГ¤ГЁГІГҐ ГЄГ®Г¬Г Г­Г¤Гі ГЁ ID Г­Г Г°ГіГёГЁГІГҐГ«Гї")
-			imgui.Text(u8"ГЏГ°ГЁГ¬ГҐГ°, ГЎГ Г­ Г§Г  Г·ГЁГІГ» - /ch id")
+			imgui.Text(u8"Чтобы выдать наказания, введите команду и ID нарушителя")
+			imgui.Text(u8"Пример, бан за читы - /ch id")
 			imgui.Text("")
 			imgui.Separator()
-			if imgui.CollapsingHeader(u8"ГЌГ ГЄГ Г§Г Г­ГЁГҐ Гў Г®Г­Г«Г Г©Г­ГҐ") then 
+			if imgui.CollapsingHeader(u8"Наказание в онлайне") then 
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
 				if imgui.CollapsingHeader(u8"Ban", imgui.ImVec2(50,0)) then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/ch - ГЎГ Г­ Г§Г  Г·ГЁГІГ»")
+					imgui.Text(u8"/ch - бан за читы")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/pl - ГЎГ Г­ Г§Г  ГЇГ«Г ГЈГЁГ ГІ Г­ГЁГЄГ  Г Г¤Г¬ГЁГ­Г  ")
+					imgui.Text(u8"/pl - бан за плагиат ника админа ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/nk - ГЎГ Г­ Г§Г  Г­ГЁГЄ Г± Г®Г±ГЄГ®Г¬/ГіГ­ГЁГ¦ГҐГ­ГЁГҐГ¬")
+					imgui.Text(u8"/nk - бан за ник с оском/унижением")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/gcnk - ГЎГ Г­ Г§Г  Г­Г Г§ГўГ Г­ГЁГҐ ГЎГ Г­Г¤Г» Г± Г®Г±ГЄГ®Г¬/ГіГ­ГЁГ¦ГҐГ­ГЁГҐГ¬")
+					imgui.Text(u8"/gcnk - бан за название банды с оском/унижением")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/brekl - ГЎГ Г­ Г§Г  Г°ГҐГЄГ«Г Г¬ГҐ | for 18 lvl ")
+					imgui.Text(u8"/brekl - бан за рекламе | for 18 lvl ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/hl - ГЎГ Г­ Г§Г  Г®Г±ГЄ Гў ГµГҐГ«ГЇГҐГ°ГҐ")
+					imgui.Text(u8"/hl - бан за оск в хелпере")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/ob - ГЎГ Г­ Г§Г  Г®ГЎГµГ®Г¤ ГЎГ Г­Г ")
+					imgui.Text(u8"/ob - бан за обход бана")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/menk  - ГЎГ Г­ Г§Г  Г§Г ГЇГ°ГҐГІ.Г±Г«Г®ГўГ  Гў Г­ГЁГЄГҐ")
+					imgui.Text(u8"/menk  - бан за запрет.слова в нике")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/bnm - ГЎГ Г­ Г§Г  Г­ГҐГ Г¤ГҐГЄГўГ ГІГ ")
+					imgui.Text(u8"/bnm - бан за неадеквата")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/bosk - ГЎГ Г­ Г§Г  Г®Г±ГЄ ГЇГ°Г®ГҐГЄГІГ  | for 18 lvl ")
+					imgui.Text(u8"/bosk - бан за оск проекта | for 18 lvl ")
 				end
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 				if imgui.CollapsingHeader(u8"Jail", imgui.ImVec2(50,0)) then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/sk - jail Г§Г  SK in zz")
+					imgui.Text(u8"/sk - jail за SK in zz")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/dz - jail Г§Г  DM/DB in zz")
+					imgui.Text(u8"/dz - jail за DM/DB in zz")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/dz1 - /dz3 - jail DM/DB in zz (x2-x4)")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/td - jail Г§Г  DB/car in /trade")
+					imgui.Text(u8"/td - jail за DB/car in /trade")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/tdbz - jail Г§Г  DB Г± ГЉГ®ГўГёГ®Г¬ Гў Г‡Г‡")
+					imgui.Text(u8"/tdbz - jail за DB с Ковшом в ЗЗ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/fsh - /jail Г§Г  SH and FC")
+					imgui.Text(u8"/fsh - /jail за SH and FC")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/jm - jail Г§Г  Г­Г Г°ГіГёГҐГ­ГЁГҐ ГЇГ°Г ГўГЁГ« Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГї.")
+					imgui.Text(u8"/jm - jail за нарушение правил мероприятия.")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/bag - jail Г§Г  ГЎГ ГЈГ®ГѕГ§")
+					imgui.Text(u8"/bag - jail за багоюз")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/pk - jail Г§Г  ГЇГ Г°ГЄГіГ° Г¬Г®Г¤")
+					imgui.Text(u8"/pk - jail за паркур мод")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/zv - jail Г§Г  Г§Г«Г®ГіГЇ.ГўГЁГЇ")
+					imgui.Text(u8"/zv - jail за злоуп.вип")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/skw - jail Г§Г  SK Г­Г  /gw")
+					imgui.Text(u8"/skw - jail за SK на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ngw - jail Г§Г  ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г§Г ГЇГ°ГҐГІ.ГЄГ®Г¬Г Г­Г¤ Г­Г  /gw")
+					imgui.Text(u8"/ngw - jail за использование запрет.команд на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/dbgw - jail Г§Г  DB ГўГҐГ°ГІ Г­Г  /gw | /jch - jail Г§Г  Г·ГЁГІГ»")
+					imgui.Text(u8"/dbgw - jail за DB верт на /gw | /jch - jail за читы")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/pmx - jail Г§Г  Г±ГҐГ°ГјГҐГ§Г­Г Гї ГЇГ®Г¬ГҐГµГ  ГЁГЈГ°Г®ГЄГ Г¬")
+					imgui.Text(u8"/pmx - jail за серьезная помеха игрокам")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/dgw - jail Г§Г  Г­Г Г°ГЄГ®ГІГЁГЄГЁ Г­Г  /gw")
+					imgui.Text(u8"/dgw - jail за наркотики на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/sch - jail Г§Г  Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»ГҐ Г±ГЄГ°ГЁГЇГІГ»")
+					imgui.Text(u8"/sch - jail за запрещенные скрипты")
 				end
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
 				if imgui.CollapsingHeader(u8"Kick", imgui.ImVec2(50,0)) then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/dj - ГЄГЁГЄ Г§Г  dm in jail")
+					imgui.Text(u8"/dj - кик за dm in jail")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/gnk1 -- /gnk3 - ГЄГЁГЄ Г§Г  Г­ГҐГ¶ГҐГ­Г§ГіГ°Гі Гў Г­ГЁГЄГҐ.")
+					imgui.Text(u8"/gnk1 -- /gnk3 - кик за нецензуру в нике.")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/cafk - ГЄГЁГЄ Г§Г  Г ГґГЄ Г­Г  Г Г°ГҐГ­ГҐ")
+					imgui.Text(u8"/cafk - кик за афк на арене")
 				end  
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 				if imgui.CollapsingHeader(u8"Mute", imgui.ImVec2(50,0)) then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/m - Г¬ГіГІ Г§Г  Г¬Г ГІ | /rm - Г¬ГіГІ Г§Г  Г¬Г ГІ Гў Г°ГҐГЇГ®Г°ГІ ")
+					imgui.Text(u8"/m - мут за мат | /rm - мут за мат в репорт ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ok - Г¬ГіГІ Г§Г  Г®Г±ГЄ ")
+					imgui.Text(u8"/ok - мут за оск ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/fd1 - /fd10 - Г¬ГіГІ Г§Г  ГґГ«ГіГ¤/Г±ГЇГ Г¬ x1-x10")
+					imgui.Text(u8"/fd1 - /fd10 - мут за флуд/спам x1-x10")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/po1 - /po10 - Г¬ГіГІ Г§Г  ГЇГ®ГЇГ°Г®ГёГ Г©ГЄГі x1-x10")
+					imgui.Text(u8"/po1 - /po10 - мут за попрошайку x1-x10")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/oa - Г¬ГіГІ Г§Г  Г®Г±ГЄ Г Г¤Г¬ ")
+					imgui.Text(u8"/oa - мут за оск адм ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/roa - Г¬ГіГІ Г§Г  Г®Г±ГЄ Г Г¤Г¬ Гў Г°ГҐГЇГ®Г°ГІ")
+					imgui.Text(u8"/roa - мут за оск адм в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/up - Г¬ГіГІ Г§Г  ГіГЇГ®Г¬.ГЇГ°Г®ГҐГЄГІ")
+					imgui.Text(u8"/up - мут за упом.проект")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rup - Г¬ГіГІ Г§Г  Гі.ГЇ Гў Г°ГҐГЇГ®Г°ГІ")
+					imgui.Text(u8"/rup - мут за у.п в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ia - Г¬ГіГІ Г§Г  ГўГ»Г¤Г Г·Гі Г±ГҐГЎГї Г§Г  Г Г¤Г¬")
+					imgui.Text(u8"/ia - мут за выдачу себя за адм")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/kl - Г¬ГіГІ Г§Г  ГЄГ«ГҐГўГҐГІГі Г­Г  Г Г¤Г¬")
+					imgui.Text(u8"/kl - мут за клевету на адм")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/nm(900), /nm1(2500), /nm2(5000) - Г¬ГіГІ Г§Г  Г­ГҐГ Г¤ГҐГЄГўГ ГІ. ")
+					imgui.Text(u8"/nm(900), /nm1(2500), /nm2(5000) - мут за неадекват. ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rnm(900), /rnm1(2500), /rnm2(5000) - Г¬ГіГІ Г§Г  Г­ГҐГ Г¤ГҐГЄГўГ ГІ Гў Г°ГҐГЇ.")
+					imgui.Text(u8"/rnm(900), /rnm1(2500), /rnm2(5000) - мут за неадекват в реп.")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/or - Г¬ГіГІ Г§Г  Г®Г±ГЄ Г°Г®Г¤")
+					imgui.Text(u8"/or - мут за оск род")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rz - Г°Г®Г§Г¦ГЁГЈ Г¬ГҐГ¦Г­Г Г¶.Г°Г®Г§Г­ГЁ")
+					imgui.Text(u8"/rz - розжиг межнац.розни")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/zs - Г§Г«Г®ГіГЇГ®ГІГ°ГҐГЎГ«ГҐГ­ГЁГҐ Г±ГЁГ¬ГўГ®Г«Г Г¬ГЁ")
+					imgui.Text(u8"/zs - злоупотребление символами")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ror - Г¬ГіГІ Г§Г  Г®Г±ГЄ Г°Г®Г¤ Гў Г°ГҐГЇГ®Г°ГІ")
+					imgui.Text(u8"/ror - мут за оск род в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/cp - /cp10 - ГЄГ ГЇГ±/Г®ГґГґГІГ®ГЇ Гў Г°ГҐГЇГ®Г°ГІ x1-x10")
+					imgui.Text(u8"/cp - /cp10 - капс/оффтоп в репорт x1-x10")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"ГЏГђГ€ГЊГ…Г—ГЂГЌГ€Г… ГЉ /cp (x1)! Г‘ГіГ¬Г¬ГЁГ°Г®ГўГ Г­ГЁГҐ Г± /cp2(x2)")
+					imgui.Text(u8"ПРИМЕЧАНИЕ К /cp (x1)! Суммирование с /cp2(x2)")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rpo - /rpo10 - ГЇГ®ГЇГ°Г®ГёГ Г©ГЄГ  Гў Г°ГҐГЇГ®Г°ГІ x1-x10")
+					imgui.Text(u8"/rpo - /rpo10 - попрошайка в репорт x1-x10")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"ГЏГђГ€ГЊГ…Г—ГЂГЌГ€Г… ГЉ /rpo (x1)! Г‘ГіГ¬Г¬ГЁГ°Г®ГўГ Г­ГЁГҐ Г± /rpo2(x2)")
+					imgui.Text(u8"ПРИМЕЧАНИЕ К /rpo (x1)! Суммирование с /rpo2(x2)")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rkl - ГЄГ«ГҐГўГҐГІГ  Г­Г  Г Г¤Г¬ Гў Г°ГҐГЇГ®Г°ГІ")
+					imgui.Text(u8"/rkl - клевета на адм в репорт")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/rrz - Г°Г®Г§Г¦ГЁГЈ Г¬ГҐГ¦Г­Г Г¶.Г°Г®Г§Г­ГЁ Гў Г°ГҐГЇГ®Г°ГІ")
+					imgui.Text(u8"/rrz - розжиг межнац.розни в репорт")
 					
 				end
 			end 
 			imgui.Text("")
 			imgui.Separator()
 			imgui.Text("")
-			if imgui.CollapsingHeader(u8"ГЌГ ГЄГ Г§Г Г­ГЁГҐ Гў Г®ГґГґГ«Г Г©Г­ГҐ") then 
+			if imgui.CollapsingHeader(u8"Наказание в оффлайне") then 
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
 				if imgui.CollapsingHeader(u8"Ban") then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/apl - ГЎГ Г­ Г§Г  ГЇГ«Г ГЈГЁГ ГІ Г­ГЁГЄ Г Г¤Г¬ГЁГ­Г ")
+					imgui.Text(u8"/apl - бан за плагиат ник админа")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/ach (/achi) - ГЎГ Г­ Г§Г  Г·ГЁГІГ» (ip)")
+					imgui.Text(u8"/ach (/achi) - бан за читы (ip)")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/ank - ГЎГ Г­ Г§Г  Г­ГЁГЄ Г± Г®Г±ГЄ/ГіГ­ГЁГ¦")
+					imgui.Text(u8"/ank - бан за ник с оск/униж")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/agcnk - ГЎГ Г­ Г§Г  Г­Г Г§ГўГ Г­ГЁГҐ ГЎГ Г­Г¤Г» Г± Г®Г±ГЄ/ГіГ­ГЁГ¦")
+					imgui.Text(u8"/agcnk - бан за название банды с оск/униж")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/agcnkip - ГЎГ Г­ ГЇГ® IP Г§Г  Г­Г Г§ГўГ Г­ГЁГҐ ГЎГ Г­Г¤Г» Г± Г®Г±ГЄ/ГіГ­ГЁГ¦")
+					imgui.Text(u8"/agcnkip - бан по IP за название банды с оск/униж")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/okpr/ip - Г®Г±ГЄ ГЇГ°Г®ГҐГЄГІГ ")
+					imgui.Text(u8"/okpr/ip - оск проекта")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/svoakk/ip - ГЎГ Г­ ГЇГ® Г ГЄГЄ/IP ГЇГ® Г°ГҐГЄГ«Г Г¬ГҐ")
+					imgui.Text(u8"/svoakk/ip - бан по акк/IP по рекламе")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/ahl (/achi) - ГЎГ Г­ Г§Г  Г®Г±ГЄ Гў ГµГҐГ«ГЇГҐГ°ГҐ (ip)")
+					imgui.Text(u8"/ahl (/achi) - бан за оск в хелпере (ip)")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/aob - ГЎГ Г­ Г§Г  Г®ГЎГµГ®Г¤ ГЎГ Г­Г ")
+					imgui.Text(u8"/aob - бан за обход бана")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/rdsob - ГЎГ Г­ Г§Г  Г®ГЎГ¬Г Г­ Г Г¤Г¬/ГЁГЈГ°Г®ГЄГ®Гў")
+					imgui.Text(u8"/rdsob - бан за обман адм/игроков")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/rdsip - ГЎГ Г­ ГЇГ® IP Г§Г  Г®ГЎГ¬Г Г­ Г Г¤Г¬/ГЁГЈГ°Г®ГЄГ®Гў")
+					imgui.Text(u8"/rdsip - бан по IP за обман адм/игроков")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/amenk - ГЎГ Г­ Г§Г  Г§Г ГЇГ°ГҐГІ.Г±Г«Г®ГўГ  Гў Г­ГЁГЄГҐ")
+					imgui.Text(u8"/amenk - бан за запрет.слова в нике")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/abnm - ГЎГ Г­ Г§Г  Г­ГҐГ Г¤ГҐГЄГўГ ГІГ ")
+					imgui.Text(u8"/abnm - бан за неадеквата")
 				end
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 				if imgui.CollapsingHeader(u8"Jail") then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ask - jail Г§Г  SK in zz")
+					imgui.Text(u8"/ask - jail за SK in zz")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/adz - jail Г§Г  DM/DB in zz")
+					imgui.Text(u8"/adz - jail за DM/DB in zz")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
 					imgui.Text(u8"/adz1 - /adz3 - jail DM/DB in zz (x2-x4)")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/atd - jail Г§Г  DB/CAR in trade")
+					imgui.Text(u8"/atd - jail за DB/CAR in trade")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/afsh - jail Г§Г  SH ans FC")
+					imgui.Text(u8"/afsh - jail за SH ans FC")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ajm - jail Г§Г  Г­Г Г°ГіГё.ГЇГ°Г ГўГЁГ« ГЊГЏ")
+					imgui.Text(u8"/ajm - jail за наруш.правил МП")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/abag - jail Г§Г  ГЎГ ГЈГ®ГѕГ§")
+					imgui.Text(u8"/abag - jail за багоюз")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/apk - jail Г§Г  ГЇГ Г°ГЄГіГ° Г¬Г®Г¤")
+					imgui.Text(u8"/apk - jail за паркур мод")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/azv - jail Г§Г  Г§Г«Г®ГіГЇ.ГўГЁГЇ")
+					imgui.Text(u8"/azv - jail за злоуп.вип")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/askw - jail Г§Г  SK Г­Г  /gw")
+					imgui.Text(u8"/askw - jail за SK на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/angw - ГЁГ±ГЇ.Г§Г ГЇГ°ГҐГІ.ГЄГ®Г¬Г Г­Г¤ Г­Г  /gw")
+					imgui.Text(u8"/angw - исп.запрет.команд на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/adbgw - jail Г§Г  DB ГўГҐГ°ГІ Г­Г  /gw")
+					imgui.Text(u8"/adbgw - jail за DB верт на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/ajch - jail Г§Г  Г·ГЁГІГ»")
+					imgui.Text(u8"/ajch - jail за читы")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/apmx - jail Г§Г  Г±ГҐГ°ГјГҐГ§.ГЇГ®Г¬ГҐГµГі")
+					imgui.Text(u8"/apmx - jail за серьез.помеху")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/adgw - jail Г§Г  Г­Г Г°ГЄГ®ГІГЁГЄГЁ Г­Г  /gw")
+					imgui.Text(u8"/adgw - jail за наркотики на /gw")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 425))
-					imgui.Text(u8"/asch - jail Г§Г  Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»ГҐ Г±ГЄГ°ГЁГЇГІГ»")
+					imgui.Text(u8"/asch - jail за запрещенные скрипты")
 				end
 				imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
 				if imgui.CollapsingHeader(u8"Mute") then  
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/am - Г¬ГіГІ Г§Г  Г¬Г ГІ ")
+					imgui.Text(u8"/am - мут за мат ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/aok - Г¬ГіГІ Г§Г  Г®Г±ГЄ ")
+					imgui.Text(u8"/aok - мут за оск ")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/afd - Г¬ГіГІ Г§Г  ГґГ«ГіГ¤/Г±ГЇГ Г¬")
+					imgui.Text(u8"/afd - мут за флуд/спам")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/apo  - Г¬ГіГІ Г§Г  ГЇГ®ГЇГ°Г®ГёГ Г©ГЄГі")
+					imgui.Text(u8"/apo  - мут за попрошайку")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/aoa - Г¬ГіГІ Г§Г  Г®Г±ГЄ.Г Г¤Г¬")
+					imgui.Text(u8"/aoa - мут за оск.адм")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/aup - Г¬ГіГІ Г§Г  ГіГЇГ®Г¬ГЁГ­Г Г­ГЁГҐ ГЇГ°Г®ГҐГЄГІГ®Гў")
+					imgui.Text(u8"/aup - мут за упоминание проектов")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/anm(900) /anm1(2500) /anm2(5000) - Г¬ГіГІ Г§Г  Г­ГҐГ Г¤ГҐГЄГўГ ГІГ ")
+					imgui.Text(u8"/anm(900) /anm1(2500) /anm2(5000) - мут за неадеквата")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/aor - Г¬ГіГІ Г§Г  Г®Г±ГЄ/ГіГЇГ®Г¬ Г°Г®Г¤Г­Г»Гµ")
+					imgui.Text(u8"/aor - мут за оск/упом родных")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/aia - Г¬ГіГІ Г§Г  ГўГ»Г¤Г Г·Гі Г±ГҐГЎГї Г§Г  Г Г¤Г¬")
+					imgui.Text(u8"/aia - мут за выдачу себя за адм")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/akl - Г¬ГіГІ Г§Г  ГЄГ«ГҐГўГҐГІГі Г­Г  Г Г¤Г¬")
+					imgui.Text(u8"/akl - мут за клевету на адм")
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 450))
-					imgui.Text(u8"/arz - Г¬ГіГІ Г§Г  Г°Г®Г§Г¦ГЁГЈ Г¬ГҐГ¦Г­Г Г¶.Г°Г®Г§Г­ГЁ")
+					imgui.Text(u8"/arz - мут за розжиг межнац.розни")
 				end
 			end 
 		end	
@@ -4220,38 +4221,38 @@ function imgui.OnDrawFrame()
 			plre.ActiveATChat()
 			imgui.SameLine()
 			imgui.BeginChild('##Prefixs', imgui.ImVec2(260, 250), true)
-			imgui.Text(u8"Г‘Г®ГµГ°Г Г­ГҐГ­ГЁГҐ Г¶ГўГҐГІГ®Гў Г¤Г«Гї ГЇГ°ГҐГґГЁГЄГ±Г®Гў") 
+			imgui.Text(u8"Сохранение цветов для префиксов") 
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'/prf1 - /prf8 В– ГўГ»Г¤Г Г·Г  ГЇГ°ГҐГґГЁГЄГ±Г®Гў \n 1 - Г•ГҐГ«ГЇГҐГ°, 2 - ГЊГ®Г¤ГҐГ°Г ГІГ®Г°, 3 - ГЊГ«.Г Г¤Г¬ГЁГ­, 4 - ГЂГ¤Г¬ГЁГ­, 5 - Г‘ГІ.Г Г¤Г¬ГЁГ­, 6 - ГЏГѓГЂ, 7 - Г‡ГѓГЂ, 8 - ГѓГЂ\n ГЏГ°ГЁ ГўГўГ®Г¤ГҐ ГЇГ°ГҐГґГЁГЄГ±Г  Гў Г®ГЄГ®ГёГЄГЁ Г­ГЁГ¦ГҐ, Г®Г­ГЁ Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ Г§Г Г­Г®Г±ГїГІГ±Гї Гў ГЄГ®Г­ГґГЁГЈ')	
-			if imgui.InputText(u8"Г•ГҐГ«ГЇГҐГ°", elm.input.prefix_Helper) then 
+			imgui.TextQuestion('(?)', u8'/prf1 - /prf8 – выдача префиксов \n 1 - Хелпер, 2 - Модератор, 3 - Мл.админ, 4 - Админ, 5 - Ст.админ, 6 - ПГА, 7 - ЗГА, 8 - ГА\n При вводе префикса в окошки ниже, они автоматически заносятся в конфиг')	
+			if imgui.InputText(u8"Хелпер", elm.input.prefix_Helper) then 
 				ATcfg.setting.prefix_Helper = elm.input.prefix_Helper.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"ГЊГ®Г¤ГҐГ°Г ГІГ®Г°", elm.input.prefix_Moderator) then 
+			if imgui.InputText(u8"Модератор", elm.input.prefix_Moderator) then 
 				ATcfg.setting.prefix_Moderator = elm.input.prefix_Moderator.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"ГЊГ«.ГЂГ¤Г¬ГЁГ­", elm.input.prefix_Madm) then 
+			if imgui.InputText(u8"Мл.Админ", elm.input.prefix_Madm) then 
 				ATcfg.setting.prefix_Madm = elm.input.prefix_Madm.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"ГЂГ¤Г¬ГЁГ­", elm.input.prefix_adm) then 
+			if imgui.InputText(u8"Админ", elm.input.prefix_adm) then 
 				ATcfg.setting.prefix_adm = elm.input.prefix_adm.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"Г‘ГІ.ГЂГ¤Г¬ГЁГ­", elm.input.prefix_STadm) then 
+			if imgui.InputText(u8"Ст.Админ", elm.input.prefix_STadm) then 
 				ATcfg.setting.prefix_STadm = elm.input.prefix_STadm.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"ГЏГѓГЂ", elm.input.prefix_PGAadm) then 
+			if imgui.InputText(u8"ПГА", elm.input.prefix_PGAadm) then 
 				ATcfg.setting.prefix_PGAadm = elm.input.prefix_PGAadm.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"Г‡ГѓГЂ", elm.input.prefix_ZGAadm) then 
+			if imgui.InputText(u8"ЗГА", elm.input.prefix_ZGAadm) then 
 				ATcfg.setting.prefix_ZGAadm = elm.input.prefix_ZGAadm.v 
 				save() 
 			end	 
-			if imgui.InputText(u8"ГѓГЂ", elm.input.prefix_GAadm) then 
+			if imgui.InputText(u8"ГА", elm.input.prefix_GAadm) then 
 				ATcfg.setting.prefix_GAadm = elm.input.prefix_GAadm.v 
 				save() 
 			end	 
@@ -4261,13 +4262,13 @@ function imgui.OnDrawFrame()
 			plugin.Notepad()
 		end	
 		if menuSelect == 10 then 
-			imgui.PushItemWidth(130) imgui.Combo("##imguiStyle", elm.int.styleImgui, colorsImGui) imgui.PopItemWidth() imgui.SameLine() imgui.Text(u8" - Г‚Г»ГЎГ®Г° ГІГҐГ¬Г» ") 
+			imgui.PushItemWidth(130) imgui.Combo("##imguiStyle", elm.int.styleImgui, colorsImGui) imgui.PopItemWidth() imgui.SameLine() imgui.Text(u8" - Выбор темы ") 
 			imgui.Separator()
-			if imgui.Button(fa.ICON_FA_UPLOAD .. u8" ГЋГЎГ­Г®ГўГЁГІГј") then  
+			if imgui.Button(fa.ICON_FA_UPLOAD .. u8" Обновить") then  
 				menuSelect = 11 
 			end	
 			imgui.Separator()
-			imgui.Text(fa.ICON_TAG .. u8" Г‚ГўГ®Г¤ ГЇГ°ГЁГўГҐГІГ±ГІГўГЁГї Г Г¤Г¬ГЁГ­Г®Гў (/ahi)")
+			imgui.Text(fa.ICON_TAG .. u8" Ввод приветствия админов (/ahi)")
 			if imgui.InputText(u8"Text for HelloAdm", elm.input.ATHelloAdm) then 
 				ATcfg.setting.ATHelloAdm = elm.input.ATHelloAdm.v 
 				save()  
@@ -4275,163 +4276,163 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			plugin.changefont()
 			imgui.Separator()
-			imgui.Text(fa.ICON_TICKET .. u8" Г‚ГўГ®Г¤ Г¶ГўГҐГІГ  Г¤Г«Гї Г®ГІГўГҐГІГ  Гў Г°ГҐГЇГ®Г°ГІ. (Г®ГЄГ­Г®)")
-			imgui.Text(u8"ГЏГЁГёГЁГІГҐ {} ГЁ ГЎГҐГ°ГҐГІГҐ Г¶ГўГҐГІ Гў HTML. Г…ГЈГ® Г¬Г®Г¦Г­Г® ГўГ§ГїГІГј Г± Г±Г Г©ГІГ ")
+			imgui.Text(fa.ICON_TICKET .. u8" Ввод цвета для ответа в репорт. (окно)")
+			imgui.Text(u8"Пишите {} и берете цвет в HTML. Его можно взять с сайта")
 			imgui.Link("https://colorscheme.ru/html-colors.html")
-			imgui.Text(u8"ГЉ ГЇГ°ГЁГ¬ГҐГ°Гі, ГЎГҐГ°ГҐГ¬ SlateBlue ГЁ ГЇГ®Г«ГіГ·Г ГҐГІГ±Гї - {6A5ACD}")
+			imgui.Text(u8"К примеру, берем SlateBlue и получается - {6A5ACD}")
 			if imgui.InputText(u8"Color for report", elm.input.ATColor) then 
 				ATcfg.setting.ATColor = elm.input.ATColor.v 
 				save() 
 			end
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'Г‘Г®ГЎГ±ГІГўГҐГ­Г­Г»Г© Г¶ГўГҐГІ ГЇГ°ГЁ Г®ГІГўГҐГІГҐ Г­Г  Г°ГҐГЇГ®Г°ГІ. ГЉГ®Г¬Г Г­Г¤Г  - .Г±Г¶')	
+			imgui.TextQuestion('(?)', u8'Собственный цвет при ответе на репорт. Команда - .сц')	
 			imgui.Separator()
 			imgui.Text("")
-			imgui.CenterText(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ Г¬Г®Г¦Г­Г® ГЇГ®Г±Г¬Г®ГІГ°ГҐГІГј Гў config/AdminTool")
-			if imgui.CollapsingHeader(u8'Г„Г®ГЇГ®Г«Г­ГЁГІГҐГ«ГјГ­Г»ГҐ ГЄГ®Г¬Г Г­Г¤Г»') then 
-				imgui.Text(u8"/tpcord x y z - ГІГЇ ГЄГ® ГЄГ®Г°Г¤Г Г¬, /delch - ГўГЁГ°ГІ.Г®Г·ГЁГ±ГІГЄГ  Г·Г ГІГ ")
-				imgui.Text(u8"/tpad - ГІГЇ Г­Г  Г®Г±ГІГ°Г®Гў, /ahi - ГЇГ°ГЁГўГҐГІГ±ГІГўГЁГҐ Г Г¤Г¬")
-				imgui.Text(u8"/u id - Г°Г Г§Г¬ГіГІ Г·Г ГІГ , /uu id - Г°Г Г§Г¬ГіГІ Г·Г ГІГ  Г± ГЁГ§ГўГЁГ­ГҐГ­ГЁГїГ¬ГЁ, /uj id - Г°Г Г§Г¤Г¦Г Г©Г«")
-				imgui.Text(u8"/stw id - ГўГ»Г¤Г Г·Г  Г¬ГЁГ­ГЁГЈГ Г­Г , /ru id - Г°Г Г§Г¬ГіГІ Г°ГҐГЇГ®Г°ГІГ , /as id - Г±ГЇГ ГўГ­ ГЁГЈГ°Г®ГЄГ ")
-				imgui.Text(u8"/prf1 - /prf8 - ГўГ»Г¤Г Г·Г  ГЇГ°ГҐГґГЁГЄГ±Г®Гў")
-				imgui.Text(u8"1 - Г•ГҐГ«ГЇГҐГ°, 2 - ГЊГ®Г¤ГҐГ°Г ГІГ®Г°, 3 - ГЊГ«.Г Г¤Г¬ГЁГ­, 4 - ГЂГ¤Г¬ГЁГ­, 5 - Г‘ГІ.Г Г¤Г¬ГЁГ­, 6 - ГЏГѓГЂ, \n7 - Г‡ГѓГЂ, 8 - ГѓГЂ")
+			imgui.CenterText(u8"Настройки можно посмотреть в config/AdminTool")
+			if imgui.CollapsingHeader(u8'Дополнительные команды') then 
+				imgui.Text(u8"/tpcord x y z - тп ко кордам, /delch - вирт.очистка чата")
+				imgui.Text(u8"/tpad - тп на остров, /ahi - приветствие адм")
+				imgui.Text(u8"/u id - размут чата, /uu id - размут чата с извинениями, /uj id - разджайл")
+				imgui.Text(u8"/stw id - выдача минигана, /ru id - размут репорта, /as id - спавн игрока")
+				imgui.Text(u8"/prf1 - /prf8 - выдача префиксов")
+				imgui.Text(u8"1 - Хелпер, 2 - Модератор, 3 - Мл.админ, 4 - Админ, 5 - Ст.админ, 6 - ПГА, \n7 - ЗГА, 8 - ГА")
 			end	
-			if imgui.Button(u8"ГЏГ Г­ГҐГ«Гј ГўГ»Г±ГёГҐГ© Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г Г¶ГЁГЁ") then  
+			if imgui.Button(u8"Панель высшей администрации") then  
 				menuSelect = 14 
 			end	
 		end	
 		if menuSelect == 11 then  
-			imgui.Text(u8" ГЌГЁГ¦ГҐ Г¬Г®Г¦Г­Г® Г®ГЎГ­Г®ГўГЁГІГј AdminTool, ГўГЄГ«ГѕГ·Г Гї ГҐГЈГ® ГЇГ«Г ГЈГЁГ­Г» ГЁ Г®Г±Г­Г®ГўГ­Г®Г© Г±ГЄГ°ГЁГЇГІ.")
+			imgui.Text(u8" Ниже можно обновить AdminTool, включая его плагины и основной скрипт.")
 			imgui.Text(u8" version: " .. script_version_text  .. " | number GitHub: " .. script_version)
 			imgui.Text(" ")
 			imgui.Separator()
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г®Г±Г­Г®ГўГ­Г®ГЈГ® Г±ГЄГ°ГЁГЇГІГ ") then  
+			if imgui.Button(u8"Обновление основного скрипта") then  
 				lua_thread.create(function()
-					showNotification(tag .. " - Update","ГЌГ Г·ГЁГ­Г Гѕ Г§Г ГЈГ°ГіГ§ГЄГі Г®Г±Г­Г®ГўГ­Г®ГЈГ® Г±ГЄГ°ГЁГЇГІГ !")
+					showNotification(tag .. " - Update","Начинаю загрузку основного скрипта!")
 					wait(500)
 					downloadUrlToFile(script_url, script_path, function(id, status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. " ГЋГ±Г­Г®ГўГ­Г®Г© Г±ГЄГ°ГЁГЇГІ Г§Г ГЄГ Г·ГҐГ­ ГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­. ")
-							sampAddChatMessage(tag .. " Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі Г±ГЄГ°ГЁГЇГІГ ")
+							sampAddChatMessage(tag .. " Основной скрипт закачен и обновлен. ")
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скрипта")
 							thisScript():reload()
 						end
 					end)
 				end)	
 			end	
 			imgui.SameLine()
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГ«Г ГЈГЁГ­Г  Г§Г  Г°ГҐГЇГ®Г°ГІГ»") then  
+			if imgui.Button(u8"Обновление плагина за репорты") then  
 				lua_thread.create(function()
-					showNotification(tag .. " - Update","ГЌГ Г·ГЁГ­Г Гѕ Г§Г ГЈГ°ГіГ§ГЄГі ГЇГ«Г ГЈГЁГ­Г  Г§Г  Г°ГҐГЇГ®Г°ГІГ»!")
+					showNotification(tag .. " - Update","Начинаю загрузку плагина за репорты!")
 					wait(500)
 					downloadUrlToFile(report_url, report_path, function(id, status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATReport" Г§Г ГЄГ Г·ГҐГ­ ГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­. ')
-							sampAddChatMessage(tag .. " Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі Г±ГЄГ°ГЁГЇГІГ®Гў")
+							sampAddChatMessage(tag .. ' Плагин "ATReport" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
 							reloadScripts()
 						end
 					end)
 				end)
 			end	
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГ«Г ГЈГЁГ­Г  Г§Г  Г¤Г®ГЇ.ГґГіГ­ГЄГ¶ГЁГ© В№1") then  
+			if imgui.Button(u8"Обновление плагина за доп.функций №1") then  
 				lua_thread.create(function()
-					showNotification(tag .. " - Update",'ГЌГ Г·ГЁГ­Г Гѕ Г§Г ГЈГ°ГіГ§ГЄГі ГЇГ«Г ГЈГЁГ­Г  Г§Г  Г ГўГІГ®Г¬ГіГІ')
+					showNotification(tag .. " - Update",'Начинаю загрузку плагина за автомут')
 					wait(500)
 					downloadUrlToFile(mute_url, mute_path, function(id, status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATautomute" Г§Г ГЄГ Г·ГҐГ­ ГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­. ')
-							sampAddChatMessage(tag .. " Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі Г±ГЄГ°ГЁГЇГІГ®Гў")
+							sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
 							reloadScripts()
 						end
 					end)
 				end)
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Г‘Г®Г¤ГҐГ°Г¦ГЁГІ: Г°Г ГЎГ®ГІГі Г± Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГїГ¬ГЁ, Г ГўГІГ®Г¬ГіГІ - Г¬Г ГІ ГЁ Г®Г±ГЄ, Г Г¤Г¬ГЁГ­-Г±ГІГ ГІГ ")
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГ«Г ГЈГЁГ­Г  ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ ГґГіГ­ГЄГ¶ГЁГ© В№2") then  
+			imgui.TextQuestion('(?)', u8"Содержит: работу с мероприятиями, автомут - мат и оск, админ-стата")
+			if imgui.Button(u8"Обновление плагина вспомогательных функций №2") then  
 				lua_thread.create(function()
-					showNotification(tag .. " - Update","ГЌГ Г·ГЁГ­Г Гѕ Г§Г ГЈГ°ГіГ§ГЄГі ГЇГ«Г ГЈГЁГ­Г  \nГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ ГґГіГ­ГЄГ¶ГЁГ©!")
+					showNotification(tag .. " - Update","Начинаю загрузку плагина \nвспомогательных функций!")
 					wait(500)
 					downloadUrlToFile(pl1_url, pl1_path, function(id, status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATother" Г§Г ГЄГ Г·ГҐГ­ ГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­. ')
-							sampAddChatMessage(tag .. " Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі Г±ГЄГ°ГЁГЇГІГ®Гў")
+							sampAddChatMessage(tag .. ' Плагин "ATother" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
 							reloadScripts()
 						end
 					end)
 				end)
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Г‘Г®Г¤ГҐГ°Г¦ГЁГІ: ГІГ°ГҐГ©Г±ГҐГ° ГЇГіГ«Гј, WallHack, Infinite Run, ГЃГ«Г®ГЄГ­Г®ГІ")
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГ«Г ГЈГЁГ­Г  Г¤Г®ГЇГ®Г«Г­ГЁГІГҐГ«ГјГ­Г»Гµ ГґГіГ­ГЄГ¶ГЁГ© В№3") then  
+			imgui.TextQuestion('(?)', u8"Содержит: трейсер пуль, WallHack, Infinite Run, Блокнот")
+			if imgui.Button(u8"Обновление плагина дополнительных функций №3") then  
 				lua_thread.create(function()
-					showNotification(tag .. " - Update","ГЌГ Г·ГЁГ­Г Гѕ Г§Г ГЈГ°ГіГ§ГЄГі ГЇГ«Г ГЈГЁГ­Г  Г¤Г®ГЇ.ГґГіГ­ГЄГ¶ГЁГ©!")
+					showNotification(tag .. " - Update","Начинаю загрузку плагина доп.функций!")
 					wait(500)
 					downloadUrlToFile(pl2_url, pl2_path, function(id, status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATplugin" Г§Г ГЄГ Г·ГҐГ­ ГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­. ')
-							sampAddChatMessage(tag .. " Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі Г±ГЄГ°ГЁГЇГІГ®Гў")
+							sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен и обновлен. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
 							reloadScripts()
 						end
 					end)
 				end)
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Г‘Г®Г¤ГҐГ°Г¦ГЁГІ: Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГЁГўГ­Г»Г© Г·Г ГІ")
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЎГЁГЎГ«ГЁГ®ГІГҐГЄГЁ TAB-Scoreboard") then  
+			imgui.TextQuestion('(?)', u8"Содержит: административный чат")
+			if imgui.Button(u8"Обновление библиотеки TAB-Scoreboard") then  
 				lua_thread.create(function()
-					showNotification(tag .. " - Update","ГЌГ Г·ГЁГ­Г Гѕ Г§Г ГЈГ°ГіГ§ГЄГі \nГЎГЁГЎГ«ГЁГ®ГІГҐГЄГі TAB-Scoreboard")
+					showNotification(tag .. " - Update","Начинаю загрузку \nбиблиотеку TAB-Scoreboard")
 					wait(500)
 					downloadUrlToFile(scoreboard_url, scoreboard_path, function(id, status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЃГЁГЎГ«ГЁГ®ГІГҐГЄГ  "TAB-Scoreboard" Г§Г ГЄГ Г·ГҐГ­Г  ГЁ Г®ГЎГ­Г®ГўГ«ГҐГ­Г . ')
-							sampAddChatMessage(tag .. " Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі Г±ГЄГ°ГЁГЇГІГ®Гў")
+							sampAddChatMessage(tag .. ' Библиотека "TAB-Scoreboard" закачена и обновлена. ')
+							sampAddChatMessage(tag .. " Выполняю перезагрузку скриптов")
 							reloadScripts()
 						end
 					end)
 				end)
 			end	
-			if imgui.Button(u8"ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГўГ±ГҐГЈГ® ГЇГ ГЄГҐГІГ  AT") then  
+			if imgui.Button(u8"Обновление всего пакета AT") then  
 				lua_thread.create(function()
 					downloadUrlToFile(report_url, report_path, function(id,status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATReport" Г§Г ГЄГ Г·ГҐГ­')
+							sampAddChatMessage(tag .. ' Плагин "ATReport" закачен')
 						end	
 					end)	
 					wait(500)
 					downloadUrlToFile(mute_url, mute_path, function(id,status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATautomute" Г§Г ГЄГ Г·ГҐГ­ ')
+							sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен ')
 						end	
 					end)	
 					wait(500)
 					downloadUrlToFile(pl1_url, pl1_path, function(id,status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATother" Г§Г ГЄГ Г·ГҐГ­ ')
+							sampAddChatMessage(tag .. ' Плагин "ATother" закачен ')
 						end	
 					end)	
 					wait(500)
 					downloadUrlToFile(pl2_url, pl2_path, function(id,status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' ГЏГ«Г ГЈГЁГ­ "ATplugin" Г§Г ГЄГ Г·ГҐГ­ ')
+							sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен ')
 						end	
 					end)	
 					wait(500)
 					downloadUrlToFile(script_url, script_path, function(id,status)
 						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. "ГЋГ±Г­Г®ГўГ­Г®Г© Г±ГЄГ°ГЁГЇГІ ГЈГ®ГІГ®Гў!")
+							sampAddChatMessage(tag .. "Основной скрипт готов!")
 						end	
 					end)	
-					sampAddChatMessage(tag .. "ГЋГЎГ­Г®ГўГ«ГҐГ­ ГўГҐГ±Гј Г®Г±Г­Г®ГўГ­Г®Г© ГЇГ ГЄГҐГІ AdminTool! Г‚Г»ГЇГ®Г«Г­ГїГѕ ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГі!")
+					sampAddChatMessage(tag .. "Обновлен весь основной пакет AdminTool! Выполняю перезагрузку!")
 					reloadScripts()
 				end)	
 			end	
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8"Г‘Г®Г¤ГҐГ°Г¦ГЁГІ: ГўГ±ГҐ Г±ГЄГ°ГЁГЇГІГ» ГЇГ ГЄГҐГІГ  AT, ГЄГ°Г®Г¬ГҐ ГёГ°ГЁГґГІГ®Гў ГЁ ГЎГЁГЎГ«ГЁГ®ГІГҐГЄ")
+			imgui.TextQuestion('(?)', u8"Содержит: все скрипты пакета AT, кроме шрифтов и библиотек")
 		end	
 		if menuSelect == 12 then  
 			plugin2.AdminState()
 			imgui.SameLine()
-			imgui.TextQuestion('(?)', u8'Г‚Г»ГўГ®Г¤ГЁГІ Г®ГЄГ®ГёГЄГ® ГўГ ГёГҐГ© Г Г¤Г¬ГЁГЁГ­Г±ГІГ°Г ГІГЁГўГ­Г®Г© Г±ГІГ ГІГЁГ±ГІГЁГЄГЁ :3\nГЏГ°Г®Г·ГЁГҐ Г­Г Г±ГІГ°Г®Г©ГЄГЁ Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГЁГўГ­Г®Г© Г±ГІГ ГІГЁГ±ГІГЁГЄГЁ Г­ГЁГ¦ГҐ')	
+			imgui.TextQuestion('(?)', u8'Выводит окошко вашей адмиинстративной статистики :3\nПрочие настройки административной статистики ниже')	
 			imgui.Separator()
 			plugin2.AdminStateCheckbox()
 		end	
@@ -4439,13 +4440,13 @@ function imgui.OnDrawFrame()
 			rep_pl.ActiveBinder()
 		end	
 		if menuSelect == 14 then  
-			if imgui.Button(u8"Г‚Г»Г¤Г Г·Г  ГЇГ®ГўГ»ГёГҐГ­ГЁГ©/Г±Г­ГїГІГЁГ©") then  
+			if imgui.Button(u8"Выдача повышений/снятий") then  
 				imgui.OpenPopup(u8'OpenMakeAdmin')
 			end	
 			if imgui.BeginPopupModal(u8'OpenMakeAdmin', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then  
 				imgui.BeginChild("##MakeAdmin", imgui.ImVec2(600, 225), true)
-				imgui.Text(u8"ГЏГ°ГЁ Г±Г®Г§Г¤Г Г­ГЁГЁ ГЎГЁГ­Г¤Г  ГўГ»Г¤Г Г·ГЁ ГЇГ® MakeAdmin, ГіГ·ГІГЁГІГҐ, Г·ГІГ® ГЇГЁГёГЁГІГ±Гї ГўГ±ГҐ Гў Г±ГІГ®Г«ГЎГЁГЄ. \nГЌГҐГ®ГЎГµГ®Г¤ГЁГ¬ Г­ГЁГЄ ГЁ ГіГ°Г®ГўГҐГ­Гј.")
-				imgui.Text(u8"ГЏГ°ГЁГ¬ГҐГ°:")
+				imgui.Text(u8"При создании бинда выдачи по MakeAdmin, учтите, что пишится все в столбик. \nНеобходим ник и уровень.")
+				imgui.Text(u8"Пример:")
 				imgui.Text(u8"alfantasyz 18\nalfantasyz 0")
 				imgui.Separator()
 				if #textcfg.makeadmin_name > 0 then  
@@ -4454,7 +4455,7 @@ function imgui.OnDrawFrame()
 							play_makeadmin(key_bind)
 						end	
 						imgui.SameLine()
-						if imgui.Button(u8'ГђГҐГ¤Г ГЄГІГЁГ°Г®ГўГ ГІГј##'..key_bind, imgui.ImVec2(100, 22)) then
+						if imgui.Button(u8'Редактировать##'..key_bind, imgui.ImVec2(100, 22)) then
 							EditOldBind = true
 							getpos = key_bind
 							local returnwrapped = tostring(textcfg.makeadmin_text[key_bind]):gsub('~', '\n')
@@ -4463,46 +4464,46 @@ function imgui.OnDrawFrame()
 							imgui.OpenPopup(u8'EditMakeAdmin')
 						end
 						imgui.SameLine()
-						if imgui.Button(u8'Г“Г¤Г Г«ГЁГІГј##'..key_bind, imgui.ImVec2(60, 22)) then
-							sampAddChatMessage(tag .. 'MakeAdmin "' ..u8:decode(textcfg.makeadmin_name[key_bind])..'" ГіГ¤Г Г«ГҐГ­!', -1)
+						if imgui.Button(u8'Удалить##'..key_bind, imgui.ImVec2(60, 22)) then
+							sampAddChatMessage(tag .. 'MakeAdmin "' ..u8:decode(textcfg.makeadmin_name[key_bind])..'" удален!', -1)
 							table.remove(textcfg.makeadmin_name, key_bind)
 							table.remove(textcfg.makeadmin_text, key_bind)
 							TextSave()
 						end
 					end	
 				else 
-					imgui.Text(u8"ГЏГіГ±ГІГ®!")
+					imgui.Text(u8"Пусто!")
 				end	
-				if imgui.Button(u8"Г‘Г®Г§Г¤Г ГІГј!") then  
+				if imgui.Button(u8"Создать!") then  
 					imgui.OpenPopup(u8'EditMakeAdmin')	 
 				end	
 				if imgui.BeginPopupModal(u8'EditMakeAdmin', false, imgui.WindowFlags.NoResize + imgui.WindowFlags.AlwaysAutoResize) then
 					imgui.BeginChild("##EdMakeAdmin", imgui.ImVec2(600, 225), true)
-					imgui.Text(u8'ГЌГ Г§ГўГ Г­ГЁГҐ MakeAdmin:'); imgui.SameLine()
+					imgui.Text(u8'Название MakeAdmin:'); imgui.SameLine()
 					imgui.PushItemWidth(130)
 					imgui.InputText("##name_adm", elm.input.adm_name)
 					imgui.PopItemWidth()
 					imgui.PushItemWidth(100)
 					imgui.Separator()
-					imgui.Text(u8'Г’ГҐГЄГ±ГІ MakeAdmin:')
+					imgui.Text(u8'Текст MakeAdmin:')
 					imgui.PushItemWidth(300)
 					imgui.InputTextMultiline("##text_adm", elm.input.adm_text, imgui.ImVec2(-1, 110))
 					imgui.PopItemWidth()
 					imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 100)
-					if imgui.Button(u8'Г‡Г ГЄГ°Г»ГІГј##bind1', imgui.ImVec2(100,30)) then
+					if imgui.Button(u8'Закрыть##bind1', imgui.ImVec2(100,30)) then
 						elm.input.adm_name.v, elm.input.adm_text.v = '', ''
 						imgui.CloseCurrentPopup()
 					end
 					imgui.SameLine()
 					if #elm.input.adm_name.v > 0 and #elm.input.adm_text.v > 0 then
 						imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
-						if imgui.Button(u8'Г‘Г®ГµГ°Г Г­ГЁГІГј##bind1', imgui.ImVec2(100,30)) then
+						if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
 							if not EditOld then
 								local refresh_text = elm.input.adm_text.v:gsub("\n", "~")
 								table.insert(textcfg.makeadmin_name, elm.input.adm_name.v)
 								table.insert(textcfg.makeadmin_text, refresh_text)
 								if TextSave() then
-									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" ГіГ±ГЇГҐГёГ­Г® Г±Г®Г§Г¤Г Г­!', -1)
+									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" успешно создан!', -1)
 									elm.input.adm_name.v, elm.input.adm_text.v = '', ''
 								end
 									imgui.CloseCurrentPopup()
@@ -4513,7 +4514,7 @@ function imgui.OnDrawFrame()
 									table.remove(textcfg.makeadmin_name, getpos + 1)
 									table.remove(textcfg.makeadmin_text, getpos + 1)
 								if TextSave() then
-									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" ГіГ±ГЇГҐГёГ­Г® Г®ГІГ°ГҐГ¤Г ГЄГІГЁГ°Г®ГўГ Г­!', -1)
+									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" успешно отредактирован!', -1)
 									elm.input.adm_name.v, elm.input.adm_text.v = '', ''
 								end
 								EditOld = false
@@ -4542,12 +4543,12 @@ function imgui.OnDrawFrame()
 
 				imgui.SetNextWindowSize(imgui.ImVec2(600, 350), imgui.Cond.FirstUseEver)
 				imgui.SetNextWindowPos(imgui.ImVec2((sw1 / 4.5), sh1 / 4), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-				imgui.Begin(u8"Г—Г ГІ-Г«Г®ГЈГЈГҐГ°", ATChatLogger)
+				imgui.Begin(u8"Чат-логгер", ATChatLogger)
 				if elm.checkbox.chat_logger.v then
 					if accept_load_clog then
-						imgui.InputText(u8"ГЏГ®ГЁГ±ГЄ Г±ГІГ°Г®ГЄГЁ", chat_find)
+						imgui.InputText(u8"Поиск строки", chat_find)
 						if chat_find.v == "" then
-							imgui.Text(u8'ГЏГ°ГҐГ¤Г«Г®Г¦ГҐГ­ГЁГҐ/Г‘Г«Г®ГўГ® Г­ГҐ ГЎГ»Г«Г® ГўГўГҐГ¤ГҐГ­Г®. Г‚ГўГҐГ¤ГЁГІГҐ ГЇГ®Г¦Г Г«ГіГ©Г±ГІГ .\n')
+							imgui.Text(u8'Предложение/Слово не было введено. Введите пожалуйста.\n')
 							for key,v in pairs(text_ru) do 
 								imgui.Text(v)
 							end   
@@ -4564,30 +4565,30 @@ function imgui.OnDrawFrame()
 						imgui.Spinner(20, 7)
 					end
 				else 
-					imgui.CenterText(u8"ГЏГ®Г¤Г­Г Г±ГІГ°Г®Г©ГЄГ  Г·Г ГІ-Г«Г®ГЈГЈГҐГ°Г  Г­ГҐ ГЎГ»Г«Г  ГўГЄГ«ГѕГ·ГҐГ­Г .")
-					imgui.CenterText(u8"Q: ГЉГ ГЄ ГҐГЈГ® ГўГЄГ«ГѕГ·ГЁГІГј?")
-					imgui.CenterText(u8"A: Г‚Г±ГҐ ГЇГ°Г®Г±ГІГ®! Г‡Г ГµГ®Г¤ГЁ Гў /tool. ГЏГ®ГІГ®Г¬ Г¦Г¬ГїГЄГ Г© Г­Г  < ГЋГ±Г­Г®ГўГ­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ AT >")
-					imgui.CenterText(u8"A: Г†Г¬ГїГЄГ­ГіГ«? ГЌГ Г¦ГЁГ¬Г Г© Г­Г  ГЇГҐГ°ГҐГЄГ«ГѕГ·Г ГІГҐГ«Гј < Г—Г ГІ-Г«Г®ГЈГЈГҐГ° > ГЁ ГЇГ°Г®ГЎГіГ© ГҐГ№Вё Г°Г Г§")
+					imgui.CenterText(u8"Поднастройка чат-логгера не была включена.")
+					imgui.CenterText(u8"Q: Как его включить?")
+					imgui.CenterText(u8"A: Все просто! Заходи в /tool. Потом жмякай на < Основные функции AT >")
+					imgui.CenterText(u8"A: Жмякнул? Нажимай на переключатель < Чат-логгер > и пробуй ещё раз")
 				end
 				imgui.End()
 			end
 
-			if ATre_menu.v and control_recon and recon_to_player and elm.checkbox.atrecon.v then -- Г°ГҐГЄГ®Г­
+			if ATre_menu.v and control_recon and recon_to_player and elm.checkbox.atrecon.v then -- рекон
 
 				imgui.LockPlayer = false
 		
 				imgui.SetNextWindowPos(imgui.ImVec2(sw/2, sh/1.06), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 1))
 				imgui.SetNextWindowSize(imgui.ImVec2(600, 60), imgui.Cond.FirstUseEver)
-				imgui.Begin(u8"ГЌГ ГЄГ Г§Г Г­ГЁГї ГЁГЈГ°Г®ГЄГ ", false, 2+4+32 + imgui.WindowFlags.NoTitleBar)
+				imgui.Begin(u8"Наказания игрока", false, 2+4+32 + imgui.WindowFlags.NoTitleBar)
 					if imgui.Button(fa.ICON_ARROW_LEFT .. u8" BackID") then  
 						sampSendChat("/re " .. control_recon_playerid-1)
 					end
 					imgui.SameLine()
-					if imgui.Button(u8"Г‡Г Г±ГЇГ ГўГ­ГЁГІГј") then
+					if imgui.Button(u8"Заспавнить") then
 						sampSendChat("/aspawn " .. control_recon_playerid)
 					end
 					imgui.SameLine()
-					if imgui.Button(u8"ГЋГЎГ­Г®ГўГЁГІГј") then
+					if imgui.Button(u8"Обновить") then
 						sampSendClickTextdraw(132)
 						if elm.checkbox.keysync.v then 
 							lua_thread.create(function()
@@ -4606,11 +4607,11 @@ function imgui.OnDrawFrame()
 						end	
 					end
 					imgui.SameLine()
-					if imgui.Button(u8"Г‘Г«Г ГЇГ­ГіГІГј") then  
+					if imgui.Button(u8"Слапнуть") then  
 						sampSendChat("/slap " .. control_recon_playerid)
 					end
 					imgui.SameLine()
-					if imgui.Button(u8"Г“ГЎГЁГІГј") then  
+					if imgui.Button(u8"Убить") then  
 						lua_thread.create(function()
 							sampSendClickPlayer(control_recon_playerid, 0)
 							wait(200)
@@ -4622,11 +4623,11 @@ function imgui.OnDrawFrame()
 						end)	
 					end	
 					imgui.SameLine()
-					if imgui.Button(u8"Г‡Г Г¬Г®Г°Г®Г§ГЁГІГј/ГђГ Г§Г¬Г®Г°Г®Г§ГЁГІГј") then  
+					if imgui.Button(u8"Заморозить/Разморозить") then  
 						sampSendChat("/freeze " .. control_recon_playerid)
 					end
 					imgui.SameLine()
-					if imgui.Button(u8"Г‚Г»Г©ГІГЁ") then
+					if imgui.Button(u8"Выйти") then
 						sampSendChat("/reoff")
 						if elm.checkbox.keysync.v then
 							lua_thread.create(function()
@@ -4651,19 +4652,19 @@ function imgui.OnDrawFrame()
 					end
 					imgui.Separator()
 					imgui.SetCursorPosX(imgui.GetWindowWidth()/2.43-80)
-					if imgui.Button(u8"ГЏГ®Г±Г Г¤ГЁГІГј") then
+					if imgui.Button(u8"Посадить") then
 						selectRecon = 2
 						tool_re = 1
 					end
 					imgui.SameLine()
 					imgui.SetCursorPosX(imgui.GetWindowWidth()/2.41)
-					if imgui.Button(u8"Г‡Г ГЎГ Г­ГЁГІГј") then
+					if imgui.Button(u8"Забанить") then
 						selectRecon = 2
 						tool_re = 2
 					end
 					imgui.SameLine()
 					imgui.SetCursorPosX(imgui.GetWindowWidth()/2.43+80)
-					if imgui.Button(u8"ГЉГЁГЄГ­ГіГІГј") then
+					if imgui.Button(u8"Кикнуть") then
 						selectRecon = 2
 						tool_re = 3
 					end
@@ -4671,7 +4672,7 @@ function imgui.OnDrawFrame()
 				
 
 				--imgui.SetNextWindowSize(imgui.ImVec2(270, sh/2), imgui.Cond.FirstUseEver) -- 
-				if right_re_menu.v then -- Г°ГҐГЄГ®Г­
+				if right_re_menu.v then -- рекон
 					local recon_cfg = inicfg.load({
 						settings = {
 							reX = 0,
@@ -4711,7 +4712,7 @@ function imgui.OnDrawFrame()
 							setClipboardText(control_recon_playernick)
 						end	
 						imgui.SameLine()
-						imgui.Text(u8"Г€ГЈГ°Г®ГЄ: " .. control_recon_playernick .. "[" .. control_recon_playerid .. "]") 
+						imgui.Text(u8"Игрок: " .. control_recon_playernick .. "[" .. control_recon_playerid .. "]") 
 						imgui.Separator()
 						for key, v in pairs(player_info) do
 							if key == 2 then
@@ -4743,28 +4744,28 @@ function imgui.OnDrawFrame()
 						plugin.ActiveWHRe()
 						plugin.ActiveBT()
 						imgui.Separator()
-						if imgui.Button(u8"Г‚Г§Г ГЁГ¬Г®Г¤ГҐГ©Г±ГІГўГ®ГўГ ГІГј \nГ„Г®ГЇ.Г¤ГҐГ©Г±ГІГўГЁГї") then  
+						if imgui.Button(u8"Взаимодействовать \nДоп.действия") then  
 							imgui.OpenPopup('ihavereconplayer')
 						end 	
 						if imgui.BeginPopup('ihavereconplayer') then  
-						if imgui.Button(u8"Г‘ГІГ ГІГЁГ±ГІГЁГЄГ  Г¤Г Г­Г­Г®ГЈГ® ГЁГЈГ°Г®ГЄГ ") then  
+						if imgui.Button(u8"Статистика данного игрока") then  
 							sampSendChat("/statpl " .. control_recon_playerid)
 						end	
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"/statpl\nГЉГ«ГЁГЄГ ГЎГҐГ«ГјГ­Г®")
-						if imgui.Button(u8"Г‚ГІГ®Г°Г Гї Г±ГІГ ГІГЁГ±ГІГЁГЄГ  ГЁГЈГ°Г®ГЄГ ") then  
+						imgui.TextQuestion("(?)", u8"/statpl\nКликабельно")
+						if imgui.Button(u8"Вторая статистика игрока") then  
 							sampSendChat("/offstats " .. control_recon_playernick)
 						end
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"ГЏГ®ГЄГ Г§ Reg/Last IP, /offstats\nГЉГ«ГЁГЄГ ГЎГҐГ«ГјГ­Г®")
-						if imgui.Button(u8"ГЋГ±Г­Г®ГўГ­Г Гї Г±ГІГ ГІГЁГ±ГІГЁГЄГ  ГЁГЈГ°Г®ГЄГ ") then 
+						imgui.TextQuestion("(?)", u8"Показ Reg/Last IP, /offstats\nКликабельно")
+						if imgui.Button(u8"Основная статистика игрока") then 
 							lua_thread.create(function()
 								sampSendClickPlayer(control_recon_playerid, 0)
 								wait(200)
 								sampSendDialogResponse(500, 1, 10)
 							end)
 						end	
-						if imgui.Button(u8"IP-Г Г¤Г°ГҐГ± ГЁГЈГ°Г®ГЄГ ") then 
+						if imgui.Button(u8"IP-адрес игрока") then 
 							sampSendChat("/getip " .. control_recon_playerid)
 						end	
 						imgui.SameLine()
@@ -4777,18 +4778,18 @@ function imgui.OnDrawFrame()
 							end)
 						end	
 						imgui.SameLine()
-						imgui.TextQuestion('(?)', u8"ГЉГ­Г®ГЇГЄГ  'Г‘Г®ГµГ°Г Г­ГЁГІГј' ГЇГ®Г§ГўГ®Г«ГЁГІ Г±ГЄГ®ГЇГЁГ°Г®ГўГ ГІГј IP")
-						if imgui.Button(u8"ГЋГ°ГіГ¦ГЁГї ГЁГЈГ°Г®ГЄГ ") then  
+						imgui.TextQuestion('(?)', u8"Кнопка 'Сохранить' позволит скопировать IP")
+						if imgui.Button(u8"Оружия игрока") then  
 							sampSendChat("/iwep " .. control_recon_playerid)
 						end 
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"ГЏГ®ГЄГ Г§ ГЈГ Г­Г®Гў ГЁГЈГ°Г®ГЄГ , /iwep\nГЉГ«ГЁГЄГ ГЎГҐГ«ГјГ­Г®")
-						if imgui.Button(u8"ГЋГІГ®ГЎГ°Г ГІГј Г®Г°ГіГ¦ГЁГҐ") then  
+						imgui.TextQuestion("(?)", u8"Показ ганов игрока, /iwep\nКликабельно")
+						if imgui.Button(u8"Отобрать оружие") then  
 							sampSendChat("/tweap " .. control_recon_playerid)
 						end  
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"/tweap\nГЉГ«ГЁГЄГ ГЎГҐГ«ГјГ­Г®")
-						if imgui.Button(u8"Г’ГЏ ГЄ ГЇГ®Г¤Г®Г§Г°ГҐГўГ ГҐГ¬Г®Г¬Гі") then  
+						imgui.TextQuestion("(?)", u8"/tweap\nКликабельно")
+						if imgui.Button(u8"ТП к подозреваемому") then  
 							lua_thread.create(function()
 								sampSendChat("/reoff")
 								wait(200)
@@ -4796,8 +4797,8 @@ function imgui.OnDrawFrame()
 							end)
 						end	
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"Г’ГҐГ«ГҐГЇГ®Г°ГІ ГЄ ГЁГЈГ°Г®ГЄГі Г§Г  ГЄГ®ГІГ®Г°Г»Г¬ ГўГ» Гў Г°ГҐГЄГ®Г­ГҐ\nГЉГ«ГЁГЄГ ГЎГҐГ«ГјГ­Г®")
-						if imgui.Button(u8"Г’ГЏ ГЇГ®Г¤Г®Г§Г°ГҐГўГ ГҐГ¬Г®ГЈГ® ГЄ Г±ГҐГЎГҐ") then  
+						imgui.TextQuestion("(?)", u8"Телепорт к игроку за которым вы в реконе\nКликабельно")
+						if imgui.Button(u8"ТП подозреваемого к себе") then  
 							lua_thread.create(function()
 								sampSendChat("/reoff")
 								wait(2000)
@@ -4805,8 +4806,8 @@ function imgui.OnDrawFrame()
 							end)
 						end
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"Г’ГҐГ«ГҐГЇГ®Г°ГІ ГЁГЈГ°Г®ГЄГ  ГЄ Г±ГҐГЎГҐ Г§Г  ГЄГ®ГІГ®Г°Г»Г¬ ГўГ» Гў Г°ГҐГЄГ®Г­ГҐ\nГЉГ«ГЁГЄГ ГЎГҐГ«ГјГ­Г®")
-						if imgui.Button(u8"Г€Г­ГґГ®Г°Г¬Г Г¶ГЁГї Г®ГЎ IP") then 
+						imgui.TextQuestion("(?)", u8"Телепорт игрока к себе за которым вы в реконе\nКликабельно")
+						if imgui.Button(u8"Информация об IP") then 
 							lua_thread.create(function()
 								wait(1)
 								sampSendChat("/getip " .. control_recon_playerid)
@@ -4817,8 +4818,8 @@ function imgui.OnDrawFrame()
 							end)
 						end 
 						imgui.SameLine()
-						imgui.TextQuestion("(?)", u8"ГЏГ®ГЄГ Г¦ГҐГІ ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГѕ, ГЈГ¤ГҐ IP ГЁ ГЁГ­ГґГі Г® Г­ГҐГ¬")	
-						if imgui.Button(u8"ГЉГ«ГЁГҐГ­ГІ") then
+						imgui.TextQuestion("(?)", u8"Покажет информацию, где IP и инфу о нем")	
+						if imgui.Button(u8"Клиент") then
 							lua_thread.create(function()
 							sampSendChat('/tonline')
 							wait(100)
@@ -4828,11 +4829,11 @@ function imgui.OnDrawFrame()
 							end)
 						end
 						imgui.SameLine()
-						imgui.TextQuestion('(?)', u8"ГЏГ°Г®ГўГҐГ°ГїГҐГІ Г± ГЄГ ГЄГ®ГЈГ® ГіГ±ГІГ°Г®Г©Г±ГІГўГ  ГЁГЈГ°Г ГҐГІ ГЁГЈГ°Г®ГЄ")
+						imgui.TextQuestion('(?)', u8"Проверяет с какого устройства играет игрок")
 							imgui.EndPopup()
 						end	
 						imgui.Separator()
-						imgui.Text(u8"Г€ГЈГ°Г®ГЄГЁ Г°ГїГ¤Г®Г¬:")
+						imgui.Text(u8"Игроки рядом:")
 						local playerid_to_stream = playersToStreamZone()
 						for _, v in pairs(playerid_to_stream) do
 							if imgui.Button(" - " .. sampGetPlayerNickname(v) .. "[" .. v .. "] - ", imgui.ImVec2(-0.1, 0)) then
@@ -4840,26 +4841,26 @@ function imgui.OnDrawFrame()
 							end
 						end
 						imgui.Separator()
-						imgui.Text(u8"Г„Г«Гї ГЇГ®ГїГўГ«ГҐГ­ГЁГї ГЄГіГ°Г±Г®Г°Г  \nГ­Г Г¦Г¬ГЁГІГҐ ГЏГЉГЊ.")
-						imgui.Text(u8"ГЉГ«Г ГўГЁГёГ : R - Г®ГЎГ­Г®ГўГЁГІГј Г°ГҐГЄГ®Г­. \nГЉГ«Г ГўГЁГёГ : Q - ГўГ»Г©ГІГЁ ГЁГ§ Г°ГҐГЄГ®Г­Г ")
-						imgui.Text(u8"NumPad4 - ГЇГ°ГҐГ¤Г»Г¤ГіГ№ГЁГ© ГЁГЈГ°Г®ГЄ \nNumPad6 - Г±Г«ГҐГ¤ГіГѕГ№ГЁГ© ГЁГЈГ°Г®ГЄ")
+						imgui.Text(u8"Для появления курсора \nнажмите ПКМ.")
+						imgui.Text(u8"Клавиша: R - обновить рекон. \nКлавиша: Q - выйти из рекона")
+						imgui.Text(u8"NumPad4 - предыдущий игрок \nNumPad6 - следующий игрок")
 					end	
 					if selectRecon == 2 then  
 						if tool_re == 1 then 
 							if imgui.Button("Cheat", btn_size) then
-								sampSendChat("/jail " .. control_recon_playerid .. " 3000 Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г·ГЁГІГҐГ°Г±ГЄГ®ГЈГ® Г±ГЄГ°ГЁГЇГІГ /ГЏГЋ")
+								sampSendChat("/jail " .. control_recon_playerid .. " 3000 Использование читерского скрипта/ПО")
 							end
-							if imgui.Button(u8"Г€Г±ГЇ.Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»Гµ Г±ГЄГ°ГЁГЇГІГ®Гў", btn_size) then  
-								sampSendChat("/jail " .. control_recon_playerid .. " 900 Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ ClickWarp/Metla (Г€Г—Г‘)")
+							if imgui.Button(u8"Исп.запрещенных скриптов", btn_size) then  
+								sampSendChat("/jail " .. control_recon_playerid .. " 900 Использование ClickWarp/Metla (ИЧС)")
 							end	
-							if imgui.Button(u8"Г‡Г«Г®ГіГЇГ®ГІГ°ГҐГЎГ«ГҐГ­ГЁГҐ VIP", btn_size) then
-								sampSendChat("/jail " .. control_recon_playerid .. " 3000 Г‡Г«Г®ГіГЇГ®ГІГ°ГҐГЎГ«ГҐГ­ГЁГҐ VIP")
+							if imgui.Button(u8"Злоупотребление VIP", btn_size) then
+								sampSendChat("/jail " .. control_recon_playerid .. " 3000 Злоупотребление VIP")
 							end
 							if imgui.Button("Speed Hack/Fly", btn_size) then
 								sampSendChat("/jail " .. control_recon_playerid .. " 900 SpeedHack/Fly/Flycar")
 							end
-							if imgui.Button(u8"ГЏГ®Г¬ГҐГµГ  MP", btn_size) then
-								sampSendChat("/jail " .. control_recon_playerid .. " 300 ГЌГ Г°ГіГёГҐГ­ГЁГҐ ГЇГ°Г ГўГЁГ« MP.")
+							if imgui.Button(u8"Помеха MP", btn_size) then
+								sampSendChat("/jail " .. control_recon_playerid .. " 300 Нарушение правил MP.")
 							end
 							if imgui.Button("Spawn Kill", btn_size) then
 								sampSendChat("/jail " .. control_recon_playerid .. " 300 Spawn Kill")
@@ -4867,45 +4868,45 @@ function imgui.OnDrawFrame()
 							if imgui.Button("DM in ZZ", btn_size) then  
 								sampSendChat("/jail " .. control_recon_playerid .. " 300 DM/DB in ZZ")
 							end
-							if imgui.Button(u8"ГЏГ®Г¬ГҐГµГ  ГЁГЈГ°Г®ГЄГ Г¬", btn_size) then  
-								sampSendChat("/jail " .. control_recon_playerid .. " 300 Г‘ГҐГ°ГјГҐГ§Г­Г Гї ГЇГ®Г¬ГҐГµГ  ГЁГЈГ°Г®ГЄГ Г¬")
+							if imgui.Button(u8"Помеха игрокам", btn_size) then  
+								sampSendChat("/jail " .. control_recon_playerid .. " 300 Серьезная помеха игрокам")
 							end
 							if imgui.Button(u8"Car in /trade", btn_size) then  
 								sampSendChat("/jail " .. control_recon_playerid .. " 300 DB/Car in /trade")
 							end
-							if imgui.Button(u8"Г€ГЈГ°Г®ГўГ®Г© ГЎГ ГЈГ®ГѕГ§ \n(Г¤ГЁГЈГ« Гў Г¬Г ГёГЁГ­ГҐ)", btn_size) then  
-								sampSendChat("/jail " .. control_recon_playerid .. " 300 Г€ГЈГ°Г®ГўГ®Г© ГЎГ ГЈГ®ГѕГ§ (deagle in car)")
+							if imgui.Button(u8"Игровой багоюз \n(дигл в машине)", btn_size) then  
+								sampSendChat("/jail " .. control_recon_playerid .. " 300 Игровой багоюз (deagle in car)")
 							end
-							if imgui.Button(u8"Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ \nГўГҐГ°ГІГ®Г«ГҐГІГ  Г­Г  /gw", btn_size) then  
-								sampSendChat("/jail " .. control_recon_playerid .. " 600 Г€Г±ГЇ. ГўГҐГ°ГІГ®Г«ГҐГІГ  Г­Г  /gw")
+							if imgui.Button(u8"Использование \nвертолета на /gw", btn_size) then  
+								sampSendChat("/jail " .. control_recon_playerid .. " 600 Исп. вертолета на /gw")
 							end
-							if imgui.Button(u8"SpawnKill Г­Г  /gw", btn_size) then  
+							if imgui.Button(u8"SpawnKill на /gw", btn_size) then  
 								sampSendChat("/jail " .. control_recon_playerid .. " 600 SK in /gw")
 							end
-							if imgui.Button(u8"Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ \nГ§Г ГЇГ°ГҐГ№.ГЄГ®Г¬Г Г­Г¤ Г­Г  /gw", btn_size) then  
-								sampSendChat("/jail " .. control_recon_playerid .. " 600 Г€Г±ГЇ. Г§Г ГЇГ°ГҐГ№ГҐГ­Г­Г»Гµ ГЄГ®Г¬Г Г­Г¤ Г­Г  /gw")
+							if imgui.Button(u8"Использование \nзапрещ.команд на /gw", btn_size) then  
+								sampSendChat("/jail " .. control_recon_playerid .. " 600 Исп. запрещенных команд на /gw")
 							end
 						end 
 						if tool_re == 2 then  
 							if imgui.Button("Cheat", btn_size) then
-								sampSendChat("/ans " .. control_recon_playerid .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-								sampSendChat("/ans " .. control_recon_playerid .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-								sampSendChat("/iban " .. control_recon_playerid .. " 7 Г€Г±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГҐ Г·ГЁГІГҐГ°Г±ГЄГ®ГЈГ® Г±ГЄГ°ГЁГЇГІГ /ГЏГЋ")
+								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+								sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								sampSendChat("/iban " .. control_recon_playerid .. " 7 Использование читерского скрипта/ПО")
 							end
-							if imgui.Button(u8"ГЏГ«Г ГЈГЁГ ГІ Г­ГЁГЄГ­ГҐГ©Г¬Г  \nГ Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г ", btn_size) then
-								sampSendChat("/ans " .. control_recon_playerid .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-								sampSendChat("/ans " .. control_recon_playerid .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-								sampSendChat("/ban " .. control_recon_playerid .. " 7 ГЏГ«Г ГЈГЁГ ГІ Г­ГЁГЄГ  Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г .")
+							if imgui.Button(u8"Плагиат никнейма \nадминистратора", btn_size) then
+								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+								sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								sampSendChat("/ban " .. control_recon_playerid .. " 7 Плагиат ника администратора.")
 							end
 							if imgui.Button("Nick 3/3", btn_size) then
-								sampSendChat("/ans " .. control_recon_playerid .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-								sampSendChat("/ans ".. control_recon_playerid .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-								sampSendChat("/ban " .. control_recon_playerid .. " 7 ГЌГЁГЄ, Г±Г®Г¤ГҐГ°Г¦Г Г№ГЁГ© Г­ГҐГ¶ГҐГ­Г§ГіГ°Г­ГіГѕ Г«ГҐГЄГ±ГЁГЄГі")
+								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+								sampSendChat("/ans ".. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								sampSendChat("/ban " .. control_recon_playerid .. " 7 Ник, содержащий нецензурную лексику")
 							end
-							if imgui.Button(u8"ГЋГ±ГЄ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ/ГЊГ ГІ Гў ГµГҐГ«ГЇГҐГ°ГҐ", btn_size) then
-								sampSendChat("/ans " .. control_recon_playerid .. " Г“ГўГ Г¦Г ГҐГ¬Г»Г© ГЁГЈГ°Г®ГЄ, ГўГ» Г­Г Г°ГіГёГ Г«ГЁ ГЇГ°Г ГўГЁГ«Г  Г±ГҐГ°ГўГҐГ°Г , ГЁ ГҐГ±Г«ГЁ ГўГ»..")
-								sampSendChat("/ans " .. control_recon_playerid .. " ..Г­ГҐ Г±Г®ГЈГ«Г Г±Г­Г» Г± Г­Г ГЄГ Г§Г Г­ГЁГҐГ¬, Г­Г ГЇГЁГёГЁГІГҐ Г¦Г Г«Г®ГЎГі Г­Г  ГґГ®Г°ГіГ¬ https://forumrds.ru")
-								sampSendChat("/ban " .. control_recon_playerid .. " 3 ГЋГ±ГЄГ®Г°ГЎГ«ГҐГ­ГЁГҐ/Г“Г­ГЁГ¦ГҐГ­ГЁГҐ/ГЊГ ГІ Гў ГµГҐГ«ГЇГҐГ°ГҐ")
+							if imgui.Button(u8"Оск/Унижение/Мат в хелпере", btn_size) then
+								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
+								sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								sampSendChat("/ban " .. control_recon_playerid .. " 3 Оскорбление/Унижение/Мат в хелпере")
 							end
 						end	
 						if tool_re == 3 then   
