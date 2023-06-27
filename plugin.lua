@@ -7,7 +7,7 @@ local encoding = require 'encoding' -- дешифровка форматов
 local inicfg = require 'inicfg' -- работа с ini
 local sampev = require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
 local mem = require "memory" -- библиотека, отвечающие за чтение памяти, и её факторы
-local notfy	= import 'lib/lib_imgui_notf.lua'
+local notfy	= import 'lib\\libsfor.lua'
 encoding.default = 'CP1251' -- смена кодировки на CP1251
 u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
 function showNotification(handle, text_not)
@@ -42,6 +42,7 @@ local plre = inicfg.load({
         adminchat = false,
         anticheat = false,
 		lcadm_imgui = false,
+		adminforms = false,
 		Font = 10,
     },
     achat = {
@@ -70,6 +71,7 @@ local lem = {
         adminchat = imgui.ImBool(plre.sett.adminchat),
 		im_ac = imgui.ImBool(plre.sett.lcadm_imgui),
         anticheat = imgui.ImBool(plre.sett.anticheat),
+		adminforms = imgui.ImBool(plre.sett.adminforms),
     },
     int = {
         adminFont = imgui.ImInt(plre.achat.Font),
@@ -152,6 +154,10 @@ end
 
 local lc_lvl, lc_adm, lc_color, lc_nick, lc_id, lc_text
 
+local reasons = { 
+	"/mute","/jail","/iban","/ban","/kick","/skick","/sban", "/muteakk", "/offban", "/banakk"
+}
+
 function sampev.onServerMessage(color, text)
 
     lc_lvl, lc_adm, lc_color, lc_nick, lc_id, lc_text = text:match("%[A%-(%d+)%] %((.+){(.+)}%) (.+)%[(%d+)%]: {FFFFFF}(.+)")
@@ -164,6 +170,29 @@ function sampev.onServerMessage(color, text)
         ip1 = ip2
         return true
     end
+
+	if lem.toggle.adminforms.v and lc_text ~= nil then  
+		for k, v in ipairs(reasons) do
+			if lc_text:match(v) ~= nil then
+				adm_form = lc_text .. " // " .. lc_nick
+				showNotification(tag, "Пришла административная форма! \n /fac - принять | /fn - отклонить")
+				sampAddChatMessage(tag .. "Форма: " .. adm_form, -1)
+				start_forms()
+			end 
+		end 
+	end
+
+	function start_forms()
+		sampRegisterChatCommand('fac', function()
+			sampSendChat("/a AT - Форма принята!")
+			sampSendChat("".. adm_form)
+			adm_form = ""
+		end)
+		sampRegisterChatCommand("fn", function()
+			sampSendChat("/a AT - Форма отклонена!")
+			adm_form = ""        
+		end)
+	end
 
 	if (lem.toggle.adminchat.v or lem.toggle.im_ac.v) and check_string ~= nil and string.find(check_string, "%[A%-(%d+)%]") ~= nil and string.find(text, "%[A%-(%d+)%] (.+) отключился") == nil then
 		local lc_text_chat
@@ -235,7 +264,7 @@ function main()
     render_warn = lua_thread.create_suspended(renderWarnings)
     loadAdminChat()
 	admin_chat:run()
-	sampAddChatMessage(tag .. " Подгрузка плагина дополнительных функций.")
+	sampfuncsLog(tag .. " Подгрузка плагина дополнительных функций.")
 
     while true do
         wait(0)
@@ -511,6 +540,17 @@ function EXPORTS.ActiveATChat()
 	end	
     imgui.EndChild()
 end    
+
+function EXPORTS.OnAdminForms()
+	-- adminforms
+	imgui.Text(u8" Административнвые формы")
+	imgui.SameLine()
+	imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
+	if imgui.ToggleButton("##AdminForms", lem.toggle.adminforms) then  
+		plre.sett.adminforms = lem.toggle.adminforms.v  
+		save()
+	end	
+end
 
 function EXPORTS.OffScript()
 	imgui.ShowCursor = false

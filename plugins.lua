@@ -3,14 +3,14 @@ local encoding = require 'encoding' -- дешифровка форматов
 local inicfg = require 'inicfg' -- работа с ini
 local sampev = require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
 local imgui = require 'imgui' -- регистр imgui окон
-local notfy	= import 'lib/lib_imgui_notf.lua'
+local lib_a	= import 'lib/libsfor.lua'
 encoding.default = 'CP1251' -- смена кодировки на CP1251
 u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
 script_properties('work-in-pause')
 ------- Подключение всех нужных библиотек -----------
 
 function showNotification(handle, text_not)
-	notfy.addNotify("{87CEEB}" .. handle, text_not, 2, 1, 6)
+	lib_a.addNotify("{87CEEB}" .. handle, text_not, 2, 1, 6)
 end
 
 local directIni = "AdminTool\\cfgmute.ini"
@@ -148,7 +148,7 @@ local russian_characters = {
     [168] = 'Ё', [184] = 'ё', [192] = 'А', [193] = 'Б', [194] = 'В', [195] = 'Г', [196] = 'Д', [197] = 'Е', [198] = 'Ж', [199] = 'З', [200] = 'И', [201] = 'Й', [202] = 'К', [203] = 'Л', [204] = 'М', [205] = 'Н', [206] = 'О', [207] = 'П', [208] = 'Р', [209] = 'С', [210] = 'Т', [211] = 'У', [212] = 'Ф', [213] = 'Х', [214] = 'Ц', [215] = 'Ч', [216] = 'Ш', [217] = 'Щ', [218] = 'Ъ', [219] = 'Ы', [220] = 'Ь', [221] = 'Э', [222] = 'Ю', [223] = 'Я', [224] = 'а', [225] = 'б', [226] = 'в', [227] = 'г', [228] = 'д', [229] = 'е', [230] = 'ж', [231] = 'з', [232] = 'и', [233] = 'й', [234] = 'к', [235] = 'л', [236] = 'м', [237] = 'н', [238] = 'о', [239] = 'п', [240] = 'р', [241] = 'с', [242] = 'т', [243] = 'у', [244] = 'ф', [245] = 'х', [246] = 'ц', [247] = 'ч', [248] = 'ш', [249] = 'щ', [250] = 'ъ', [251] = 'ы', [252] = 'ь', [253] = 'э', [254] = 'ю', [255] = 'я',
 } 
 
-local tag = "{00BFFF} [AM]"
+local tag = "{00BFFF} [AM]" 
 
 function asyncHttpRequest(method, url, args, resolve, reject)
 	local request_thread = effil.thread(function(method, url, args)
@@ -207,6 +207,13 @@ function distance_cord(lat1, lon1, lat2, lon2)
 	local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 	local d = 6378 * c
 	return d
+end
+
+function sampev.onDisplayGameText(style, time, text)
+    if string.match(text, "~w~RECON ~r~OFF") then  
+        sampAddChatMessage("Recon Off")
+        control_recon = false
+    end
 end
 
 function sampev.onServerMessage(color, text)
@@ -282,7 +289,7 @@ function sampev.onServerMessage(color, text)
                         if value == string.rlower(val) and not check_osk:find(":я") then
                             lua_thread.create(function()
                             sampAddChatMessage(tag .. text, -1)
-                                if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_osk.v then
+                                if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_osk.v and control_recon == false then
                                     sampSendChat("/mute " .. check_osk_id .. " 400 " .. " Оскорбление/Унижение.")
                                     showNotification("{87CEEdB}AdminTool", 'Запрещенное слово: {FFFFFF}' .. value .. '\n{FFFFFF}Ник нарушителя: {FFFFFF}' .. sampGetPlayerNickname(tonumber(check_osk_id)))
                                 end	
@@ -298,7 +305,7 @@ function sampev.onServerMessage(color, text)
                         if value == string.rlower(val) then
                             lua_thread.create(function()
                                 sampAddChatMessage(tag .. text, -1)
-                                if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_mat.v then
+                                if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_mat.v and control_recon == false then
                                     sampSendChat("/mute " .. check_osk_id .. " 300 " .. " Нецензурная лексика.")
                                     showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_osk_id)) .. "\n Запрещенное слово: " .. value)
                                 end
@@ -315,7 +322,7 @@ end
 
 function main()
     while not isSampAvailable() do wait(0) end
-    
+	
     local file_read_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "r"), 1
 
 	if file_read_1 ~= nil then
@@ -1358,7 +1365,13 @@ function imgui.OnDrawFrame()
         
         imgui.ShowCursor = false
 
-        imgui.SetNextWindowPos(imgui.ImVec2(cfg.settings.posX, cfg.settings.posY), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5))
+        if cfg.settings.posX == 0 and cfg.settings.posY == 0 then  
+            imgui.SetNextWindowPos(imgui.ImVec2(1786, 736), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5))
+        else
+            imgui.SetNextWindowPos(imgui.ImVec2(cfg.settings.posX, cfg.settings.posY), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5)) 
+        end
+
+
 
         imgui.Begin(u8'Статистика', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize + imgui.WindowFlags.NoTitleBar)
 

@@ -100,7 +100,7 @@ function main()
 	while true do
 		wait(0)
 		imgui.ShowCursor = false
-		imgui.SetMouseCursor(-1)
+		--imgui.SetMouseCursor(-1)
 		imgui.Process = true
 	end
 end
@@ -244,6 +244,8 @@ function EXPORTS.addNotify(caption, text, captionPos, textPos, time)
 end
 
 function EXPORTS.OffNotf()
+	imgui.Process = false
+	imgui.ShowCursor = false
 	thisScript():unload()
 end	
 

@@ -7,7 +7,7 @@ local encoding = require 'encoding' -- дешифровка форматов
 local inicfg = require 'inicfg' -- работа с ini
 local sampev = require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
 local mem = require "memory" -- библиотека, отвечающие за чтение памяти, и её факторы
-local notfy	= import 'lib/lib_imgui_notf.lua'
+local notfy	= import 'lib\\libsfor.lua'
 encoding.default = 'CP1251' -- смена кодировки на CP1251
 u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
 ffi.cdef[[
@@ -205,7 +205,7 @@ local defTable = inicfg.load({
         dinamicObject = 9013962961,
         pedP = 1862972872,
         carP = 6282572962,
-        bullettracer = false, 
+        bullettracer = true, 
         showMyBullet = false,  
         infinite_run = false, 
         wallhack = false,
