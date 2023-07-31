@@ -3221,11 +3221,12 @@ function sampev.onShowTextDraw(id, data)
 	or id == 147 or id == 148 or id == 149 or id == 149 or id == 150 
 	or id == 143 or id == 153 or id == 154 or id == 152 or id == 155 
 	or id == 156 or id == 157 or id == 158 or id == 151 or id == 159
-	or id == 160 or id == 2052 or id == 179 or id == 165 or id == 437
-	or id == 164 or id == 180 or id == 162 or id == 178 or id == 181 or id == 166 or id == 170 
-	or id == 174 or id == 182 or id == 172 or id == 175 or id == 171 or id == 183 or id == 184 
-	or id == 177 or id == 171 or id == 161 or id == 169 or id == 167 or id == 176 or id == 413 or id == 437
-	or id == 163 or id == 168 or id == 173) and elm.checkbox.atrecon.v then
+	or id == 160 or id == 2052 or id == 413 or id == 437 or id == 179
+	or id == 165 or id == 164 or id == 180 or id == 162 or id == 178
+	or id == 163 or id == 161 or id == 169 or id == 181 or id == 166
+	or id == 170 or id == 168 or id == 174 or id == 182 or id == 171
+	or id == 172 or id == 175 or id == 173 or id == 183 or id == 183
+	or id == 184 or id == 177 or id == 167 or id == 176) and elm.checkbox.atrecon.v then
 		return false
 	end
 	if id == 2059 then  
