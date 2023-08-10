@@ -858,8 +858,8 @@ function EXPORTS.ActiveWHRe()
             control_wallhack = true
         else 
             showNotification("AdminTool", "Выключен WallHack")
+            nameTagOn()
             control_wallhack = false
-            nameTagOff()
         end	
         save()
     end
@@ -877,8 +877,8 @@ function EXPORTS.ActiveWH()
             control_wallhack = true
         else 
             showNotification("AdminTool", "Выключен WallHack")
+            nameTagOn()
             control_wallhack = false
-            nameTagOff()
         end	
         save()
     end

@@ -143,8 +143,8 @@ local chat_logger_text = { } -- òåêñò ëîããåğà
 local text_ru = { }
 local accept_load_clog = false -- ïğèíÿòèå ïåğåìåííîé ëîããåğà
 
-local script_version = 6 -- îñíîâíàÿ âåğñèÿ, ïåğåõâàòûâàåìàÿ ñàéòîì è ñêğèïòîì
-local script_version_text = "12.6" -- òåêñòîâàÿ âåğñèÿ
+local script_version = 7 -- îñíîâíàÿ âåğñèÿ, ïåğåõâàòûâàåìàÿ ñàéòîì è ñêğèïòîì
+local script_version_text = "13.0" -- òåêñòîâàÿ âåğñèÿ
 local script_path = thisScript().path  -- ïàò÷
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
 local report_path = getWorkingDirectory() .. "ATreport.lua"
@@ -315,7 +315,7 @@ local elm = {
 		admFont = imgui.ImInt(ATcfg.setting.admFont),
 	},
 	input = {
-       ATAdminPass = imgui.ImBuffer(tostring(ATcfg.setting.ATAdminPass), 50),
+       ATAdminPass = imgui.ImBuffer(tostring(ATcfg.setting.ATAdminPass), 60),
 	   prefix_Madm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_Madm), 50),
 	   prefix_GAadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_GAadm), 50),
 	   prefix_STadm = imgui.ImBuffer(tostring(ATcfg.setting.prefix_STadm), 50),
@@ -1649,6 +1649,7 @@ function main()
 		if isKeyDown(VK_R) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
 			if this_server == servers[2] or this_server == servers[3] or this_server == servers[1] then  
 				sampSendClickTextdraw(132)
+				sampSendClickTextdraw(156)
 			end
 			if elm.checkbox.keysync.v then 
 				lua_thread.create(function()
@@ -2105,11 +2106,16 @@ function cmd_nm1(arg)
 end
 
 function cmd_up(arg)
-	if #arg > 0 then
-		sampSendChat("/mute " .. arg .. " 1000 " .. " Óïîìèíàíèå ñòîğîííèõ ïğîåêòîâ ")
-	else 
-		sampAddChatMessage(tag .. "Âû çàáûëè ââåñòè ID íàğóøèòåëÿ! ", -1)
-	end
+	lua_thread.create(function()
+		if #arg > 0 then
+			sampSendChat("/mute " .. arg .. " 1000 " .. " Óïîìèíàíèå ñòîğîííèõ ïğîåêòîâ ")
+			wait(1000)
+			sampSendChat("/cc ")
+			sampAddChatMessage(tag .. "Î÷èñòêà ÷àòà ñâÿçè ñ âûäà÷åé ìóòà.")
+		else 
+			sampAddChatMessage(tag .. "Âû çàáûëè ââåñòè ID íàğóøèòåëÿ! ", -1)
+		end
+	end)
 end
 
 function cmd_rz(arg)
@@ -3275,8 +3281,7 @@ function sampev.onTextDrawSetString(id, text)
 end
 
 function sampev.onShowTextDraw(id, data)
-	if (id >= 3 and id <= 38 or 
-	id == 266 or id == 344 or 
+	if (id == 266 or id == 344 or 
 	id == 2057 or id == 359 or id == 2050 or id == 367 or id == 411
 	or id == 104 or id == 105 or id == 106 or id == 107 or id == 108 
 	or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 
@@ -3294,7 +3299,8 @@ function sampev.onShowTextDraw(id, data)
 	or id == 160 or id == 2052 or id == 179 or id == 165 or id == 437
 	or id == 164 or id == 180 or id == 162 or id == 178 or id == 181 or id == 166 or id == 170 
 	or id == 174 or id == 182 or id == 172 or id == 175 or id == 171 or id == 183 or id == 184 
-	or id == 177 or id == 171 or id == 161 or id == 169 or id == 167 or id == 176 or id == 413 or id == 437) and elm.checkbox.atrecon.v then
+	or id == 177 or id == 171 or id == 161 or id == 169 or id == 167 or id == 176 or id == 413 
+	or id == 437) and elm.checkbox.atrecon.v then
 		return false
 	end
 	if id == 2059 then  
@@ -3826,7 +3832,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8"Îòêğûòèå èíòåğôåéñà (/tool): ")
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATTool)
+			if tonumber(ATcfg.keys.ATTool) then 
+				imgui.Text(tostring(ATcfg.keys.ATTool)) 
+			else  
+				imgui.Text(ATcfg.keys.ATTool)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 1", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATTool = getDownKeysText()
@@ -3840,7 +3850,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8"Âûäà÷à çà îíëàéí: ")
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATOnline)
+			if tonumber(ATcfg.keys.ATOnline) then 
+				imgui.Text(tostring(ATcfg.keys.ATOnline))
+			else 
+				imgui.Text(ATcfg.keys.ATOnline)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 2", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATOnline = getDownKeysText()
@@ -3854,7 +3868,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8"Îòêğûòèå /ans: ")
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATReportAns)
+			if tonumber(ATcfg.keys.ATReportAns) then
+				imgui.Text(tostring(ATcfg.keys.ATReportAns))
+			else
+				imgui.Text(ATcfg.keys.ATReportAns)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 3", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportAns = getDownKeysText()
@@ -3868,7 +3886,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8'Âûâîä "Ïğèÿòíîé èãğû" â /ans: ' )
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATReportRP)
+			if tonumber(ATcfg.keys.ATReportRP) then  
+				imgui.Text(tostring(ATcfg.keys.ATReportRP))
+			else
+				imgui.Text(ATcfg.keys.ATReportRP)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 4", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportRP = getDownKeysText()
@@ -3882,7 +3904,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8"Ñòàòèñòèêà èãğîêà ïğè ñëåæêå: ")
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.Re_menu)
+			if tonumber(ATcfg.keys.Re_menu) then  
+				imgui.Text(tostring(ATcfg.keys.Re_menu)) 
+			else 
+				imgui.Text(ATcfg.keys.Re_menu)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 5", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.Re_menu = getDownKeysText()
@@ -3896,7 +3922,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8'Âûâîä "Ïğèÿòíîãî âğåìÿïğåïğîâîæäåíèÿ" â /ans: ' )
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATReportRP1)
+			if tonumber(ATcfg.keys.ATReportRP1) then  
+				imgui.Text(tostring(ATcfg.keys.ATReportRP1))
+			else 
+				imgui.Text(ATcfg.keys.ATReportRP1)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 6", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportRP1 = getDownKeysText()
@@ -3910,7 +3940,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8'Âûâîä "Ïğèÿòíîé èãğû" â ÷àò: ' )
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATReportRP2)
+			if tonumber(ATcfg.keys.ATReportRP2) then  
+				imgui.Text(tostring(ATcfg.keys.ATReportRP2))
+			else 
+				imgui.Text(ATcfg.keys.ATReportRP2)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 7", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATReportRP2 = getDownKeysText()
@@ -3924,7 +3958,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8'Âêëş÷åíèå/âûêëş÷åíèå WallHack: ' )
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATWHkeys)
+			if tonumber(ATcfg.keys.ATWHkeys) then
+				imgui.Text(tostring(ATcfg.keys.ATWHkeys))
+			else 
+				imgui.Text(ATcfg.keys.ATWHkeys)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 8", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATWHkeys = getDownKeysText()
@@ -3938,7 +3976,11 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text(u8'Àâòîìàòè÷åñêîå íàïèñàíèå /re â ÷àò: ')
 			imgui.SameLine()
-			imgui.Text(ATcfg.keys.ATRecon)
+			if tonumber(ATcfg.keys.ATRecon) then  
+				imgui.Text(tostring(ATcfg.keys.ATRecon))
+			else 
+				imgui.Text(ATcfg.keys.ATRecon)
+			end
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 162)
 			if imgui.Button(u8"Çàïèñàòü. ## 9", imgui.ImVec2(75, 0)) then
 				ATcfg.keys.ATRecon = getDownKeysText()
@@ -4667,6 +4709,7 @@ function imgui.OnDrawFrame()
 					if imgui.Button(u8"Îáíîâèòü") then	
 						if this_server == servers[2] or this_server == servers[3] or this_server == servers[1] then  
 							sampSendClickTextdraw(132)
+							sampSendClickTextdraw(156)
 						end
 						if elm.checkbox.keysync.v then 
 							lua_thread.create(function()
@@ -4788,7 +4831,8 @@ function imgui.OnDrawFrame()
 							setClipboardText(control_recon_playernick)
 						end	
 						imgui.SameLine()
-						imgui.Text(u8"Èãğîê: " .. recon_nick .. "[" .. recon_id .. "]") 
+						imgui.Text(u8"Èãğîê: \n" .. recon_nick .. "[" .. recon_id .. "]") 
+						imgui.Text("")
 						imgui.Separator()
 						for key, v in pairs(player_info) do
 							if key == 2 then
