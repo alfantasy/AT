@@ -145,16 +145,16 @@ local accept_load_clog = false -- ïğèíÿòèå ïåğåìåííîé ëîããåğà
 
 local script_version = 7 -- îñíîâíàÿ âåğñèÿ, ïåğåõâàòûâàåìàÿ ñàéòîì è ñêğèïòîì
 local script_version_text = "13.0" -- òåêñòîâàÿ âåğñèÿ
-local script_path = thisScript().path  -- ïàò÷
-local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATmain.lua" 
-local report_path = getWorkingDirectory() .. "ATreport.lua"
-local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATreport.lua"
-local mute_path = getWorkingDirectory() .. "\\module\\ATautomute.lua"
-local mute_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATautomute.lua"
-local pl1_path = getWorkingDirectory() .. "\\module\\ATother.lua"
-local pl1_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATother.lua" 
-local pl2_path = getWorkingDirectory() .. "\\module\\ATplugin.lua"
-local pl2_url = "https://raw.githubusercontent.com/alfantasy/AT/main/ATplugin.lua" 
+local script_path = path[1] -- ïàò÷
+local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
+local report_path = path[5]
+local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/def.lua"
+local mute_path = path[4]
+local mute_url = "https://raw.githubusercontent.com/alfantasy/AT/main/plugins.lua"
+local pl1_path = path[2]
+local pl1_url = "https://raw.githubusercontent.com/alfantasy/AT/main/other.lua" 
+local pl2_path = path[3]
+local pl2_url = "https://raw.githubusercontent.com/alfantasy/AT/main/plugin.lua" 
 
 local update_path = getWorkingDirectory() .. '/upat.ini' -- îñíîâíîé ïàò÷
 local update_url = "https://raw.githubusercontent.com/alfantasy/AT/main/upat.ini" -- çàãğóçêà ïàò÷à
@@ -1647,10 +1647,8 @@ function main()
 		end
 
 		if isKeyDown(VK_R) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
-			if this_server == servers[2] or this_server == servers[3] or this_server == servers[1] then  
-				sampSendClickTextdraw(132)
-				sampSendClickTextdraw(156)
-			end
+			sampSendClickTextdraw(132)
+			sampSendClickTextdraw(156)
 			if elm.checkbox.keysync.v then 
 				lua_thread.create(function()
 					wait(1000)
@@ -3281,7 +3279,8 @@ function sampev.onTextDrawSetString(id, text)
 end
 
 function sampev.onShowTextDraw(id, data)
-	if (id == 266 or id == 344 or 
+	if (id >= 3 and id <= 38 or 
+	id == 266 or id == 344 or 
 	id == 2057 or id == 359 or id == 2050 or id == 367 or id == 411
 	or id == 104 or id == 105 or id == 106 or id == 107 or id == 108 
 	or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 
@@ -3296,11 +3295,12 @@ function sampev.onShowTextDraw(id, data)
 	or id == 147 or id == 148 or id == 149 or id == 149 or id == 150 
 	or id == 143 or id == 153 or id == 154 or id == 152 or id == 155 
 	or id == 156 or id == 157 or id == 158 or id == 151 or id == 159
-	or id == 160 or id == 2052 or id == 179 or id == 165 or id == 437
-	or id == 164 or id == 180 or id == 162 or id == 178 or id == 181 or id == 166 or id == 170 
-	or id == 174 or id == 182 or id == 172 or id == 175 or id == 171 or id == 183 or id == 184 
-	or id == 177 or id == 171 or id == 161 or id == 169 or id == 167 or id == 176 or id == 413 
-	or id == 437) and elm.checkbox.atrecon.v then
+	or id == 160 or id == 2052 or id == 413 or id == 437 or id == 179
+	or id == 165 or id == 164 or id == 180 or id == 162 or id == 178
+	or id == 163 or id == 161 or id == 169 or id == 181 or id == 166
+	or id == 170 or id == 168 or id == 174 or id == 182 or id == 171
+	or id == 172 or id == 175 or id == 173 or id == 183 or id == 183
+	or id == 184 or id == 177 or id == 167 or id == 176) and elm.checkbox.atrecon.v then
 		return false
 	end
 	if id == 2059 then  
@@ -4707,10 +4707,8 @@ function imgui.OnDrawFrame()
 					end
 					imgui.SameLine()
 					if imgui.Button(u8"Îáíîâèòü") then	
-						if this_server == servers[2] or this_server == servers[3] or this_server == servers[1] then  
-							sampSendClickTextdraw(132)
-							sampSendClickTextdraw(156)
-						end
+						sampSendClickTextdraw(132)
+						sampSendClickTextdraw(156)
 						if elm.checkbox.keysync.v then 
 							lua_thread.create(function()
 								wait(1)
