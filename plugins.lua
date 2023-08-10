@@ -211,7 +211,7 @@ end
 
 function sampev.onDisplayGameText(style, time, text)
     if string.match(text, "~w~RECON ~r~OFF") then  
-        sampAddChatMessage("Recon Off")
+        --sampAddChatMessage("Recon Off")
         control_recon = false
     end
 end
@@ -225,7 +225,7 @@ function sampev.onServerMessage(color, text)
     end
 
     if text:find("Вы наблюдаете за") then  
-        sampAddChatMessage("Recon On", -1)
+        --sampAddChatMessage("Recon On", -1)
         control_recon = true         
     end
 
@@ -684,6 +684,9 @@ function EXPORTS.ActiveMP()
     imgui.Text(u8"Swat Tank - 601 ID, Shamal - 519 ID, Комбайн - 532 ID") 
     imgui.Text(u8"Чтобы заспавнить машину, введите /veh ID 1 1")
     imgui.Text(u8"Вопросы для Викторины, вы должны приготовить сами")
+    imgui.Separator()
+    x, y, z = getCharCoordinates(PLAYER_PED)
+    imgui.Text(u8"Ваши координаты X: " .. x .. " | Y: " .. y .. " | Z " .. z)
     imgui.Separator()
     if imgui.Button(u8"Полезные штуки", imgui.ImVec2(120,0)) then 
         imgui.OpenPopup('toolmp')
