@@ -108,27 +108,6 @@ function main()
 	local i = 1
 	while true do
 		wait(0)
-		if h then
-			if n then
-				if doesDirectoryExist("moonloader\\resource\\scoreboard\\" .. n) and n ~= "." and n ~= ".." then
-					table.insert(thems, n)
-					themsId[tostring(n)] = i
-					if allset.set.curTheme == n then
-						cStyle.v = i - 1
-					end
-					i = i + 1
-				end
-				n = findNextFile(h)
-			else
-				findClose(h)
-				if #thems == 0 then
-					thems[1] = "main"
-					themsId["main"] = 1
-					notThems = true
-					loadTheme()
-				end
-			end
-		end
 		imgui.Process = show_main_window.v
 		for k, v in pairs(pMarker) do
 			local result, ped = sampGetCharHandleBySampPlayerId(k)
@@ -293,12 +272,6 @@ function imgui.OnDrawFrame()
 			end
 			imgui.Separator()
 			if imgui.Button(u8"Сохранить изменения", imgui.ImVec2(212, 0)) then
-				if notThems then
-					inicfg.save(cfg, "..\\resource\\scoreboard\\main\\data.ini")
-					notThems = false
-				else
-					inicfg.save(cfg, "..\\resource\\scoreboard\\" .. allset.set.curTheme .. "\\data.ini")
-				end
 				sampAddChatMessage(tag .. "Настройки TAB`борда сохранены.")
 				inicfg.save(allset, "..\\config\\AdminTool\\scoreboard.ini")
 			end
@@ -779,12 +752,6 @@ function onScriptTerminate(script, quitGame)
 		end
 		if not doesDirectoryExist("moonloader\\config") then
 			createDirectory("moonloader\\config")
-		end
-		if notThems then
-			inicfg.save(cfg, "..\\resource\\scoreboard\\main\\data.ini")
-			notThems = false
-		else
-			inicfg.save(cfg, "..\\resource\\scoreboard\\" .. allset.set.curTheme .. "\\data.ini")
 		end
 		inicfg.save(allset, "..\\config\\AdminTool\\scoreboard")
 		inicfg.save(groups, "..\\config\\AdminTool\\playergroupscoreboard.ini")
