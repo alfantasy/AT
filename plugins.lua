@@ -44,8 +44,6 @@ local cfg = inicfg.load({
         ad_color = "{FFFFFF}",
         posX = 1000,
         posY = 800,
-        reX = 0,
-        reY = 0,
         show_mute_day = false,
         show_mute_now = false,
         show_report_day = false,
@@ -62,7 +60,6 @@ local cfg = inicfg.load({
         show_afk_now = false,
         show_nick_id = false, 
         show_time = false, 
-        recon_state = false,
     },
 	static = {
 		dayReport = 0,
@@ -80,7 +77,6 @@ local cfg = inicfg.load({
 inicfg.save(cfg, directIni)
 
 local changePosition = false
-local changePosition1 = false
 local sessionOnline = imgui.ImInt(0)
 local sessionAfk = imgui.ImInt(0)
 local sessionFull = imgui.ImInt(0)
@@ -95,7 +91,6 @@ local LsessionJail = 0
 local ini = {
     textrule = imgui.ImBuffer(65536),
     admin_state = imgui.ImBool(cfg.settings.admin_state),
-    recon_state = imgui.ImBool(cfg.settings.recon_state),
     mp_tp = imgui.ImBool(cfg.settings.mp_tp),
     automute_mat = imgui.ImBool(cfg.settings.automute_mat),
     automute_osk = imgui.ImBool(cfg.settings.automute_osk),
@@ -340,14 +335,6 @@ function main()
 
 	sampRegisterChatCommand("chip", chip)
 
-    sampRegisterChatCommand("reconmenu", function()
-        changePosition1 = true
-    end)
-
-    sampRegisterChatCommand("check_re", function()
-        sampAddChatMessage(tag .. " X: " .. tostring(cfg.settings.reX) .. " | Y: " ..  tostring(cfg.settings.reY), -1)
-    end)
-
     sampRegisterChatCommand('s_osk', function(param)
 		if param == nil then
 			return false
@@ -462,16 +449,14 @@ function main()
 
         imgui.Process = true
 
-        if not ini.admin_state.v and not ini.recon_state.v then 
+        if not ini.admin_state.v then 
             ini.admin_state.v = false
-            ini.recon_state.v = false
             imgui.ShowCursor = false  
             imgui.Process = false
         end    
 
         
         isPos()
-        rePos()
     end
 end
 
@@ -615,22 +600,6 @@ function time()
 	    end
     end
 end
-
-function rePos()
-    if changePosition1 then  
-        ini.recon_state.v = true 
-        showCursor(true, false)
-        local mouseX, mouseY = getCursorPos()
-        cfg.settings.reX, cfg.settings.reY = mouseX, mouseY
-        if isKeyJustPressed(49) then
-            showCursor(false, false)
-            showNotification(tag, "Успешно сохранено\n Перезагрузите AT для изменения значений\nALT+R")
-            changePosition1 = false
-            save()
-            ini.recon_state.v = false
-        end
-    end
-end	        
 
 function isPos() 
 	if changePosition then
@@ -1396,27 +1365,6 @@ function imgui.OnDrawFrame()
         if ini.show_time.v then imgui.TextColoredRGB(ini.ad_color.v .. u8(os.date("%d.%m.%y | %H:%M:%S", os.time()))) end
         imgui.End()
     end    
-
-    if ini.recon_state.v then  
-
-        grey_black()
-
-        imgui.ShowCursor = false  
-        
-        imgui.SetNextWindowSize(imgui.ImVec2(250, sh/2.15), imgui.Cond.FirstUseEver)
-        imgui.SetNextWindowPos(imgui.ImVec2(cfg.settings.reX, cfg.settings.reY), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5))
-
-        imgui.Begin(u8"Изменение рекон-меню (пример окна)", ini.recon_state)
-        
-        imgui.BeginChild('##SelectMenuRecon', imgui.ImVec2(50, sh/2.15), true)
-        imgui.EndChild()
-        imgui.SameLine()
-        imgui.BeginChild('##ShowInformation', imgui.ImVec2(200,sh/2.15), true)
-        imgui.Text(u8"Информация об игроке")
-        imgui.EndChild()
-        
-        imgui.End()
-    end    
 end    
 
 function onScriptTerminate(script, quitGame)
@@ -1424,13 +1372,6 @@ function onScriptTerminate(script, quitGame)
 		if inicfg.save(cfg, directIni) then sampfuncsLog('{00FF00}AdminTool: {FFFFFF}Ваш онлайн сохранён!') end
 	end
 end
-
-function EXPORTS.SetReconPos()
-    if imgui.Button(fa.ICON_FA_COGS .. "##ReconMenuSet") then  
-        changePosition1 = true
-        sampAddChatMessage(tag .. ' Чтобы подтвердить сохранение - нажмите 1')
-    end    
-end    
 
 function grey_black()
     imgui.SwitchContext()

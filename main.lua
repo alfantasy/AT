@@ -12,30 +12,11 @@ local inicfg 				= require 'inicfg' -- работа с ini
 local sampev 				= require "lib.samp.events" -- подключение основных библиотек, связанные с потокам пакетов ивентов SA:MP, и их прямое соединение с LUA
 local tab_board				= import (getWorkingDirectory() .. '\\lib\\scoreboard.lua') -- регистр для scoreboard
 local lib_a					= import (getWorkingDirectory() .. '\\lib\\libsfor.lua')
-local path = {
-    [1] = getWorkingDirectory() .. "\\lib\\path\\win32\\main.lua", -- основной скрипт
-    [2] = getWorkingDirectory() .. "\\lib\\path\\win32\\other.lua", -- скрипт с сторонними инжектированными плагинами
-    [3] = getWorkingDirectory() .. "\\lib\\path\\win32\\plugin.lua", -- скрипт с основными плагинами для АТ
-    [4] = getWorkingDirectory() .. "\\lib\\samp\\plugins.lua", -- скрипт с автомутом и дополнительными плагинами
-    [5] = getWorkingDirectory() .. "\\lib\\path\\win32\\def.lua", -- скрипт, отвечающий за репорты
-    [6] = getWorkingDirectory() .. "\\lib\\libsfor.lua", -- вспомогательная библиотека для AT
-    [7] = getWorkingDirectory() .. "\\lib\\imgui_addons.lua" -- аддоны для полного функционала ImGui
-}
-local rep_res, rep_pl 		= pcall(import, path[5])
-local plugin_res, plugin 	= pcall(import, path[2])
-local plre_res, plre 	 	= pcall(import, path[3])
-local plugin2_res, plugin2  = pcall(import, path[4])
+local rep_res, rep_pl 		= pcall(import, "reports.lua")
+local plugin_res, plugin 	= pcall(import, "module/other.lua")
+local plre_res, plre 	 	= pcall(import, "module/plugin.lua")
+local plugin2_res, plugin2  = pcall(import, "module/plugins.lua")
 local fa 					= require 'faicons'
-
-local ip_s, port_s = sampGetCurrentServerAddress()
-local this_server = ip_s..":"..port_s
-local servers = {
-	[1] = "46.174.52.246:7777",
-	[2] = "46.174.55.87:7777",
-	[3] = "46.174.49.170:7777",
-	[4] = "46.174.55.169:7777",
-	[5] = "62.122.213.75:7777"
-}
 
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
 encoding.default = 'CP1251' -- смена кодировки на CP1251
@@ -143,17 +124,17 @@ local chat_logger_text = { } -- текст логгера
 local text_ru = { }
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 7 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "13.0" -- текстовая версия
-local script_path = path[1] -- патч
+local script_version = 8 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "13.1" -- текстовая версия
+local script_path = getWorkingDirectory() .. "main.lua"
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
-local report_path = path[5]
+local report_path = getWorkingDirectory() .. "def.lua"
 local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/def.lua"
-local mute_path = path[4]
+local mute_path = getWorkingDirectory() .. "module/plugins.lua"
 local mute_url = "https://raw.githubusercontent.com/alfantasy/AT/main/plugins.lua"
-local pl1_path = path[2]
+local pl1_path = getWorkingDirectory() .. "module/other.lua"
 local pl1_url = "https://raw.githubusercontent.com/alfantasy/AT/main/other.lua" 
-local pl2_path = path[3]
+local pl2_path = getWorkingDirectory() .. "module/plugin.lua"
 local pl2_url = "https://raw.githubusercontent.com/alfantasy/AT/main/plugin.lua" 
 
 local update_path = getWorkingDirectory() .. '/upat.ini' -- основной патч
@@ -205,6 +186,8 @@ local ATcfg = inicfg.load({
 		keysync = false,
 		acX = 0,
 		acY = 0,
+		reX = 0,
+		reY = 0,
 	},
 	keys = {
 		ATWHkeys = "None",
@@ -334,7 +317,11 @@ local elm = {
 	},
 	ac = {
 		X = ATcfg.setting.acX,
-		Y = ATcfg.setting.acY
+		Y = ATcfg.setting.acY,
+	},
+	re = {
+		X = ATcfg.setting.reX, 
+		Y = ATcfg.setting.reY
 	}
 }	
 
@@ -1501,6 +1488,7 @@ function main()
 
 	------------------ Показ запуска скрипта -------------------------
 	sampfuncsLog(tag .. " Скрипт был инициализирован! Для проверки введите /tool")
+	sampAddChatMessage(tag .. " Скрипт был инициализирован! Для проверки введите /tool", -1)
 	------------------ Показ запуска скрипта -------------------------
 
 	_, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
@@ -3735,8 +3723,6 @@ function imgui.OnDrawFrame()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
 			imgui.Text(fa.ICON_ADDRESS_CARD .. u8" Custom Recon-Menu")
 			imgui.SameLine()
-			plugin2.SetReconPos()
-			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
 			if imgui.ToggleButton('##RanReMenu', elm.checkbox.atrecon) then 
 				if elm.checkbox.atrecon.v then  
@@ -4797,13 +4783,15 @@ function imgui.OnDrawFrame()
 
 				--imgui.SetNextWindowSize(imgui.ImVec2(270, sh/2), imgui.Cond.FirstUseEver) -- 
 				if right_re_menu.v then -- рекон
-					
 
+					if ATcfg.setting.reX == 0 and ATcfg.setting.reY == 0 then
+						imgui.SetNextWindowPos(imgui.ImVec2(1786, 736), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+					else
+						imgui.SetNextWindowPos(imgui.ImVec2(ATcfg.setting.reX, ATcfg.setting.reY), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+					end
 					imgui.SetNextWindowSize(imgui.ImVec2(255, sh/2.15), imgui.Cond.FirstUseEver)
-					--imgui.SetNextWindowPos(imgui.ImVec2(recon_cfg.settings.reX+125, recon_cfg.settings.reY), imgui.Cond.FirstUseEver, imgui.ImVec2(1, 0.5)) 
-					imgui.SetNextWindowPos(imgui.ImVec2(1786, 736), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5))
 					
-					imgui.Begin(u8"##ReconMenu", nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar)  --  
+					imgui.Begin(u8"Info Recon-Menu", nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)  --  
 					if accept_load then
 					imgui.BeginChild('##SelectMenuRecon', imgui.ImVec2(50, sh/2.15), true)
 					imgui.PushStyleVar(imgui.StyleVar.FrameRounding, 10) 
@@ -4959,6 +4947,16 @@ function imgui.OnDrawFrame()
 							end
 						end
 						imgui.Separator()
+						if imgui.Button(u8"Save Position") then  
+							param = imgui.GetWindowPos()
+							ATcfg.setting.reX = tonumber(param.x)
+							ATcfg.setting.reY = tonumber(param.y)
+							sampAddChatMessage("X: " .. ATcfg.setting.reX .. " | Y: " .. ATcfg.setting.reY, -1)
+							save()
+							showNotification(tag, "Сохранение позиции окна Recon-Menu")
+						end
+						imgui.SameLine()
+						imgui.TextQuestion('(?)', u8"Сохраняет позицию окна Recon-Menu")
 						imgui.Text(u8"Для появления курсора \nнажмите ПКМ.")
 						imgui.Text(u8"Клавиша: R - обновить рекон. \nКлавиша: Q - выйти из рекона")
 						imgui.Text(u8"NumPad4 - предыдущий игрок \nNumPad6 - следующий игрок")

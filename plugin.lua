@@ -15,11 +15,11 @@ function showNotification(handle, text_not)
 end
 
 local path = {
-    [1] = getWorkingDirectory() .. "\\lib\\path\\win32\\main.lua",
-    [2] = getWorkingDirectory() .. "\\lib\\path\\win32\\other.lua",
-    [3] = getWorkingDirectory() .. "\\lib\\path\\win32\\plugin.lua",
-    [4] = getWorkingDirectory() .. "\\lib\\samp\\events\\plugins.lua",
-    [5] = getWorkingDirectory() .. "\\lib\\SA-MP API\\def.lua"
+    [1] = getWorkingDirectory() .. "main.lua",
+    [2] = getWorkingDirectory() .. "\\module\\other.lua",
+    [3] = getWorkingDirectory() .. "\\module\\plugin.lua",
+    [4] = getWorkingDirectory() .. "\\module\\plugins.lua",
+    [5] = getWorkingDirectory() .. "def.lua"
 }
 
 local plugin_res, plugin = pcall(import, path[2])
