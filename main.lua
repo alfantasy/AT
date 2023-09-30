@@ -105,6 +105,7 @@ local mcolor -- ëîêàëüíàÿ ïåğåìåííàÿ äëÿ ğåãèñòğàöèè ğàíäîìíîãî öâåòà
 local player_info = {} -- èíôà î ÷åëèêå
 local player_to_streamed = {} -- èíôà î ïğåñëåäóåìûì
 local text_remenu = { "Î÷êè:", "Çäîğîâüå:", "Áğîíÿ:", "ÕÏ ìàøèíû:", "Ñêîğîñòü:", "Ping:", "Ïàòğîíû:", "Âûñòğåëû:", "Âğåìÿ âûñòğåëîâ:", "Âğåìÿ ÀÔÊ:", "P.Loss:", "VIP:", "Passive Ìîä:", "Turbo:", "Êîëëèçèÿ:" }
+local control_recon_ids = {439, 146, 148, 2052, 143, 157, 155, 154, 158, 156, 162, 181, 168, 159, 167, 161, 166, 182, 180, 163, 165, 171, 183, 168, 165, 172, 170, 176, 184, 173, 174, 177, 175, 152, 185, 149, 153, 151, 144, 145, 186, 179, 2059, 147, 160, 164, 169, 150, 178}
 local control_recon_playerid = -1 -- êîíòğîëèğóåìàÿ ïåğåìåííàÿ çà èä èãğîêà
 local control_tab_playerid = -1 -- â òàáå
 local ip_player = nil -- ip èãğîêà
@@ -3267,33 +3268,37 @@ function sampev.onTextDrawSetString(id, text)
 end
 
 function sampev.onShowTextDraw(id, data)
-	if (id >= 3 and id <= 38 or 
-	id == 266 or id == 344 or 
-	id == 2057 or id == 359 or id == 2050 or id == 367 or id == 411
-	or id == 104 or id == 105 or id == 106 or id == 107 or id == 108 
-	or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 
-	or id == 138 or id == 122 or id == 132 or id == 350 or id == 133 
-	or id == 103 or id == 134 or id == 135 or id == 136 or id == 137 
-	or id == 126 or id == 114 or id == 113 or id == 119 or id == 131 
-	or id == 132 or id == 129 or id == 123 or id == 117 or id == 112 
-	or id == 116 or id == 119 or id == 120 or id == 118 or id == 121 
-	or id == 124 or id == 125 or id == 127 or id == 128 or id == 115 
-	or id == 2060 or id == 354 or id == 136 or id == 2056 or id == 140 
-	or id == 141 or id == 142 or id == 145 or id == 146 or id == 144 
-	or id == 147 or id == 148 or id == 149 or id == 149 or id == 150 
-	or id == 143 or id == 153 or id == 154 or id == 152 or id == 155 
-	or id == 156 or id == 157 or id == 158 or id == 151 or id == 159
-	or id == 160 or id == 2052 or id == 413 or id == 437 or id == 179
-	or id == 165 or id == 164 or id == 180 or id == 162 or id == 178
-	or id == 163 or id == 161 or id == 169 or id == 181 or id == 166
-	or id == 170 or id == 168 or id == 174 or id == 182 or id == 171
-	or id == 172 or id == 175 or id == 173 or id == 183 or id == 183
-	or id == 184 or id == 177 or id == 167 or id == 176) and elm.checkbox.atrecon.v then
-		return false
+	-- if (id >= 3 and id <= 38 or 
+	-- id == 266 or id == 344 or 
+	-- id == 2057 or id == 359 or id == 2050 or id == 367 or id == 411
+	-- or id == 104 or id == 105 or id == 106 or id == 107 or id == 108 
+	-- or id == 110 or id == 111 or id == 109 or id == 130 or id == 139 
+	-- or id == 138 or id == 122 or id == 132 or id == 350 or id == 133 
+	-- or id == 103 or id == 134 or id == 135 or id == 136 or id == 137 
+	-- or id == 126 or id == 114 or id == 113 or id == 119 or id == 131 
+	-- or id == 132 or id == 129 or id == 123 or id == 117 or id == 112 
+	-- or id == 116 or id == 119 or id == 120 or id == 118 or id == 121 
+	-- or id == 124 or id == 125 or id == 127 or id == 128 or id == 115 
+	-- or id == 2060 or id == 354 or id == 136 or id == 2056 or id == 140 
+	-- or id == 141 or id == 142 or id == 145 or id == 146 or id == 144 
+	-- or id == 147 or id == 148 or id == 149 or id == 149 or id == 150 
+	-- or id == 143 or id == 153 or id == 154 or id == 152 or id == 155 
+	-- or id == 156 or id == 157 or id == 158 or id == 151 or id == 159
+	-- or id == 160 or id == 2052 or id == 413 or id == 437 or id == 179
+	-- or id == 165 or id == 164 or id == 180 or id == 162 or id == 178
+	-- or id == 163 or id == 161 or id == 169 or id == 181 or id == 166
+	-- or id == 170 or id == 168 or id == 174 or id == 182 or id == 171
+	-- or id == 172 or id == 175 or id == 173 or id == 183 or id == 183
+	-- or id == 184 or id == 177 or id == 167 or id == 176) and elm.checkbox.atrecon.v then
+	-- 	return false
+	-- end
+	if elm.checkbox.atrecon.v then 
+		for _, i in pairs(control_recon_ids) do 
+			if id == i then  
+				return false 
+			end
+		end
 	end
-	if id == 2059 then  
-		return false  
-	end	
 	if id == 428 or id == 431 then  
 		sampAddChatMessage(data,-1)
 	end	
