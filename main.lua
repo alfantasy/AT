@@ -1327,7 +1327,7 @@ function sampev.onServerMessage(color, text)
 		local nick, id = text:match("Вы наблюдаете за {ffffff}(.+)%((%d+)%)")
 		recon_id = id 
 		recon_nick = nick
-		check_recon = true
+		return true
 	end
 
 	local check_string = string.match(text, "[^%s]+")
@@ -1953,7 +1953,7 @@ function main()
 		end
 
 		if isKeyDown(VK_R) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
-			sampSendClickTextdraw(158)
+			sampSendClickTextdraw(163)
 			if elm.checkbox.keysync.v then 
 				lua_thread.create(function()
 					wait(1000)
@@ -5000,7 +5000,7 @@ function imgui.OnDrawFrame()
 					end
 					imgui.SameLine()
 					if imgui.Button(u8"Обновить") then	
-						sampSendClickTextdraw(158)
+						sampSendClickTextdraw(163)
 						if elm.checkbox.keysync.v then 
 							lua_thread.create(function()
 								wait(1)
