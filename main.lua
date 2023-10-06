@@ -1452,40 +1452,44 @@ function main()
 					end
 				end
 			else
-				lua_thread.create(function()
-					sampAddChatMessage(tag .. " Загружается важное обновление AT. Ожидайте загрузки.")
-					downloadUrlToFile(report_url, report_path, function(id,status)
-						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' Плагин "ATReport" закачен')
-						end	
+				if tonumber(updateIni.info.version) > script_version then 
+					lua_thread.create(function()
+						rep_pl.OffScript()
+						wait(500)
+						sampAddChatMessage(tag .. " Загружается важное обновление AT. Ожидайте загрузки.")
+						downloadUrlToFile(report_url, report_path, function(id,status)
+							if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+								sampAddChatMessage(tag .. ' Плагин "ATReport" закачен')
+							end	
+						end)	
+						wait(500)
+						downloadUrlToFile(mute_url, mute_path, function(id,status)
+							if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+								sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен ')
+							end	
+						end)	
+						wait(500)
+						downloadUrlToFile(pl1_url, pl1_path, function(id,status)
+							if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+								sampAddChatMessage(tag .. ' Плагин "ATother" закачен ')
+							end	
+						end)	
+						wait(500)
+						downloadUrlToFile(pl2_url, pl2_path, function(id,status)
+							if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+								sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен ')
+							end	
+						end)	
+						wait(500)
+						downloadUrlToFile(script_url, script_path, function(id,status)
+							if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
+								sampAddChatMessage(tag .. "Основной скрипт готов!")
+							end	
+						end)	
+						sampAddChatMessage(tag .. "Обновлен весь основной пакет AdminTool! Выполняю перезагрузку!")
+						reloadScripts()
 					end)	
-					wait(500)
-					downloadUrlToFile(mute_url, mute_path, function(id,status)
-						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' Плагин "ATautomute" закачен ')
-						end	
-					end)	
-					wait(500)
-					downloadUrlToFile(pl1_url, pl1_path, function(id,status)
-						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' Плагин "ATother" закачен ')
-						end	
-					end)	
-					wait(500)
-					downloadUrlToFile(pl2_url, pl2_path, function(id,status)
-						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. ' Плагин "ATplugin" закачен ')
-						end	
-					end)	
-					wait(500)
-					downloadUrlToFile(script_url, script_path, function(id,status)
-						if status == dlstatus.STATUS_ENDDOWNLOADDATA then  
-							sampAddChatMessage(tag .. "Основной скрипт готов!")
-						end	
-					end)	
-					sampAddChatMessage(tag .. "Обновлен весь основной пакет AdminTool! Выполняю перезагрузку!")
-					reloadScripts()
-				end)	
+				end
 			end
 		end
 	end)
