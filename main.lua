@@ -129,8 +129,8 @@ local script_version = 9 -- основная версия, перехватываемая сайтом и скриптом
 local script_version_text = "13.4" -- текстовая версия
 local script_path = getWorkingDirectory() .. "main.lua"
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
-local report_path = getWorkingDirectory() .. "def.lua"
-local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/def.lua"
+local report_path = getWorkingDirectory() .. "reports.lua"
+local report_url = "https://raw.githubusercontent.com/alfantasy/AT/main/reports.lua"
 local mute_path = getWorkingDirectory() .. "module/plugins.lua"
 local mute_url = "https://raw.githubusercontent.com/alfantasy/AT/main/plugins.lua"
 local pl1_path = getWorkingDirectory() .. "module/other.lua"
@@ -1298,7 +1298,6 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 end
 
 function sampev.onServerMessage(color, text)
-
 	if text:find("%[(.+)%] IP:") then
         local nick, ip2 = text:match("%[(.+)%] IP: (.+) | IP")
         ip1 = ip2
