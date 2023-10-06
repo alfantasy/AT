@@ -105,7 +105,7 @@ local mcolor -- локальная переменная для регистрации рандомного цвета
 local player_info = {} -- инфа о челике
 local player_to_streamed = {} -- инфа о преследуемым
 local text_remenu = { "Очки:", "Здоровье:", "Броня:", "ХП машины:", "Скорость:", "Ping:", "Патроны:", "Выстрелы:", "Время выстрелов:", "Время АФК:", "P.Loss:", "VIP:", "Passive Мод:", "Turbo:", "Коллизия:" }
-local control_recon_ids = {439, 146, 148, 2052, 143, 157, 155, 154, 158, 156, 162, 181, 168, 159, 167, 161, 166, 182, 180, 163, 165, 171, 183, 168, 165, 172, 170, 176, 184, 173, 174, 177, 175, 152, 185, 149, 153, 151, 144, 145, 186, 179, 2059, 147, 160, 164, 169, 150, 178}
+local control_recon_ids = {444, 146, 148, 2058, 143, 157, 155, 154, 158, 156, 162, 181, 168, 159, 167, 161, 166, 182, 180, 163, 165, 171, 183, 168, 165, 172, 170, 176, 184, 173, 174, 177, 175, 152, 185, 149, 153, 151, 144, 145, 186, 179, 2059, 147, 160, 164, 169, 150, 178, 187, 188, 189, 190, 191, 2052}
 local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
 local control_tab_playerid = -1 -- в табе
 local ip_player = nil -- ip игрока
@@ -3580,7 +3580,7 @@ function textSplit(str, delim, plain)
 end
 
 function sampev.onTextDrawSetString(id, text)
-	if id == 2059 and elm.checkbox.atrecon.v then
+	if id == 2058 and elm.checkbox.atrecon.v then
 		player_info = textSplit(text, "~n~")
 	end
 end
