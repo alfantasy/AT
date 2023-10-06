@@ -43,6 +43,7 @@ local plre = inicfg.load({
         anticheat = false,
 		lcadm_imgui = false,
 		adminforms = false,
+		autoforms = false,
 		Font = 10,
     },
     achat = {
@@ -72,6 +73,7 @@ local lem = {
 		im_ac = imgui.ImBool(plre.sett.lcadm_imgui),
         anticheat = imgui.ImBool(plre.sett.anticheat),
 		adminforms = imgui.ImBool(plre.sett.adminforms),
+		autoforms = imgui.ImBool(plre.sett.autoforms),
     },
     int = {
         adminFont = imgui.ImInt(plre.achat.Font),
@@ -177,7 +179,13 @@ function sampev.onServerMessage(color, text)
 				adm_form = lc_text .. " // " .. lc_nick
 				showNotification(tag, "Пришла административная форма! \n /fac - принять | /fn - отклонить")
 				sampAddChatMessage(tag .. "Форма: " .. adm_form, -1)
-				start_forms()
+				if lem.toggle.autoforms.v then  
+					sampSendChat("/a AT - Форма принята!")
+					sampSendChat("" .. adm_form)
+					adm_form = ""
+				else 
+					start_forms()
+				end
 			end 
 		end 
 	end
@@ -550,6 +558,11 @@ function EXPORTS.OnAdminForms()
 		plre.sett.adminforms = lem.toggle.adminforms.v  
 		save()
 	end	
+	imgui.SameLine()
+	if imgui.Checkbox('##AutoForms', lem.toggle.autoforms) then  
+		plre.sett.autoforms = lem.toggle.autoforms.v  
+		save()   
+	end
 end
 
 function EXPORTS.OffScript()

@@ -39,9 +39,28 @@ local cfg = inicfg.load({
     settings = {
         automute_mat = false,
         automute_osk = false,
+        automute_rod = false,
+        automute_upom = false,
         mp_tp = false,
         admin_state = false,
-        ad_color = "{FFFFFF}",
+        show_transparency = false,
+        color1 = "{FFFFFF}",
+        color2 = "{FFFFFF}",
+        color3 = "{FFFFFF}",
+        color4 = "{FFFFFF}",
+        color5 = "{FFFFFF}",
+        color6 = "{FFFFFF}",
+        color6 = "{FFFFFF}",
+        color7 = "{FFFFFF}",
+        color8 = "{FFFFFF}",
+        color9 = "{FFFFFF}",
+        color10 = "{FFFFFF}",
+        color11 = "{FFFFFF}",
+        color12 = "{FFFFFF}",
+        color13 = "{FFFFFF}",
+        color14 = "{FFFFFF}",
+        color15 = "{FFFFFF}",
+        color16 = "{FFFFFF}",
         posX = 1000,
         posY = 800,
         show_mute_day = false,
@@ -94,7 +113,24 @@ local ini = {
     mp_tp = imgui.ImBool(cfg.settings.mp_tp),
     automute_mat = imgui.ImBool(cfg.settings.automute_mat),
     automute_osk = imgui.ImBool(cfg.settings.automute_osk),
-    ad_color = imgui.ImBuffer(tostring(cfg.settings.ad_color), 50),
+    automute_rod = imgui.ImBool(cfg.settings.automute_rod),
+    automute_upom = imgui.ImBool(cfg.settings.automute_upom),
+    color1 = imgui.ImBuffer(tostring(cfg.settings.color1), 50),
+    color2 = imgui.ImBuffer(tostring(cfg.settings.color2), 50),
+    color3 = imgui.ImBuffer(tostring(cfg.settings.color3), 50),
+    color4 = imgui.ImBuffer(tostring(cfg.settings.color4), 50),
+    color5 = imgui.ImBuffer(tostring(cfg.settings.color5), 50),
+    color6 = imgui.ImBuffer(tostring(cfg.settings.color6), 50),
+    color7 = imgui.ImBuffer(tostring(cfg.settings.color7), 50),
+    color8 = imgui.ImBuffer(tostring(cfg.settings.color8), 50),
+    color9 = imgui.ImBuffer(tostring(cfg.settings.color9), 50),
+    color10 = imgui.ImBuffer(tostring(cfg.settings.color10), 50),
+    color11 = imgui.ImBuffer(tostring(cfg.settings.color11), 50),
+    color12 = imgui.ImBuffer(tostring(cfg.settings.color12), 50),
+    color13 = imgui.ImBuffer(tostring(cfg.settings.color13), 50),
+    color14 = imgui.ImBuffer(tostring(cfg.settings.color14), 50),
+    color15 = imgui.ImBuffer(tostring(cfg.settings.color15), 50),
+    color16 = imgui.ImBuffer(tostring(cfg.settings.color16), 50),
     open_mp = imgui.ImBuffer(516), 
     set_dt = imgui.ImBuffer(500),
     mp_prize = imgui.ImBuffer(524),
@@ -113,7 +149,8 @@ local ini = {
     show_online_now = imgui.ImBool(cfg.settings.show_online_now),
     show_report_day = imgui.ImBool(cfg.settings.show_report_day), 
     show_report_now = imgui.ImBool(cfg.settings.show_report_now),
-    show_time = imgui.ImBool(cfg.settings.show_time)
+    show_time = imgui.ImBool(cfg.settings.show_time),
+    show_transparency = imgui.ImBool(cfg.settings.show_transparency)
 }
 
 local onscene = { "блять", "сука", "хуй", "нахуй" } -- основная сцена мата
@@ -125,9 +162,78 @@ local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширин
 imgui.CenterText = require('imgui_addons').CenterText
 
 local onscene_2 = { "пидр", "лох", "гандон", "уебан" }
+local ph_rod = { 
+    "мать ебал", "mq", "мать в канаве", "твоя мать шлюха", "твой рот шатал", "mqq", "mmq", 'mmqq', "matb v kanave",
+}
 local neosk = { "я лох" }
 local control_onscene_1 = false
 local control_onscene_2 = false
+
+local ph_upom = {
+    "аризона", "russian roleplay", "evolve", "эвольв"
+}
+
+local automute_settings = {
+    input_phrase = imgui.ImBuffer(500),
+    input_mute = imgui.ImBool(false),
+    input_osk = imgui.ImBool(false),
+    input_upom = imgui.ImBool(false),
+    input_rod = imgui.ImBool(false),
+    show_file_mute = imgui.ImBool(false),
+    show_file_osk = imgui.ImBool(false), 
+    show_file_upom = imgui.ImBool(false), 
+    show_file_rod = imgui.ImBool(false),
+    stream = imgui.ImBuffer(50000)
+}
+
+
+function check_file_mute()
+    local file_check = assert(io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\mat.txt", "r"))
+    local t = file_check:read("*all")
+    file_check:close() 
+        return t
+end
+
+function check_file_osk()
+    local file_check1 = assert(io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "r"))
+    local t1 = file_check1:read("*all")
+    file_check1:close() 
+        return t1
+end
+
+function check_file_upom()
+    local file_check = assert(io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "r"))
+    local t = file_check:read("*all")
+    file_check:close() 
+        return t
+end
+
+function check_file_rod()
+    local file_check = assert(io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "r"))
+    local t = file_check:read("*all")
+    file_check:close() 
+        return t
+end
+
+function checkMessage(msg, arg)
+    if arg == 1 then 
+        if msg ~= nil then  
+            for i, ph in ipairs(ph_rod) do  
+                if string.find(msg, ph, 1, true) then  
+                    return true, ph 
+                end  
+            end  
+        end
+    elseif arg == 2 then  
+        if msg ~= nil then  
+            for i, ph in ipairs(ph_upom) do  
+                if string.find(msg, ph, 1, true) then  
+                    return true, ph 
+                end 
+            end 
+        end
+    end 
+end
 
 function save() 
     inicfg.save(cfg, directIni)
@@ -212,7 +318,6 @@ function sampev.onDisplayGameText(style, time, text)
 end
 
 function sampev.onServerMessage(color, text)
-
 	if chip and text:find("%[(.+)%] IP:") then
         local nick, ip2 = text:match("%[(.+)%] IP: (.+) | IP")
         ip1 = ip2
@@ -226,6 +331,8 @@ function sampev.onServerMessage(color, text)
 
 	local _, check_mat_id, _, check_mat = string.match(text, "(.+)%((.+)%): {(.+)}(.+)")
 	local _, check_osk_id, _, check_osk = string.match(text, "(.+)%((.+)%): {(.+)}(.+)")
+    local hasForbiddenText, forbiddenText = checkMessage(check_osk, 1) 
+    local hasForbiddenText_upom, forbiddenText_upom = checkMessage(check_osk, 2)
 
     if text:find('%[.*%] '..getMyNick()..'%['..getMyId()..'%] ответил (.*)%[(%d+)%]: (.*)') then 
 		cfg.static.dayReport = cfg.static.dayReport + 1
@@ -275,15 +382,17 @@ function sampev.onServerMessage(color, text)
     end 
 
     if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
-        if check_osk ~= nil and check_osk_id ~= nil and (ini.automute_mat.v or ini.automute_osk.v) then
+        if check_osk ~= nil and check_osk_id ~= nil and (ini.automute_mat.v or ini.automute_osk.v or ini.automute_rod.v) then
             local string_os = string.split(check_osk, " ")
             for i, value in ipairs(onscene_2) do
                 for j, val in ipairs(string_os) do
                     val = val:match("(%P+)")
                     if val ~= nil then
-                        if value == string.rlower(val) and not check_osk:find(":я") then
+                        if value == string.rlower(val) and not check_osk:find(":я") and ini.automute_osk.v then
                             lua_thread.create(function()
-                            sampAddChatMessage(tag .. text, -1)
+                            sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка, за которую AT замутил.")
+                            sampAddChatMessage(tag .. " | " .. text, -1)
+                            sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
                                 if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_osk.v and control_recon == false then
                                     sampSendChat("/mute " .. check_osk_id .. " 400 " .. " Оскорбление/Унижение.")
                                     showNotification("{87CEEdB}AdminTool", 'Запрещенное слово: {FFFFFF}' .. value .. '\n{FFFFFF}Ник нарушителя: {FFFFFF}' .. sampGetPlayerNickname(tonumber(check_osk_id)))
@@ -297,9 +406,11 @@ function sampev.onServerMessage(color, text)
                 for j, val in ipairs(string_os) do
                     val = val:match("(%P+)")
                     if val ~= nil then
-                        if value == string.rlower(val) then
+                        if value == string.rlower(val) and ini.automute_mat.v then
                             lua_thread.create(function()
-                                sampAddChatMessage(tag .. text, -1)
+                                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка, за которую AT замутил.")
+                                sampAddChatMessage(tag .. " | " .. text, -1)
+                                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
                                 if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() and ini.automute_mat.v and control_recon == false then
                                     sampSendChat("/mute " .. check_osk_id .. " 300 " .. " Нецензурная лексика.")
                                     showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_osk_id)) .. "\n Запрещенное слово: " .. value)
@@ -308,6 +419,20 @@ function sampev.onServerMessage(color, text)
                         end
                     end
                 end
+            end
+            if hasForbiddenText and ini.automute_rod.v and control_recon == false then 
+                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка, за которую AT замутил.")
+                sampAddChatMessage(tag .. " | " .. text, -1)
+                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                sampSendChat("/mute " .. check_osk_id .. " 5000 Оскорбление/Унижение родных")
+                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_osk_id)) .. "\n Замучен по причине: Оскорбление родных")
+            end
+            if hasForbiddenText_upom and ini.automute_upom.v and control_recon == false then  
+                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка, за которую AT замутил.")
+                sampAddChatMessage(tag .. " | " .. text, -1)
+                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                sampSendChat("/mute " .. check_osk_id .. " 1000 Упоминание сторонних проектов")
+                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_osk_id)) .. "\n Замучен по причине: Упом.стор.проектов")
             end
             return true
         end
@@ -318,6 +443,112 @@ end
 function main()
     while not isSampAvailable() do wait(0) end
 	
+    local file_read_rod, c_line_rod = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", 'r'), 1
+
+    if file_read_rod ~= nil then  
+        file_read_rod:seek("set", 0)
+        for line in file_read_rod:lines() do  
+            ph_rod[c_line_rod] = line  
+            c_line_rod = c_line_rod + 1 
+        end  
+        file_read_rod:close()
+    end 
+
+    sampRegisterChatCommand("s_rod", function(param)
+        if param == nil then  
+            return false 
+        end 
+        for _, val in ipairs(ph_rod) do 
+            if string.rlower(param) == val then  
+                sampAddChatMessage(tag .. " Фраза \"" .. val .. "\" уже присутствует в списке фраз оскорбления родных.")
+                return false 
+            end 
+        end 
+        local file_write_rod, c_line_rod = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "w"), 1
+        ph_rod[#ph_rod + 1] = string.rlower(param)
+        for _, val in ipairs(ph_rod) do 
+            file_write_rod:write(val .. "\n")
+        end 
+        file_write_rod:close() 
+        sampAddChatMessage(tag .. " Фраза \"" .. string.rlower(param) .. "\" успешно добавлена в список фраз оскорблений родных")
+    end)
+
+    sampRegisterChatCommand('d_rod', function(param)
+		local file_write_rod, c_line_rod = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "w"), 1
+		if param == nil then
+			return false
+		end
+        local file_write_rod, c_line_rod = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "w"), 1
+		for i, val in ipairs(ph_rod) do
+			if val == string.rlower(param) then
+				ph_rod[i] = nil
+				control_onscene_2 = true
+			else
+				file_write_rod:write(val .. "\n")
+			end
+		end
+        file_write_rod:close()
+		if control_onscene_2 then
+			sampAddChatMessage(tag .. " Фраза \"" .. string.rlower(param) .. "\" была успешно удалено из списка фраз оскорблений родных")
+			control_onscene_2 = false
+		else
+			sampAddChatMessage(tag .. " Фразы \"" .. string.rlower(param) .. "\" нет в списке фраз оскорблений родных")
+		end
+	end)
+
+    local file_read_upom, c_line_upom = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "r"), -1
+
+    if file_read_upom ~= nil then
+		file_read_upom:seek("set", 0)
+		for line in file_read_upom:lines() do
+			ph_upom[c_line_upom] = line
+			c_line_upom = c_line_upom + 1
+		end
+		file_read_upom:close()
+	end
+
+    sampRegisterChatCommand("s_upom", function(param)
+        if param == nil then  
+            return false 
+        end 
+        for _, val in ipairs(ph_upom) do 
+            if string.rlower(param) == val then  
+                sampAddChatMessage(tag .. " Фраза \"" .. val .. "\" уже присутствует в списке фраз упоминаний сторонних проектов.")
+                return false 
+            end 
+        end 
+        local file_read_upom, c_line_upom = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "w"), 1
+        ph_upom[#ph_upom + 1] = string.rlower(param)
+        for _, val in ipairs(ph_upom) do 
+            file_read_upom:write(val .. "\n")
+        end 
+        file_read_upom:close() 
+        sampAddChatMessage(tag .. " Фраза \"" .. string.rlower(param) .. "\" успешно добавлена в список фраз упоминаний сторонних проектов.")
+    end)
+
+    sampRegisterChatCommand('d_upom', function(param)
+		local file_read_upom, c_line_upom = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "w"), 1
+		if param == nil then
+			return false
+		end
+        local file_read_upom, c_line_upom = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "w"), 1
+		for i, val in ipairs(ph_upom) do
+			if val == string.rlower(param) then
+				ph_upom[i] = nil
+				control_onscene_2 = true
+			else
+				file_read_upom:write(val .. "\n")
+			end
+		end
+        file_read_upom:close()
+		if control_onscene_2 then
+			sampAddChatMessage(tag .. " Фраза \"" .. string.rlower(param) .. "\" была успешно удалено из списка фраз упоминаний сторонних проектов.")
+			control_onscene_2 = false
+		else
+			sampAddChatMessage(tag .. " Фразы \"" .. string.rlower(param) .. "\" нет в списке фраз упоминаний сторонних проектов.")
+		end
+	end)
+
     local file_read_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "r"), 1
 
 	if file_read_1 ~= nil then
@@ -328,10 +559,6 @@ function main()
 		end
 		file_read_1:close()
 	end
-
-    sampRegisterChatCommand("color_text", function()
-        sampAddChatMessage(tag .. ini.ad_color.v .. " text", -1)
-    end)
 
 	sampRegisterChatCommand("chip", chip)
 
@@ -640,6 +867,14 @@ function EXPORTS.ActiveAutoMute()
             cfg.settings.automute_osk = ini.automute_osk.v 
             save() 
         end	
+        if imgui.ToggleButton(u8' Автомут за оск родных', ini.automute_rod) then  
+            cfg.settings.automute_rod = ini.automute_rod.v  
+            save()
+        end
+        if imgui.ToggleButton(u8' Автомут за упом.стор.проектов', ini.automute_upom) then  
+            cfg.settings.automute_upom = ini.automute_upom.v  
+            save()
+        end
         imgui.EndPopup()
     end    
 end
@@ -753,6 +988,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,-2315,1545,18)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Прятки. Желающие /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Прятки. Желающие /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -770,6 +1006,7 @@ function EXPORTS.ActiveMP()
             else 	
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Прятки. Желающие /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Прятки. Желающие /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -781,6 +1018,7 @@ function EXPORTS.ActiveMP()
         end
         if imgui.Button(u8'Правила МП "Прятки"') then
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+            wait(500)
             sampSendChat("/mess 6 Правила знаем, значит у вас есть минута, чтобы спрятаться")
         end
         imgui.Separator()
@@ -790,6 +1028,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,1753,2072,1955)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Король Дигла. Желающие /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Король Дигла. Желающие /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -807,6 +1046,7 @@ function EXPORTS.ActiveMP()
             else 
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Король Дигла. Желающие /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Король Дигла. Желающие /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -827,6 +1067,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,1973,-978,1371)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Русская рулетка. Желающие /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Русская рулетка. Желающие /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -844,6 +1085,7 @@ function EXPORTS.ActiveMP()
             else 
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Русская рулетка. Желающие /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Русская рулетка. Желающие /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -855,6 +1097,7 @@ function EXPORTS.ActiveMP()
         end
         if imgui.Button(u8'Правила МП "Русская рулетка"') then
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+            wait(500)
             sampSendChat("/mess 6 Я буду действовать с помощью команды /try - убил. Удачно - убиты. Неудачно - живы.")
         end
         imgui.Separator()
@@ -864,6 +1107,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,-2304,872,59)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Поливалка. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Поливалка. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -881,6 +1125,7 @@ function EXPORTS.ActiveMP()
             else 
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Поливалка. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Поливалка. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -892,7 +1137,9 @@ function EXPORTS.ActiveMP()
         end
         if imgui.Button(u8'Правила МП "Поливалка"') then
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+            wait(500)
             sampSendChat("/mess 6 Я буду использовать Swat Tank, и буду сбивать вас с выбранного места.")
+            wait(500)
             sampSendChat("/mess 6 Последний, кто остается - победитель.")
         end
         imgui.Separator()
@@ -902,6 +1149,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,2027,-2434,13)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Крылья смерти. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Крылья смерти. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -919,6 +1167,7 @@ function EXPORTS.ActiveMP()
             else 
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Крылья смерти. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Крылья смерти. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -930,19 +1179,25 @@ function EXPORTS.ActiveMP()
         end
         if imgui.Button(u8'Правила МП "Крылья смерти"') then
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+            wait(500)
             sampSendChat("/mess 6 Я буду использовать самолет Shamal, а ваша задача залезть на крылья")
+            wait(500)
             sampSendChat("/mess 6 Ваша последующая задача не упасть, а я буду выполнять трюки.")
+            wait(500)
             sampSendChat("/mess 6 Тот, кто останется последним на самолете - победитель")
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Викторина"') then
             sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Викторина! Телепорта не будет")
+            wait(500)
             sampSendChat("/mess 10 Сейчас, я объясню правила игры, и те, кто прочитает правила, мне в /pm +")
             showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Викторина" \nзапущена\nГотовьте вопросы')
         end
         if imgui.Button(u8'Правила МП "Викторина"') then
             sampSendChat("/mess 6 Я задаю вопрос из любой категории, и жду ответа.")
+            wait(500)
             sampSendChat("/mess 6 Первый, кто отвечает - получает один балл")
+            wait(500)
             sampSendChat("/mess 6 Всего баллов - 5. Готовность отправляем мне в /pm знаком +")
         end
         imgui.Separator()
@@ -952,6 +1207,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,1547,-1359,329)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Живи или умри. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Живи или умри. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -969,6 +1225,7 @@ function EXPORTS.ActiveMP()
             else 
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Живи или умри. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Живи или умри. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -980,8 +1237,11 @@ function EXPORTS.ActiveMP()
         end
         if imgui.Button(u8'Правила МП "Живи или умри"') then  
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+            wait(500)
             sampSendChat("/mess 6 Я буду использовать комбайн. Моя задача - давить вас")
+            wait(500)
             sampSendChat("/mess 6 Ваша задача - разбегаться в крыше, и выживать.")
+            wait(500)
             sampSendChat("/mess 6 Тот, кто будет последним - победитель")
         end
         imgui.Separator()
@@ -991,6 +1251,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,626,-1891,3)
                     wait(2500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Развлечение. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Развлечение. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -1008,6 +1269,7 @@ function EXPORTS.ActiveMP()
             else 
                 lua_thread.create(function()
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Развлечение. Желающие: /tpmp")
+                    wait(500)
                     sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Развлечение. Желающие: /tpmp")
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -1019,21 +1281,27 @@ function EXPORTS.ActiveMP()
         end
         if imgui.Button(u8'Правила МП "Развлечение"') then  
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+            wait(500)
             sampSendChat("/mess 6 Я вам ставлю любые объекты, ставите бумбокс. В течении 10 минут..")
+            wait(500)
             sampSendChat("/mess 6 ...вы свободно веселитесь! Цель самого мероприятия - собрать сервер!")
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Поле чудес"') then  
             lua_thread.create(function()
                 sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Поле чудес! Телепорта не будет")
+                wait(500)
                 sampSendChat("/mess 10 Сейчас, я объясню правила игры, и те, кто прочитает правила, мне в /pm +")
                 showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Поле чудес" \nзапущена\nГотовьте слово')
             end)
         end
         if imgui.Button(u8'Правила МП "Поле чудес"') then
             sampSendChat("/mess 6 Я загадываю слово, говорю его примерное значение")  
+            wait(500)
             sampSendChat("/mess 6 Ваша задача - угадать слово, открывать буквы")
+            wait(500)
             sampSendChat("/mess 6 Тот, кто отгадает слово - победитель")
+            wait(500)
             sampSendChat("/mess 6 Одна буква = один балл. Один балл - 1кк виртов.")
         end
         imgui.Separator()
@@ -1043,6 +1311,7 @@ function EXPORTS.ActiveMP()
                     setCharCoordinates(PLAYER_PED,526,-1724,12)
                     wait(2500)
                     sampSendChat('/mess 10 Уважаемые игроки! Проходит меропряитие "Догони админа". /tpmp')
+                    wait(500)
                     sampSendChat('/mess 10 Уважаемые игроки! Проходит меропряитие "Догони админа". /tpmp')
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 14)
@@ -1060,6 +1329,7 @@ function EXPORTS.ActiveMP()
             else 	
                 lua_thread.create(function()
                     sampSendChat('/mess 10 Уважаемые игроки! Проходит меропряитие "Догони админа". /tpmp')
+                    wait(500)
                     sampSendChat('/mess 10 Уважаемые игроки! Проходит меропряитие "Догони админа". /tpmp')
                     sampSendChat("/mp")
                     sampSendDialogResponse(5343, 1, 0)
@@ -1071,7 +1341,9 @@ function EXPORTS.ActiveMP()
         end	
         if imgui.Button(u8'Правила МП "Догони админа"') then 
             sampSendChat('/mess 6 Правила: ДМ, любые баги, /s, /r, /fly - запрещено.')
+            wait(500)
             sampSendChat('/mess 6 Вам необходимо догнать админа, сбить его и ударить кулаком')
+            wait(500)
             sampSendChat('/mess 6 Игрок, сделавший это первым - побеждает. Use only motocycles')
         end	
     imgui.EndPopup()
@@ -1089,6 +1361,7 @@ function EXPORTS.ActiveMP()
         imgui.InputTextMultiline("##RuleText", ini.textrule, imgui.ImVec2(-1, 110))
         if imgui.Button(u8'Создать/Открыть МП') then 
             sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: " .. u8:decode(ini.open_mp.v))
+            wait(500)
             sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: " .. u8:decode(ini.open_mp.v))
             sampSendChat("/mp")
             sampSendDialogResponse(5343, 1, 14)
@@ -1113,6 +1386,7 @@ function EXPORTS.ActiveMP()
             local refresh_text = ini.textrule.v:gsub("\n", "~")
             lua_thread.create(function()
                 for bp in refresh_text:gmatch('[^~]+') do
+                    wait(500)
                     sampSendChat("/mess 6 " .. u8:decode(tostring(bp)))
                  end
             end)
@@ -1121,7 +1395,9 @@ function EXPORTS.ActiveMP()
         imgui.Separator()
         if imgui.Button(u8'Стандарт.правила') then  
             sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s, баги, /flycar")
+            wait(500)
             sampSendChat("/mess 6 Следуем командам администратора, ДМ запрещено, если..")
+            wait(500)
             sampSendChat("/mess 6 ..это не предусмотрено мероприятием. Начинаем!")
         end
         imgui.EndChild()
@@ -1137,6 +1413,7 @@ function EXPORTS.ActiveMP()
         imgui.SameLine()
         if imgui.Button(u8"Призыв к телепортации") then  
             sampSendChat("/mess 10 Дорогие игроки, телепорт все ещё открыт! /tpmp")
+            wait(500)
             sampSendChat("/mess 10 Успейте, до начала мероприятия!")
         end
         imgui.Separator()
@@ -1145,6 +1422,7 @@ function EXPORTS.ActiveMP()
         if imgui.Button(u8'Вывод') then 
             lua_thread.create(function()
                 sampSendChat("/mess 10 У нас есть победитель в мероприятии!")
+                wait(500)
                 sampSendChat("/mess 10 И это игрок с ID: " .. u8:decode(ini.mp_prize.v))
                 sampSendChat("/mpwin " .. ini.mp_prize.v)
                 showNotification("AdminTool - MP", "Вы выдали приз игроку с ID " .. u8:decode(ini.mp_prize.v) .. ", вам\nвыдана зарплата")
@@ -1157,6 +1435,209 @@ function EXPORTS.ActiveMP()
     imgui.EndPopup()
     end
 end    
+
+function EXPORTS.up_automute()
+    imgui.Text(u8"Здесь можно отредактировать файлы автомута без взаимодействия с командой.")
+    imgui.Checkbox(u8'Добавить/Удалить слово в списке мата', automute_settings.input_mute)
+    imgui.SameLine() 
+    if imgui.Button(u8"Просмотр файла ##1") then  
+        automute_settings.show_file_mute.v = true  
+    end
+    imgui.Checkbox(u8'Добавить/Удалить фразу в списке оскорблений родных', automute_settings.input_rod)
+    imgui.SameLine() 
+    if imgui.Button(u8"Просмотр файла ##2") then  
+        automute_settings.show_file_rod.v = true  
+    end
+    imgui.Checkbox(u8'Добавить/Удалить слово в списке оскорблений/унижений', automute_settings.input_osk)
+    imgui.SameLine() 
+    if imgui.Button(u8"Просмотр файла ##3") then  
+        automute_settings.show_file_osk.v = true  
+    end
+    imgui.Checkbox(u8"Добавить/Удалить фразу в списке упоминаний проектов", automute_settings.input_upom)
+    imgui.SameLine() 
+    if imgui.Button(u8"Просмотр файла ##4") then  
+        automute_settings.show_file_upom.v = true  
+    end
+    imgui.Separator()
+    imgui.Text(u8"Сюда можно ввести слово: \n(с случае с упоминанием проектов или оскорбление родных - можно и фразы)")
+    imgui.InputText('##Phrase', automute_settings.input_phrase) 
+    imgui.SameLine()
+    if imgui.Button(fa.ICON_REFRESH) then  
+        automute_settings.input_phrase.v = ""
+    end
+    if imgui.Button(u8"Сохранить") then  
+        if #automute_settings.input_phrase.v > 0 then  
+            if automute_settings.input_mute.v then  
+                for _, val in ipairs(onscene) do 
+                    if string.rlower(u8:decode(automute_settings.input_phrase.v)) == val then  
+                        showNotification("AutoMute", "Ошибка. Данное слово: \n\"" .. val .. "\" \nуже есть в списке.")
+                        return false
+                    end 
+                end 
+                local file_write, c_line = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\mat.txt", "w"), 1
+                onscene[#onscene + 1] = string.rlower(u8:decode(automute_settings.input_phrase.v))
+                for _, val in ipairs(onscene) do
+                    file_write:write(val .. "\n")
+                end
+                file_write:close()
+                showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно добавлено в список.")
+            elseif automute_settings.input_osk.v then  
+                for _, val in ipairs(onscene_2) do
+                    if string.rlower(u8:decode(automute_settings.input_phrase.v)) == val then
+                        showNotification("AutoMute", "Ошибка. Данное слово: \n\"" .. val .. "\" \nуже есть в списке.")
+                        return false
+                    end
+                end
+                local file_write_1, c_line_1 = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "w"), 1
+                onscene_2[#onscene_2 + 1] = string.rlower(u8:decode(automute_settings.input_phrase.v))
+                for _, val in ipairs(onscene_2) do
+                    file_write_1:write(val .. "\n")
+                end
+                file_write_1:close()
+                showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно добавлено в список.")
+            elseif automute_settings.input_upom.v then  
+                for _, val in ipairs(ph_upom) do 
+                    if string.rlower(u8:decode(automute_settings.input_phrase.v)) == val then  
+                        showNotification("AutoMute", "Ошибка. Данное слово: \n\"" .. val .. "\" \nуже есть в списке.")
+                        return false 
+                    end 
+                end 
+                local file_read_upom, c_line_upom = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "w"), 1
+                ph_upom[#ph_upom + 1] = string.rlower(u8:decode(automute_settings.input_phrase.v))
+                for _, val in ipairs(ph_upom) do 
+                    file_read_upom:write(val .. "\n")
+                end 
+                file_read_upom:close() 
+                showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно добавлено в список.")
+            elseif automute_settings.input_rod.v then  
+                for _, val in ipairs(ph_rod) do 
+                    if string.rlower(u8:decode(automute_settings.input_phrase.v)) == val then  
+                        showNotification("AutoMute", "Ошибка. Данное слово: \n\"" .. val .. "\" \nуже есть в списке.")
+                        return false 
+                    end 
+                end 
+                local file_write_rod, c_line_rod = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "w"), 1
+                ph_rod[#ph_rod + 1] = string.rlower(u8:decode(automute_settings.input_phrase.v))
+                for _, val in ipairs(ph_rod) do 
+                    file_write_rod:write(val .. "\n")
+                end 
+                file_write_rod:close() 
+                showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно добавлено в список.")
+            end
+        end
+    end
+    imgui.SameLine()
+    if imgui.Button(u8"Удалить") then  
+        if #automute_settings.input_phrase.v > 0 then  
+            if automute_settings.input_mute.v then  
+                local file_write, c_line = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\mat.txt", "w"), 1
+                for i, val in ipairs(onscene) do 
+                    if val == string.rlower(u8:decode(automute_settings.input_phrase.v)) then  
+                        onscene[i] = nil  
+                        control_onscene = true 
+                    else 
+                        file_write:write(val .. "\n")
+                    end 
+                end 
+                file_write:close()
+                if control_onscene then  
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно удалено из списка")
+                    control_onscene = false  
+                else
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" не существует в списке.")
+                end
+            elseif automute_settings.input_osk.v then  
+                local file_write, c_line = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\osk.txt", "w"), 1
+                for i, val in ipairs(onscene_2) do 
+                    if val == string.rlower(u8:decode(automute_settings.input_phrase.v)) then  
+                        onscene_2[i] = nil  
+                        control_onscene = true 
+                    else 
+                        file_write:write(val .. "\n")
+                    end 
+                end 
+                file_write:close()
+                if control_onscene then  
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно удалено из списка")
+                    control_onscene = false  
+                else
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" не существует в списке.")
+                end
+            elseif automute_settings.input_upom.v then  
+                local file_write, c_line = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "w"), 1
+                for i, val in ipairs(ph_upom) do 
+                    if val == string.rlower(u8:decode(automute_settings.input_phrase.v)) then  
+                        ph_upom[i] = nil  
+                        control_onscene = true 
+                    else 
+                        file_write:write(val .. "\n")
+                    end 
+                end 
+                file_write:close()
+                if control_onscene then  
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно удалено из списка")
+                    control_onscene = false  
+                end
+                showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" не существует в списке.")
+            elseif automute_settings.input_rod.v then  
+                local file_write, c_line = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "w"), 1
+                for i, val in ipairs(ph_rod) do 
+                    if val == string.rlower(u8:decode(automute_settings.input_phrase.v)) then  
+                        ph_rod[i] = nil  
+                        control_onscene = true 
+                    else 
+                        file_write:write(val .. "\n")
+                    end 
+                end 
+                file_write:close()
+                if control_onscene then  
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" успешно удалено из списка")
+                    control_onscene = false  
+                else
+                    showNotification("AutoMute", " Слово: \n\"" .. string.rlower(u8:decode(automute_settings.input_phrase.v)) .. "\" не существует в списке.")
+                end
+            end
+        end
+    end
+    imgui.SameLine()
+    if imgui.Button(u8"Закрыть просмотр") then  
+        if automute_settings.show_file_mute.v then  
+            automute_settings.show_file_mute.v = false 
+        elseif automute_settings.show_file_osk.v then  
+            automute_settings.show_file_osk.v = false  
+        elseif automute_settings.show_file_rod.v then  
+            automute_settings.show_file_rod.v = false  
+        elseif automute_settings.show_file_upom.v then  
+            automute_settings.show_file_upom.v = false  
+        else 
+            showNotification("AdminTool", "Ни один из существующих файлов\nне просматривается :(")
+        end
+    end
+    imgui.Separator()
+    if automute_settings.show_file_mute.v then 
+        automute_settings.stream.v = check_file_mute()
+        for line in automute_settings.stream.v:gmatch("[^\r\n]+") do
+            imgui.Text(u8(line))
+        end
+    elseif automute_settings.show_file_osk.v then  
+        automute_settings.stream.v = check_file_osk()
+        for line in automute_settings.stream.v:gmatch("[^\r\n]+") do
+            imgui.Text(u8(line))
+        end
+    elseif automute_settings.show_file_rod.v then  
+        automute_settings.stream.v = check_file_rod()
+        for line in automute_settings.stream.v:gmatch("[^\r\n]+") do
+            imgui.Text(u8(line))
+        end
+    elseif automute_settings.show_file_upom.v then   
+        automute_settings.stream.v = check_file_upom()
+        for line in automute_settings.stream.v:gmatch("[^\r\n]+") do
+            imgui.Text(u8(line))
+        end
+    else
+        imgui.Text(u8"Ни один файл не просматривается. :(")
+    end
+end
 
 function EXPORTS.autoMP()
     imgui.Text(fa.ICON_MAP .. u8" Авто-TP на МП")
@@ -1179,8 +1660,9 @@ function EXPORTS.AdminState()
 end    
 
 function EXPORTS.AdminStateCheckbox()
-    if imgui.InputText(u8'Регистрация цвета для текста', ini.ad_color) then  
-        cfg.settings.ad_color = ini.ad_color.v  
+    imgui.Text(u8" Возле каждого значения есть блок текста, в него можно ввести текст формата {RRGGBB}")
+    if imgui.Checkbox(u8'Прозрачное окно статистики', ini.show_transparency) then  
+        cfg.settings.show_transparency = ini.show_transparency.v  
         save() 
     end
     if imgui.Button(fa.ICON_FA_COGS .. u8" Изменение положения") then  
@@ -1192,13 +1674,33 @@ function EXPORTS.AdminStateCheckbox()
         save() 
     end    
     imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##Color1", ini.color1) then  
+        cfg.settings.color1 = ini.color1.v  
+        save() 
+    end
+    imgui.PopItemWidth()
+    imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ времени', ini.show_time) then  
         cfg.settings.show_time = ini.show_time.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##Color2", ini.color2) then  
+        cfg.settings.color2 = ini.color2.v  
+        save() 
+    end
+    imgui.PopItemWidth()
     if imgui.Checkbox(u8'Показ онлайна за день', ini.show_online_day) then  
         cfg.settings.show_online_day = ini.show_online_day.v  
+        save() 
+    end
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##Color3", ini.color3) then  
+        cfg.settings.color3 = ini.color3.v  
         save() 
     end    
     imgui.SameLine()
@@ -1207,66 +1709,156 @@ function EXPORTS.AdminStateCheckbox()
         cfg.settings.show_online_now = ini.show_online_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color4", ini.color4) then  
+        cfg.settings.color4 = ini.color4.v  
+        save() 
+    end    
     if imgui.Checkbox(u8'Показ AFK за день', ini.show_afk_day) then  
         cfg.settings.show_afk_day = ini.show_afk_day.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color5", ini.color5) then  
+        cfg.settings.color5 = ini.color5.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ AFK за сеанс', ini.show_afk_now) then  
         cfg.settings.show_afk_now = ini.show_afk_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color6", ini.color6) then  
+        cfg.settings.color6 = ini.color6.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     if imgui.Checkbox(u8'Показ репортов за день', ini.show_report_day) then  
         cfg.settings.show_report_day = ini.show_report_day.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color7", ini.color7) then  
+        cfg.settings.color7 = ini.color7.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ репортов за сеанс', ini.show_report_now) then  
         cfg.settings.show_report_now = ini.show_report_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color8", ini.color8) then  
+        cfg.settings.color8 = ini.color8.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     if imgui.Checkbox(u8'Показ мутов за день', ini.show_mute_day) then  
         cfg.settings.show_mute_day = ini.show_mute_day.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color9", ini.color9) then  
+        cfg.settings.color9 = ini.color9.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ мутов за сеанс', ini.show_mute_now) then  
         cfg.settings.show_mute_now = ini.show_mute_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color10", ini.color10) then  
+        cfg.settings.color10 = ini.color10.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     if imgui.Checkbox(u8'Показ киков за день', ini.show_kick_day) then  
         cfg.settings.show_kick_day = ini.show_kick_day.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color11", ini.color11) then  
+        cfg.settings.color11 = ini.color11.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ киков за сеанс', ini.show_kick_now) then  
         cfg.settings.show_kick_now = ini.show_kick_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color12", ini.color12) then  
+        cfg.settings.color12 = ini.color12.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     if imgui.Checkbox(u8'Показ джайлов за день', ini.show_jail_day) then  
         cfg.settings.show_jail_day = ini.show_jail_day.v  
         save() 
+    end   
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color13", ini.color13) then  
+        cfg.settings.color13 = ini.color13.v  
+        save() 
     end    
+    imgui.PopItemWidth()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ джайлов за сеанс', ini.show_jail_now) then  
         cfg.settings.show_jail_now = ini.show_jail_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color14", ini.color14) then  
+        cfg.settings.color14 = ini.color14.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     if imgui.Checkbox(u8'Показ банов за день', ini.show_ban_day) then  
         cfg.settings.show_ban_day = ini.show_ban_day.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color15", ini.color15) then  
+        cfg.settings.color15 = ini.color15.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
     imgui.SameLine()
     imgui.SetCursorPosX(imgui.GetWindowWidth() - 250)
     if imgui.Checkbox(u8'Показ банов за сеанс', ini.show_ban_now) then  
         cfg.settings.show_ban_now = ini.show_ban_now.v  
         save() 
     end    
+    imgui.SameLine()
+    imgui.PushItemWidth(65)
+    if imgui.InputText("##color16", ini.color16) then  
+        cfg.settings.color16 = ini.color16.v  
+        save() 
+    end    
+    imgui.PopItemWidth()
 end    
 
 function imgui.TextColoredRGB(text, render_text)
@@ -1343,35 +1935,40 @@ function imgui.OnDrawFrame()
             imgui.SetNextWindowPos(imgui.ImVec2(cfg.settings.posX, cfg.settings.posY), imgui.Cond.FirsUseEver, imgui.ImVec2(0.5, 0.5)) 
         end
 
-
+        if ini.show_transparency.v then  
+            imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(1.00, 1.00, 1.00, 0.05))
+        end
 
         imgui.Begin(u8'Статистика', nil, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoMove + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.AlwaysAutoResize + imgui.WindowFlags.NoTitleBar)
 
-        if ini.show_nick_id.v then imgui.TextColoredRGB(ini.ad_color.v .. getMyNick() .. " || ID: " ..  getMyId()) end
-        if ini.show_online_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Онлайн за день: " .. get_clock(cfg.static.online)) end 
-        if ini.show_online_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Онлайн за сеанс: " .. get_clock(sessionOnline.v)) end
-        if ini.show_afk_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"AFK за день: " .. get_clock(cfg.static.afk)) end
-        if ini.show_afk_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"AFK за сеанс: " .. get_clock(sessionAfk.v)) end
-        if ini.show_report_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Репортов за день: " .. cfg.static.dayReport) end
-        if ini.show_report_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Репортов за сеанс: " .. LsessionReport) end
-        if ini.show_ban_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Баны за день: " .. cfg.static.dayBan) end
-        if ini.show_ban_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Баны за сеанс: " .. LsessionBan) end
-        if ini.show_mute_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Муты за день: " .. cfg.static.dayMute) end
-        if ini.show_mute_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Муты за сеанс: " .. LsessionMute) end
-        if ini.show_jail_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Джаилы за день: " .. cfg.static.dayJail) end
-        if ini.show_jail_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Джаилы за сеанс: " .. LsessionJail) end
-        if ini.show_kick_day.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Кики за день: " .. cfg.static.dayKick) end
-        if ini.show_kick_now.v then imgui.TextColoredRGB(ini.ad_color.v .. u8"Кики за сеанс: " .. LsessionKick) end
-        if ini.show_time.v then imgui.TextColoredRGB(ini.ad_color.v .. u8(os.date("%d.%m.%y | %H:%M:%S", os.time()))) end
+        if ini.show_nick_id.v then imgui.TextColoredRGB(ini.color1.v .. getMyNick() .. " || ID: " ..  getMyId()) end
+        if ini.show_online_day.v then imgui.TextColoredRGB(ini.color3.v .. u8"Онлайн за день: " .. get_clock(cfg.static.online)) end 
+        if ini.show_online_now.v then imgui.TextColoredRGB(ini.color4.v .. u8"Онлайн за сеанс: " .. get_clock(sessionOnline.v)) end
+        if ini.show_afk_day.v then imgui.TextColoredRGB(ini.color5.v .. u8"AFK за день: " .. get_clock(cfg.static.afk)) end
+        if ini.show_afk_now.v then imgui.TextColoredRGB(ini.color6.v .. u8"AFK за сеанс: " .. get_clock(sessionAfk.v)) end
+        if ini.show_report_day.v then imgui.TextColoredRGB(ini.color7.v .. u8"Репортов за день: " .. cfg.static.dayReport) end
+        if ini.show_report_now.v then imgui.TextColoredRGB(ini.color8.v .. u8"Репортов за сеанс: " .. LsessionReport) end
+        if ini.show_ban_day.v then imgui.TextColoredRGB(ini.color15.v .. u8"Баны за день: " .. cfg.static.dayBan) end
+        if ini.show_ban_now.v then imgui.TextColoredRGB(ini.color16.v .. u8"Баны за сеанс: " .. LsessionBan) end
+        if ini.show_mute_day.v then imgui.TextColoredRGB(ini.color9.v .. u8"Муты за день: " .. cfg.static.dayMute) end
+        if ini.show_mute_now.v then imgui.TextColoredRGB(ini.color10.v .. u8"Муты за сеанс: " .. LsessionMute) end
+        if ini.show_jail_day.v then imgui.TextColoredRGB(ini.color13.v .. u8"Джаилы за день: " .. cfg.static.dayJail) end
+        if ini.show_jail_now.v then imgui.TextColoredRGB(ini.color14.v .. u8"Джаилы за сеанс: " .. LsessionJail) end
+        if ini.show_kick_day.v then imgui.TextColoredRGB(ini.color11.v .. u8"Кики за день: " .. cfg.static.dayKick) end
+        if ini.show_kick_now.v then imgui.TextColoredRGB(ini.color12.v .. u8"Кики за сеанс: " .. LsessionKick) end
+        if ini.show_time.v then imgui.TextColoredRGB(ini.color2.v .. u8(os.date("%d.%m.%y | %H:%M:%S", os.time()))) end
         imgui.End()
+        if ini.show_transparency.v then  
+            imgui.PopStyleColor()
+        end
     end    
 end    
 
-function onScriptTerminate(script, quitGame)
-	if script == thisScript() then 
-		if inicfg.save(cfg, directIni) then sampfuncsLog('{00FF00}AdminTool: {FFFFFF}Ваш онлайн сохранён!') end
-	end
-end
+-- function onScriptTerminate(script, quitGame)
+-- 	if script == thisScript() then 
+-- 		if inicfg.save(cfg, directIni) then sampfuncsLog('{00FF00}AdminTool: {FFFFFF}Ваш онлайн сохранён!') end
+-- 	end
+-- end
 
 function grey_black()
     imgui.SwitchContext()
