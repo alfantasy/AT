@@ -180,9 +180,12 @@ function sampev.onServerMessage(color, text)
 				showNotification(tag, "Пришла административная форма! \n /fac - принять | /fn - отклонить")
 				sampAddChatMessage(tag .. "Форма: " .. adm_form, -1)
 				if lem.toggle.autoforms.v then  
-					sampSendChat("/a AT - Форма принята!")
-					sampSendChat("" .. adm_form)
-					adm_form = ""
+					lua_thread.create(function()
+						sampSendChat("/a AT - Форма принята!")
+						wait(500)
+						sampSendChat("" .. adm_form)
+						adm_form = ""
+					end)
 				else 
 					start_forms()
 				end
@@ -192,9 +195,12 @@ function sampev.onServerMessage(color, text)
 
 	function start_forms()
 		sampRegisterChatCommand('fac', function()
-			sampSendChat("/a AT - Форма принята!")
-			sampSendChat("".. adm_form)
-			adm_form = ""
+			lua_thread.create(function()
+				sampSendChat("/a AT - Форма принята!")
+				wait(500)
+				sampSendChat("".. adm_form)
+				adm_form = ""
+			end)
 		end)
 		sampRegisterChatCommand("fn", function()
 			sampSendChat("/a AT - Форма отклонена!")
