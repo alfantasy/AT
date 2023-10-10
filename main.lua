@@ -1341,16 +1341,12 @@ function sampev.onServerMessage(color, text)
 		sampSendChat("/remenu")
 		return false
 	end
-	if text == "Вы включили меню при наблюдении" then
+	if text == "Вы включили меню при наблюдении" and elm.checkbox.atrecon.v then
 		control_recon = true
 		if recon_to_player then
 			control_info_load = true
 			accept_load = false
 		end
-		return false
-	end
-	if text == "Вы отключили меню при наблюдении" and not elm.checkbox.atrecon.v then
-		control_recon = false
 		return false
 	end
 	if text == "Игрок не в сети" and recon_to_player then
@@ -3599,9 +3595,15 @@ function sampev.onSendCommand(command)
 	local id = string.match(command, "/re (%d+)")
 	if id ~= nil and not check_cmd_re and elm.checkbox.atrecon.v then
 		recon_to_player = true
-		if control_recon then
-			control_info_load = true
-			accept_load = false
+		control_info_load = true
+		accept_load = false
+		if control_info_load then
+			control_recon = true
+			control_info_load = false
+			load_info_player:run()
+			ATre_menu.v = true
+			imgui.Process = true
+			tool_re = 0
 		end
 		control_recon_playerid = id
 		if elm.checkbox.atrecon.v and sampIsPlayerConnected(control_recon_playerid) then
@@ -3660,6 +3662,7 @@ function sampev.onSendCommand(command)
 			end)
 		end
 		recon_to_player = false
+		control_recon = false
 		imgui.ShowCursor = false
 		control_recon_playerid = -1
 	end
