@@ -26,11 +26,22 @@ local plugin_res, plugin = pcall(import, path[2])
 local fa = require 'faicons'
 local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
 
+local fai = require "fAwesome5"
+local fai_font = nil  
+local fai_glyph_ranges = imgui.ImGlyphRanges({ fai.min_range, fai.max_range })
+function imgui.BeforeDrawFrame()
+    if fai_font == nil then
+        local font_config = imgui.ImFontConfig() -- to use 'imgui.ImFontConfig.new()' on error
+        font_config.MergeMode = true
+        fai_font = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fa-solid-900.ttf', 13.0, font_config, fai_glyph_ranges)
+    end
+end
+
 local fontsize = nil
 
 local directIni = "AdminTool\\reconconfig.ini"
 
-local tag = "{00BFFF} [AT] " -- локальная переменная, которая регистрирует тэг AT
+local tag = "{00BFFF} [AT] {FFFFFF}" -- локальная переменная, которая регистрирует тэг AT
 local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
 
 imgui.ToggleButton = require('imgui_addons').ToggleButton
@@ -44,6 +55,9 @@ local plre = inicfg.load({
 		lcadm_imgui = false,
 		adminforms = false,
 		autoforms = false,
+		dchat = false, 
+		pm_chat = false, 
+		reports_render = false,
 		Font = 10,
     },
     achat = {
@@ -60,6 +74,24 @@ local plre = inicfg.load({
 		X_imgui = 50,
 		Y_imgui = 298,
     },
+	render_sms = {
+		X = 424,
+		Y = 619,
+		lines = 10,
+		Font = 10,
+	},
+	render_dchat = {
+		X = 424,
+		Y = 619,
+		lines = 10,
+		Font = 10,
+	},
+	render_faq = {
+		X = 424,
+		Y = 619,
+		lines = 10,
+		Font = 10,
+	},
 }, directIni)
 inicfg.save(plre, directIni)
 
@@ -74,6 +106,9 @@ local lem = {
         anticheat = imgui.ImBool(plre.sett.anticheat),
 		adminforms = imgui.ImBool(plre.sett.adminforms),
 		autoforms = imgui.ImBool(plre.sett.autoforms),
+		dchat = imgui.ImBool(plre.sett.dchat),
+		pm_chat = imgui.ImBool(plre.sett.pm_chat),
+		reports_render = imgui.ImBool(plre.sett.reports_render),
     },
     int = {
         adminFont = imgui.ImInt(plre.achat.Font),
@@ -93,6 +128,11 @@ local admin_chat_lines = {
 	im_l = imgui.ImInt(10)
 }
 
+local no_saved = {
+	X = 0,
+	Y = 0,
+}
+
 local ac_no_saved = {
 	chat_lines = { },
 	pos = false,
@@ -106,8 +146,70 @@ local changePosition = false
 local rbutton = imgui.ImInt(0)
 local changeint = 0
 
+local render_sms = {
+	chat_lines = { },
+	pos = false, 
+	X = 0,
+	Y = 0,
+	lines = imgui.ImInt(10),
+}
+
+local render_dchat = {
+	chat_lines = { },
+	pos = false, 
+	X = 0,
+	Y = 0,
+	lines = imgui.ImInt(10),
+}
+local render_faq = {
+	chat_lines = { },
+	pos = false, 
+	X = 0,
+	Y = 0,
+	lines = imgui.ImInt(10),
+}
+
 local line_ac = imgui.ImInt(16) 
 local font_ac = renderCreateFont("Arial", tonumber(lem.int.adminFont.v), font_admin_chat.BOLD + font_admin_chat.SHADOW)
+
+function saveDChat()
+	plre.render_dchat.X = render_dchat.X 
+	plre.render_dchat.Y = render_dchat.Y 
+	plre.render_dchat.lines = render_dchat.lines.v  
+	save()
+end
+
+function saveSMSCh()
+	plre.render_sms.X = render_sms.X 
+	plre.render_sms.Y = render_sms.Y 
+	plre.render_sms.lines = render_sms.lines.v  
+	save()
+end
+
+function saveFaQ()
+	plre.render_faq.X = render_faq.X 
+	plre.render_faq.Y = render_faq.Y 
+	plre.render_faq.lines = render_faq.lines.v  
+	save()
+end
+
+function loadDChat()
+	render_dchat.X = plre.render_dchat.X  
+	render_dchat.Y = plre.render_dchat.Y 
+	render_dchat.lines.v = plre.render_dchat.lines  
+end
+
+function loadFaQ()
+	render_faq.X = plre.render_faq.X  
+	render_faq.Y = plre.render_faq.Y 
+	render_faq.lines.v = plre.render_faq.lines  
+end
+
+function loadSMSCh()
+	render_sms.X = plre.render_sms.X  
+	render_sms.Y = plre.render_sms.Y 
+	render_sms.lines.v = plre.render_sms.lines  
+end
 
 function saveAdminChat()
 	plre.achat.X = admin_chat_lines.X
@@ -167,6 +269,57 @@ function sampev.onServerMessage(color, text)
 	local check_string = string.match(text, "[^%s]+")
 	local check_string_2 = string.match(text, "[^%s]+")
 
+	if text:find("%[A] SMS:") and lem.toggle.pm_chat.v then  
+		local pm_text = text:match("%[A] SMS: (.+)")
+		--sampAddChatMessage(tag .. " SMS: " .. pm_text, -1)
+		for i = render_sms.lines.v, 1, -1 do
+			if i ~= 1 then
+				render_sms.chat_lines[i] = render_sms.chat_lines[i-1]
+			else
+				render_sms.chat_lines[i] = "{00BFFF} [AT-SMS] {FFFFFF}" .. pm_text
+			end
+		end
+		return false
+	end
+	if text:find("%[A] NEARBY CHAT: (.+)") and lem.toggle.dchat.v then  
+		local d_text = text:match("%[A] NEARBY CHAT: (.+)")
+		--sampAddChatMessage(tag .. " Б.чат: " .. d_text, -1)
+		for i = render_dchat.lines.v, 1, -1 do
+			if i ~= 1 then
+				render_dchat.chat_lines[i] = render_dchat.chat_lines[i-1]
+			else
+				render_dchat.chat_lines[i] = "{00BFFF} [AT-DChat] {FFFFFF}" .. d_text
+			end
+		end
+		return false
+	end
+
+	if text:find("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)") and lem.toggle.reports_render.v then  
+		number_rep, nick, id, text = text:match("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)")
+		--sampAddChatMessage(tag .. "Жалоба " ..number_rep.. " | " .. nick .. ' ['  .. id .. ']: ' .. text, -1)
+		full_report = "Жалоба " ..number_rep.. " | " .. nick .. ' ['  .. id .. ']: ' .. text
+		for i = render_faq.lines.v, 1, -1 do
+			if i ~= 1 then
+				render_faq.chat_lines[i] = render_faq.chat_lines[i-1]
+			else
+				render_faq.chat_lines[i] = full_report
+			end
+		end
+		return true
+	elseif text:find("Жалоба | {AFAFAF}(.+)%[(%d+)%]: (.+)") and lem.toggle.reports_render.v then
+		nick, id, text = text:match("Жалоба | {AFAFAF}(.+)%[(%d+)%]: (.+)")
+		--sampAddChatMessage(tag .. "Жалоба " ..number_rep.. " | " .. nick .. ' ['  .. id .. ']: ' .. text, -1)
+		full_report = "Жалоба | " .. nick .. ' ['  .. id .. ']: ' .. text
+		for i = render_faq.lines.v, 1, -1 do
+			if i ~= 1 then
+				render_faq.chat_lines[i] = render_faq.chat_lines[i-1]
+			else
+				render_faq.chat_lines[i] = full_report
+			end
+		end
+		return true
+	end
+
     if text:find("%[(.+)%] IP:") then
         local nick, ip2 = text:match("%[(.+)%] IP: (.+) | IP")
         ip1 = ip2
@@ -179,14 +332,14 @@ function sampev.onServerMessage(color, text)
 				adm_form = lc_text .. " // " .. lc_nick
 				showNotification(tag, "Пришла административная форма! \n /fac - принять | /fn - отклонить")
 				sampAddChatMessage(tag .. "Форма: " .. adm_form, -1)
-				if lem.toggle.autoforms.v then  
+				if lem.toggle.autoforms.v and not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then  
 					lua_thread.create(function()
 						sampSendChat("/a AT - Форма принята!")
 						wait(500)
 						sampSendChat("" .. adm_form)
 						adm_form = ""
 					end)
-				else 
+				elseif not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then 
 					start_forms()
 				end
 			end 
@@ -276,8 +429,17 @@ function main()
 
     admin_chat = lua_thread.create_suspended(drawAdminChat)
     render_warn = lua_thread.create_suspended(renderWarnings)
+	render_faq_cycle = lua_thread.create_suspended(drawReports)
+	render_sms_cycle = lua_thread.create_suspended(drawSMS)
+	render_dchat_cycle = lua_thread.create_suspended(drawDChat)
+	loadDChat()
+	loadFaQ()
+	loadSMSCh()
     loadAdminChat()
 	admin_chat:run()
+	render_faq_cycle:run()
+	render_sms_cycle:run()
+	render_dchat_cycle:run()
 	sampfuncsLog(tag .. " Подгрузка плагина дополнительных функций.")
 
     while true do
@@ -287,6 +449,18 @@ function main()
 
         if ac_no_saved.pos then
 			change_adm_chat()
+		end
+
+		if render_dchat.pos then  
+			change_dchat()
+		end  
+
+		if render_faq.pos then  
+			change_faq()
+		end  
+
+		if render_sms.pos then  
+			change_sms()
 		end
 
 		if not lem.toggle.im_ac.v then  
@@ -334,6 +508,42 @@ function change_adm_chat()
 	end
 end
 
+function change_faq()
+	if isKeyJustPressed(VK_RBUTTON) then  
+		render_faq.X = no_saved.X 
+		render_faq.Y = no_saved.Y 
+		render_faq.pos = false  
+	elseif isKeyJustPressed(VK_LBUTTON) then  
+		render_faq.pos = false  
+	else 
+		render_faq.X, render_faq.Y = getCursorPos()
+	end  
+end
+
+function change_sms()
+	if isKeyJustPressed(VK_RBUTTON) then  
+		render_sms.X = no_saved.X 
+		render_sms.Y = no_saved.Y 
+		render_sms.pos = false  
+	elseif isKeyJustPressed(VK_LBUTTON) then  
+		render_sms.pos = false  
+	else 
+		render_sms.X, render_sms.Y = getCursorPos()
+	end  
+end
+
+function change_dchat()
+	if isKeyJustPressed(VK_RBUTTON) then  
+		render_dchat.X = no_saved.X 
+		render_dchat.Y = no_saved.Y 
+		render_dchat.pos = false  
+	elseif isKeyJustPressed(VK_LBUTTON) then  
+		render_dchat.pos = false  
+	else 
+		render_dchat.X, render_dchat.Y = getCursorPos()
+	end  
+end
+
 function join_argb(a, r, g, b)
     local argb = b  -- b
     argb = bit.bor(argb, bit.lshift(g, 8))  -- g
@@ -379,6 +589,47 @@ function drawAdminChat()
     end
 end
 
+function drawReports()
+	while true do 
+		if lem.toggle.reports_render.v then 
+			for i = render_faq.lines.v, 1, -1 do  
+				if render_faq.chat_lines[i] == nil then  
+					render_faq.chat_lines[i] = " "
+				end 
+				renderFontDrawText(font_ac, render_faq.chat_lines[i], render_faq.X, render_faq.Y+(lem.int.adminFont.v+4)*(render_dchat.lines.v - i), 0xFF9999FF)
+			end
+		end 
+		wait(1)
+	end 
+end
+
+function drawSMS()
+	while true do 
+		if lem.toggle.pm_chat.v then 
+			for i = render_sms.lines.v, 1, -1 do  
+				if render_sms.chat_lines[i] == nil then  
+					render_sms.chat_lines[i] = " "
+				end 
+				renderFontDrawText(font_ac, render_sms.chat_lines[i], render_sms.X, render_sms.Y+(lem.int.adminFont.v+4)*(render_dchat.lines.v - i), 0xFF9999FF)
+			end 
+		end
+		wait(1)
+	end 
+end
+
+function drawDChat()
+	while true do 
+		if lem.toggle.dchat.v then 
+			for i = render_dchat.lines.v, 1, -1 do 
+				if render_dchat.chat_lines[i] == nil then  
+					render_dchat.chat_lines[i] = " "
+				end 
+				renderFontDrawText(font_ac, render_dchat.chat_lines[i], render_dchat.X, render_dchat.Y+(lem.int.adminFont.v+4)*(render_dchat.lines.v - i), 0xFF9999FF)
+			end 
+		end
+		wait(1)
+	end  
+end
 function imgui.TextColoredRGB(text, render_text)
 	local max_float = imgui.GetWindowWidth()
 	local style = imgui.GetStyle()
@@ -465,6 +716,8 @@ end
 
 function EXPORTS.ActiveATChat()
     imgui.BeginChild('##AdminChat', imgui.ImVec2(230, 250), true)
+	imgui.Text(u8"Данный блок отвечает за административный чат.")
+	imgui.Separator()
 	if imgui.RadioButton(u8"Imgui-чат ##1",rbutton,1) then  
 		changeint = 1  
 	end 
@@ -557,7 +810,7 @@ end
 
 function EXPORTS.OnAdminForms()
 	-- adminforms
-	imgui.Text(u8" Административнвые формы")
+	imgui.Text(fai.ICON_FA_COMMENTS .. u8" Административнвые формы")
 	imgui.SameLine()
 	imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
 	if imgui.ToggleButton("##AdminForms", lem.toggle.adminforms) then  
@@ -569,6 +822,82 @@ function EXPORTS.OnAdminForms()
 		plre.sett.autoforms = lem.toggle.autoforms.v  
 		save()   
 	end
+end
+
+function EXPORTS.OnActiveChats()
+	imgui.BeginChild('##ActiveChatsRender_Press', imgui.ImVec2(230, 250), true)
+	if imgui.RadioButton(u8"/pm", rbutton, 3) then  
+		changeint = 3 
+	end
+	imgui.SameLine()
+	if imgui.RadioButton(u8"/d", rbutton, 4) then  
+		changeint = 4
+	end
+	imgui.SameLine()
+	if imgui.RadioButton(u8"/report", rbutton, 5) then  
+		changeint = 5
+	end
+	if changeint == 3 then  
+		imgui.Text(u8"Включение рендера СМС")
+		imgui.SameLine()
+		if imgui.ToggleButton('##ActiveRenderSMS', lem.toggle.pm_chat) then  
+			plre.sett.pm_chat = lem.toggle.pm_chat.v 
+			save()  
+		end
+		imgui.Text(u8'Количество строк: ')
+		imgui.PushItemWidth(80)
+		imgui.InputInt('##ThisIsRenderSMS', render_sms.lines)
+		imgui.PopItemWidth()
+		if imgui.Button(u8'Положение чата') then
+			no_saved.X = render_sms.X; no_saved.Y = render_sms.Y
+			render_sms.pos = true
+		end
+		if imgui.Button(u8'Сохранить') then  
+			showNotification("Save Chats", "Настройка рендера /pm сохранены")
+			saveSMSCh()
+		end
+	end
+	if changeint == 4 then  
+		imgui.Text(u8"Включение рендера /d чата")
+		imgui.SameLine()
+		if imgui.ToggleButton('##ActiveRenderDCHAT', lem.toggle.dchat) then  
+			plre.sett.dchat = lem.toggle.dchat.v 
+			save()  
+		end
+		imgui.Text(u8'Количество строк: ')
+		imgui.PushItemWidth(80)
+		imgui.InputInt('##ThisIsRenderDchat', render_dchat.lines)
+		imgui.PopItemWidth()
+		if imgui.Button(u8'Положение чата') then
+			no_saved.X = render_dchat.X; no_saved.Y = render_dchat.Y
+			render_dchat.pos = true
+		end
+		if imgui.Button(u8'Сохранить') then  
+			showNotification("Save Chats", "Настройка рендера ближнего чата сохранены")
+			saveDChat()
+		end
+	end
+	if changeint == 5 then  
+		imgui.Text(u8"Включение рендера репортов")
+		imgui.SameLine()
+		if imgui.ToggleButton('##ActiveRenderFAQ', lem.toggle.reports_render) then  
+			plre.sett.reports_render = lem.toggle.reports_render.v 
+			save()  
+		end
+		imgui.Text(u8'Количество строк: ')
+		imgui.PushItemWidth(80)
+		imgui.InputInt('##ThisIsRenderFAQ', render_faq.lines)
+		imgui.PopItemWidth()
+		if imgui.Button(u8'Положение чата') then
+			no_saved.X = render_faq.X; no_saved.Y = render_faq.Y
+			render_faq.pos = true
+		end
+		if imgui.Button(u8'Сохранить') then  
+			showNotification("Save Chats", "Настройка рендера репортов сохранены")
+			saveFaQ()
+		end
+	end
+	imgui.EndChild()
 end
 
 function EXPORTS.OffScript()

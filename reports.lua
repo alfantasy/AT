@@ -38,6 +38,8 @@ end
 local report_ans = 0
 local check_ans = 0
 
+local settext = ""
+
 local rep = { 
     imgui = imgui.ImBool(false),
 	window_ans = imgui.ImBool(false),
@@ -1387,6 +1389,16 @@ function imgui.OnDrawFrame()
 				end	
 			end	
 			imgui.SameLine()
+			if imgui.Button(fa.ICON_BAN .. u8" Отклонить") then  
+				lua_thread.create(function()
+					sampSendDialogResponse(2349, 1, 0)
+					wait(200)
+					sampSendDialogResponse(2350, 1, 1)
+					wait(200)
+					sampCloseCurrentDialogWithButton(13)
+				end)
+			end
+			imgui.SameLine()
 			imgui.SetCursorPosX(imgui.GetWindowWidth() - 80)
 			if imgui.Button(fa.ICON_WINDOW_CLOSE .. u8" Закрыть ##CLOSE") then  
 				lua_thread.create(function()
@@ -1448,12 +1460,6 @@ function imgui.OnDrawFrame()
 								if not rep.ggp.v then
 									lua_thread.create(function()
 									local settext = '{FFFFFF}' .. v_2
-									sampSendDialogResponse(2349, 1, 0)
-									sampSendDialogResponse(2350, 1, 0)
-									wait(200)
-									sampSendDialogResponse(2351, 1, 0, settext)
-									wait(200)
-									sampCloseCurrentDialogWithButton(13)
 									end)
 								else
 									lua_thread.create(function()

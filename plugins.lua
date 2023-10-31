@@ -232,7 +232,23 @@ function checkMessage(msg, arg)
                 end 
             end 
         end
-    end 
+    elseif arg == 3 then  
+        if msg ~= nil then  
+            for i, ph in ipairs(onscene_2) do  
+                if string.find(msg, ph, 1, true) then  
+                    return true, ph  
+                end  
+            end  
+        end  
+    elseif arg == 4 then  
+        if msg ~= nil then  
+            for i, ph in ipairs(onscene) do  
+                if string.find(msg, ph, 1, true) then  
+                    return true, ph  
+                end  
+            end  
+        end
+    end
 end
 
 function save() 
@@ -331,6 +347,7 @@ function sampev.onServerMessage(color, text)
 
 	local _, check_mat_id, _, check_mat = string.match(text, "(.+)%((.+)%): {(.+)}(.+)")
 	local _, check_osk_id, _, check_osk = string.match(text, "(.+)%((.+)%): {(.+)}(.+)")
+
     local hasForbiddenText, forbiddenText = checkMessage(check_osk, 1) 
     local hasForbiddenText_upom, forbiddenText_upom = checkMessage(check_osk, 2)
 
@@ -381,8 +398,47 @@ function sampev.onServerMessage(color, text)
         return true 
     end 
 
+    if text:find("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)") then 
+        local _, _, check_zb_id, check_zb = text:match("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)")
+        if ini.automute_osk.v or ini.automute.rod.v or ini.automute_upom.v or ini.automute_mat.v then  
+            local osk_text, _ = checkMessage(check_zb, 3)
+            local mat_text, _ = checkMessage(check_zb, 4)
+            local ror_text, _ = checkMessage(check_zb, 1)
+            local upom_text, _ = checkMessage(check_zb, 2)
+            if osk_text and ini.automute_osk.v and control_recon == false then  
+                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                sampSendChat("/rmute " .. check_zb_id .. " 400 Оскорбление/Унижение")
+                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Оскорбление/Унижение")
+            end 
+            if mat_text and ini.automute_mat.v and control_recon == false then  
+                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                sampSendChat("/rmute " .. check_zb_id .. " 300 Нецензурная лексика")
+                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Мат")
+            end
+            if ror_text and ini.automute_rod.v and control_recon == false then 
+                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                sampSendChat("/rmute " .. check_zb_id .. " 5000 Оскорбление/Унижение родных")
+                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Оскорбление родных")
+            end
+            if upom_text and ini.automute_upom.v and control_recon == false then  
+                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                sampSendChat("/rmute " .. check_zb_id .. " 1000 Упоминание сторонних проектов")
+                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Упом.стор.проектов")
+            end
+        end
+        return true  
+    end
+
     if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
-        if check_osk ~= nil and check_osk_id ~= nil and (ini.automute_mat.v or ini.automute_osk.v or ini.automute_rod.v) then
+        if check_osk ~= nil and check_osk_id ~= nil and (ini.automute_mat.v or ini.automute_osk.v or ini.automute_rod.v or ini.automute_upom.v) then
             local string_os = string.split(check_osk, " ")
             for i, value in ipairs(onscene_2) do
                 for j, val in ipairs(string_os) do

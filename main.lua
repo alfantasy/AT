@@ -103,14 +103,10 @@ colours = {
 local mcolor -- локальная переменная для регистрации рандомного цвета
 
 local player_info = {} -- инфа о челике
-local player_to_streamed = {} -- инфа о преследуемым
 local text_remenu = { "Очки:", "Здоровье:", "Броня:", "ХП машины:", "Скорость:", "Ping:", "Патроны:", "Выстрелы:", "Время выстрелов:", "Время АФК:", "P.Loss:", "VIP:", "Passive Мод:", "Turbo:", "Коллизия:" }
-local control_recon_ids = {444, 146, 148, 2058, 143, 157, 155, 154, 158, 156, 162, 181, 168, 159, 167, 161, 166, 182, 180, 163, 165, 171, 183, 168, 165, 172, 170, 176, 184, 173, 174, 177, 175, 152, 185, 149, 153, 151, 144, 145, 186, 179, 2059, 147, 160, 164, 169, 150, 178, 187, 188, 189, 190, 191, 2052}
+local control_recon_ids = {437, 2056, 144, 145, 146, 2050, 141, 155, 153, 156, 152, 154, 160, 179, 158, 157, 165, 159, 164, 180, 162, 161, 178, 163, 169, 167, 166, 181, 170, 168, 174, 172, 171, 175, 173, 150, 148, 147, 183, 151, 149, 143, 184, 142, 177, 171, 182, 176}
 local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
-local control_tab_playerid = -1 -- в табе
-local ip_player = nil -- ip игрока
 local control_recon_playernick -- ник
-local next_recon_playerid = nil -- следующий ид
 local recon_nick, recon_id
 local control_recon = false -- контролирование рекона
 local control_info_load = false -- контролирование загрузки инфы
@@ -125,8 +121,8 @@ local chat_logger_text = { } -- текст логгера
 local text_ru = { }
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 9 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "13.4" -- текстовая версия
+local script_version = 10 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "13.5" -- текстовая версия
 local script_path = getWorkingDirectory() .. "main.lua"
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
 local report_path = getWorkingDirectory() .. "reports.lua"
@@ -189,6 +185,8 @@ local ATcfg = inicfg.load({
 		acY = 0,
 		reX = 0,
 		reY = 0,
+		auto_take_report = false,
+		auto_online = false,
 	},
 	keys = {
 		ATWHkeys = "None",
@@ -271,8 +269,6 @@ local admins = {}
 					
 local menuSelect = 0
 local selectRecon = 0
-local combo_select = imgui.ImInt(0) -- отвечает за комбо-штучки
-local sw1, sh1 = getScreenResolution() -- отвечает за ширину и длину, короче говоря - размер окна.
 local sw, sh = getScreenResolution() -- отвечает за второстепенную длину и ширину окон.
 
 local selectlogin = false
@@ -293,6 +289,8 @@ local elm = {
 		atrecon = imgui.ImBool(ATcfg.setting.recon_menu),
 		show_admins = imgui.ImBool(ATcfg.setting.show_admins),
 		keysync = imgui.ImBool(ATcfg.setting.keysync),
+		auto_take_report = imgui.ImBool(ATcfg.setting.auto_take_report),
+		auto_online = imgui.ImBool(ATcfg.setting.auto_online),
 	},
 	int = {
 		styleImgui = imgui.ImInt(ATcfg.setting.styleImgui),
@@ -363,41 +361,6 @@ function dec(data)
             return string.char(c)
     end))
 end
-
-local translate = {
-	["й"] = "q",
-	["ц"] = "w",
-	["у"] = "e",
-	["к"] = "r",
-	["е"] = "t",
-	["н"] = "y",
-	["г"] = "u",
-	["ш"] = "i",
-	["щ"] = "o",
-	["з"] = "p",
-	["х"] = "[",
-	["ъ"] = "]",
-	["ф"] = "a",
-	["ы"] = "s",
-	["в"] = "d",
-	["а"] = "f",
-	["п"] = "g",
-	["р"] = "h",
-	["о"] = "j",
-	["л"] = "k",
-	["д"] = "l",
-	["ж"] = ";",
-	["э"] = "'",
-	["я"] = "z",
-	["ч"] = "x",
-	["с"] = "c",
-	["м"] = "v",
-	["и"] = "b",
-	["т"] = "n",
-	["ь"] = "m",
-	["б"] = ",",
-	["ю"] = "."
-}
 
 function showFlood()
 	imgui.Text(u8"Данные кнопки отвечают за мгновенную отправу флуда.") 
@@ -1242,14 +1205,17 @@ end
 
 function sampev.onShowDialog(id, style, title, button1, button2, text)
 	if title == "Mobile" then -- сюда айди нужного диалога
-        if text:match(control_recon_playernick) then
-           t_online = "Мобильный лаунчер"
-		   else
-		   t_online = "Клиент SAMP"
-        end
-		sampAddChatMessage("")
-		sampAddChatMessage(tag .."Игрок {EE1010}".. control_recon_playernick .. "["..control_recon_playerid.."] {CCCCCC}использует {EE1010}".. t_online)
-		sampAddChatMessage("")
+		if ATre_menu.v then 
+			if text:match(control_recon_playernick) then
+			t_online = "Мобильный лаунчер"
+			else
+			t_online = "Клиент SAMP"
+			end
+			sampAddChatMessage("")
+			sampAddChatMessage(tag .."Игрок {EE1010}".. control_recon_playernick .. "["..control_recon_playerid.."] {CCCCCC}использует {EE1010}".. t_online)
+			sampAddChatMessage("")
+		end  
+		return false
     end
 	
 	if check_report or id == 2349 then
@@ -1293,6 +1259,7 @@ function sampev.onShowDialog(id, style, title, button1, button2, text)
 					j = i
 				end
 			end
+			return false
 		end
 	end
 end
@@ -1334,6 +1301,14 @@ function sampev.onServerMessage(color, text)
 
 	if check_string == 'Жалоба' and elm.checkbox.push_report.v then
 		showNotification("[AT - Уведомление]", "Поступил новый репорт.")
+		if elm.checkbox.auto_take_report.v then  
+			sampAddChatMessage(tag .. "Автоматически беру пришедший репорт.")
+			sampSendChat("/ans ") 
+			sampSendDialogResponse(2348, 1, 0)
+			sampSendDialogResponse(2349, 1, 0)
+			sampSendDialogResponse(2350, 1, 1)
+			wait(200)
+		end
 		return true
 	end	
 
@@ -1515,6 +1490,7 @@ function main()
 	load_info_player = lua_thread.create_suspended(loadPlayerInfo)
 	draw_re_menu = lua_thread.create_suspended(drawRePlayerInfo)
 	renderadmin = lua_thread.create_suspended(renderAdmins)
+	send_online = lua_thread.create_suspended(drawOnline)
 	sampRegisterChatCommand("rep_fr", function()
 		local fileonrp = io.open(getGameDirectory().."//moonloader//config//AdminTool//rpforms.txt","r+")
 		local waitsc = 6000
@@ -1809,6 +1785,7 @@ function main()
 	nick = sampGetPlayerNickname(id)
 
 	renderadmin:run()
+	send_online:run()
 
 	while true do
 
@@ -1892,8 +1869,13 @@ function main()
 		end
 
 		if isKeyJustPressed(strToIdKeys(ATcfg.keys.ATReportAns)) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and ATToolsMenu.v == false then
-			sampSendChat("/ans ")
-			sampSendDialogResponse (2348, 1, 0)
+			lua_thread.create(function()
+				sampSendChat("/ans ")
+				sampSendDialogResponse(2348, 1, 0)
+				sampSendDialogResponse(2349, 1, 0)
+				sampSendDialogResponse(2350, 1, 1)
+				wait(200)
+			end)
 		end
 
 		if isKeyDown(strToIdKeys(ATcfg.keys.ATWHkeys)) and ATToolsMenu.v == false then  
@@ -1928,23 +1910,19 @@ function main()
 
 		if isKeyDown(VK_NumPad6) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
 			lua_thread.create(function()
-				sampAddChatMessage(control_recon_playerid+1, -1)
-				-- wait(1)
-				-- check_recon = true 
-				-- sampSetChatInputEnabled(true)
-				-- sampSetChatInputText("/re " .. control_recon_playerid+1)
-				-- setVirtualKeyDown(VK_RETURN)
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/re " .. control_recon_playerid+1)
+				setVirtualKeyDown(VK_RETURN)
 			end)
 		end
 
 		if isKeyDown(VK_NumPad4) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
 			lua_thread.create(function()
-				sampAddChatMessage(control_recon_playerid-1, -1)
-				-- wait(1)
-				-- check_recon = true 
-				-- sampSetChatInputEnabled(true)
-				-- sampSetChatInputText("/re " .. control_recon_playerid-1)
-				-- setVirtualKeyDown(VK_RETURN)
+				wait(1)
+				sampSetChatInputEnabled(true)
+				sampSetChatInputText("/re " .. control_recon_playerid-1)
+				setVirtualKeyDown(VK_RETURN)
 			end)
 		end
 
@@ -1989,10 +1967,6 @@ function main()
 		if not ATToolsMenu.v and not ATre_menu.v and not ATChatLogger.v then 
 			imgui.Process = false 
 			imgui.ShowCursor = false
-		end	
-
-		if ATToolsMenu.v then  
-			sampSetChatInputEnabled(false)
 		end	
 
 		if sampGetDialogCaption() == "{ff8587}Администрация проекта (онлайн)" and elm.checkbox.show_admins.v then 
@@ -2807,6 +2781,7 @@ function cmd_hl(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/iban " .. arg .. " 3 " .. " Оскорбление/Унижение/Мат в хелпере")
 		end)
 	else 
@@ -2820,6 +2795,7 @@ function cmd_pl(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/ban " .. arg .. " 7 " .. " Плагиат ника администратора ")
 		end)
 	else 
@@ -2833,6 +2809,7 @@ function cmd_ob(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/iban " .. arg .. " 7 " .. " Обход прошлого бана ")
 		end)
 	else 
@@ -2846,6 +2823,7 @@ function cmd_ch(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/iban " .. arg .. " 7 " .. " Использование читерского скрипта/ПО. ")
 		end)
 	else 
@@ -2859,6 +2837,7 @@ function cmd_gcnk(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/iban " .. arg .. " 7 " .. " Банда, содержащая нецензурную лексину ")
 		end)
 	else 
@@ -2872,6 +2851,7 @@ function cmd_menk(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/ban " .. arg .. " 7 " .. " Ник, содержающий запрещенные слова ")
 		end)
 	else 
@@ -2885,6 +2865,7 @@ function cmd_nk(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/ban " .. arg .. " 7 " .. " Ник, содержащий нецензурную лексику ")
 		end)
 	else 
@@ -2898,6 +2879,7 @@ function cmd_bnm(arg)
 		sampSendChat("/ans " .. arg .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 		wait(500)
 		sampSendChat("/ans " .. arg .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+		wait(500)
 		sampSendChat("/iban " .. arg .. " 7 " .. " Неадекватное поведение")
 		end)
 	else 
@@ -3576,7 +3558,7 @@ function textSplit(str, delim, plain)
 end
 
 function sampev.onTextDrawSetString(id, text)
-	if id == 2058 and elm.checkbox.atrecon.v then
+	if id == 2056 and elm.checkbox.atrecon.v then
 		player_info = textSplit(text, "~n~")
 	end
 end
@@ -3743,7 +3725,21 @@ function onWindowMessage(msg, wparam, lparam)
 	end
 end
 
-
+function drawOnline()
+	while true do 
+		if sampIsChatInputActive() == false and elm.checkbox.auto_online.v then  
+			sampAddChatMessage(tag .. "Запуск переменной AutoOnline. Ожидайте выдачи.")
+			wait(62000)
+			sampSendChat("/online")
+			wait(100)
+			local c = math.floor(sampGetPlayerCount(false) / 10)
+			sampSendDialogResponse(1098, 1, c - 1)
+			sampCloseCurrentDialogWithButton(0)
+			wait(650)
+		end
+		wait(1)
+	end	
+end	
 
 local helloText = [[
 	Доброго времени суток. Спасибо за скачивание данного скрипта! 
@@ -3843,66 +3839,80 @@ function imgui.OnDrawFrame()
 	if ATToolsMenu.v then
 
 		imgui.SetNextWindowSize(imgui.ImVec2(650, 400), imgui.Cond.FirstUseEver)
-		imgui.SetNextWindowPos(imgui.ImVec2((sw1 / 2), sh1 / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+		imgui.SetNextWindowPos(imgui.ImVec2((sw / 2), sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
 		imgui.ShowCursor = true
 
-		imgui.Begin(fa.ICON_SERVER .. u8" AdminTool [AT] ", ATToolsMenu, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-		imgui.BeginChild("##menuSecond", imgui.ImVec2(36, 362), true)
+		imgui.Begin(fa.ICON_SERVER .. u8" AdminTool [AT] ", ATToolsMenu, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.MenuBar)
+		imgui.BeginMenuBar()
 		imgui.PushStyleVar(imgui.StyleVar.ButtonTextAlign, imgui.ImVec2(0.5, 0.5))
 		imgui.PushStyleVar(imgui.StyleVar.FrameRounding, 10) 
 		if imgui.Button(fai.ICON_FA_USER_COG, imgui.ImVec2(27,0)) then
 			menuSelect = 1
 		end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Основные функции AT")
 		if imgui.Button(fa.ICON_ADDRESS_BOOK, imgui.ImVec2(27,0)) then  
 			menuSelect = 12
 		end	
+		imgui.SameLine()
 		imgui.Tooltip(u8"Административная статистика")
         if imgui.Button(fa.ICON_FA_KEYBOARD, imgui.ImVec2(27,0)) then
             menuSelect = 2
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Горячие клавиши")
 		if imgui.Button(fa.ICON_FA_CROSSHAIRS, imgui.ImVec2(27,0)) then 
 			menuSelect = 5 
 		end	
+		imgui.SameLine()
 		imgui.Tooltip(u8"Трейсер пуль")
         if imgui.Button(fa.ICON_RSS, imgui.ImVec2(27,0)) then
             menuSelect = 3
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Помощь по /ans")
         if imgui.Button(fa.ICON_FA_INFO, imgui.ImVec2(27,0)) then
             menuSelect = 4
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Флуды")
         if imgui.Button(fa.ICON_FILE_TEXT, imgui.ImVec2(27,0)) then
 			menuSelect = 9
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Блокнот")
         if imgui.Button(fa.ICON_FA_TEXT_HEIGHT, imgui.ImVec2(27,0)) then
             menuSelect = 6
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Мероприятия")
 		if imgui.Button(fa.ICON_FA_PLUS, imgui.ImVec2(27,0)) then  
 			menuSelect = 15
 		end 
+		imgui.SameLine()
 		imgui.Tooltip(u8"Редакция файлов автомута")
         if imgui.Button(fa.ICON_FA_COMMENTS, imgui.ImVec2(27,0)) then
             menuSelect = 7
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Наказания")
 		if imgui.Button(fa.ICON_FA_REPLY, imgui.ImVec2(27,0)) then
             menuSelect = 8
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Специальные функции")
 		if imgui.Button(fa.ICON_CALCULATOR, imgui.ImVec2(27,0)) then  
 			menuSelect = 13
 		end	
+		imgui.SameLine()
 		imgui.Tooltip(u8"Биндер")
         if imgui.Button(fa.ICON_FA_COGS, imgui.ImVec2(27,0)) then
             menuSelect = 10
         end
+		imgui.SameLine()
 		imgui.Tooltip(u8"Настройки")
+		imgui.SameLine()
 		if imgui.Button(fa.ICON_POWER_OFF, imgui.ImVec2(27,0)) then  
 			lua_thread.create(function()
 				wait(200)
@@ -3920,9 +3930,8 @@ function imgui.OnDrawFrame()
 		imgui.Tooltip(u8"Выключение всего AT.\nЕсли необходимо перезагрузить, то нажмите ALT+R")
 		imgui.PopStyleVar(1)
 		imgui.PopStyleVar(1)
-        imgui.EndChild()
-        imgui.SameLine()
-        imgui.BeginChild("##menuSelectable", imgui.ImVec2(600, 362), true)
+		imgui.EndMenuBar()
+        imgui.BeginChild("##menuSelectable", imgui.ImVec2(640, 350), false)
         if menuSelect == 0 then
             imgui.TextColoredRGB(u8(helloText))
         end
@@ -4112,6 +4121,26 @@ function imgui.OnDrawFrame()
 			plre.OnAdminForms()
 			imgui.SameLine()
 			imgui.TextQuestion('(?)', u8'Позволяет принимать формы для выдачи наказания игрокам от прочих администраторов. \n Примечание: ИСКЛЮЧИТЕЛЬНО ДЛЯ СТАРШИХ АДМИНИСТРАТОРОВ!! НУЖНО СПРАШИВАТЬ ФРАПС')
+			imgui.Text(fai.ICON_FA_CUT .. u8" AT Take-Report")
+			imgui.SameLine()
+			imgui.SetCursorPosX(imgui.GetWindowWidth() - 400)
+			if imgui.ToggleButton('##TakeReportAuto', elm.checkbox.auto_take_report) then  
+				ATcfg.setting.auto_take_report = elm.checkbox.auto_take_report.v  
+				save()
+			end  
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8'Если у Вас не работает /tr, либо он Вам не доступен, вы можете включить Take Report от AT')
+			imgui.SameLine()
+			imgui.SetCursorPosX(imgui.GetWindowWidth() - 300)
+			imgui.Text(u8"Авто-онлайн") 
+			imgui.SameLine()
+			imgui.SetCursorPosX(imgui.GetWindowWidth() - 100)
+			if imgui.ToggleButton("##AutoOnline", elm.checkbox.auto_online) then  
+				ATcfg.setting.auto_online = elm.checkbox.auto_online.v  
+				save() 
+			end
+			imgui.SameLine()
+			imgui.TextQuestion('(?)', u8'Каждую минуту при включенном параметре, \nАТ автоматически будет сам выдавать /online')
 		end	
 		if menuSelect == 2 then 
 			imgui.Text("")
@@ -4623,6 +4652,7 @@ function imgui.OnDrawFrame()
 		if menuSelect == 8 then 
 			plre.ActiveATChat()
 			imgui.SameLine()
+			plre.OnActiveChats()
 			imgui.BeginChild('##Prefixs', imgui.ImVec2(260, 250), true)
 			imgui.Text(u8"Сохранение цветов для префиксов") 
 			imgui.SameLine()
@@ -4657,7 +4687,7 @@ function imgui.OnDrawFrame()
 			end	 
 			if imgui.InputText(u8"ГА", elm.input.prefix_GAadm) then 
 				ATcfg.setting.prefix_GAadm = elm.input.prefix_GAadm.v 
-				save() 
+				save()
 			end	 
 			imgui.EndChild()
 		end	
@@ -4904,7 +4934,7 @@ function imgui.OnDrawFrame()
 					if #elm.input.adm_name.v > 0 and #elm.input.adm_text.v > 0 then
 						imgui.SetCursorPosX((imgui.GetWindowWidth() - 100) / 1.01)
 						if imgui.Button(u8'Сохранить##bind1', imgui.ImVec2(100,30)) then
-							if not EditOld then
+							if not EditOldBind then
 								local refresh_text = elm.input.adm_text.v:gsub("\n", "~")
 								table.insert(textcfg.makeadmin_name, elm.input.adm_name.v)
 								table.insert(textcfg.makeadmin_text, refresh_text)
@@ -4923,7 +4953,7 @@ function imgui.OnDrawFrame()
 									sampAddChatMessage(tag .. 'MakeAdmin"' ..u8:decode(elm.input.adm_name.v).. '" успешно отредактирован!', -1)
 									elm.input.adm_name.v, elm.input.adm_text.v = '', ''
 								end
-								EditOld = false
+								EditOldBind = false
 								imgui.CloseCurrentPopup()
 							end
 						end
@@ -4951,7 +4981,7 @@ function imgui.OnDrawFrame()
 				imgui.ShowCursor = true
 
 				imgui.SetNextWindowSize(imgui.ImVec2(600, 350), imgui.Cond.FirstUseEver)
-				imgui.SetNextWindowPos(imgui.ImVec2((sw1 / 4.5), sh1 / 4), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+				imgui.SetNextWindowPos(imgui.ImVec2((sw / 4.5), sh / 4), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 				imgui.Begin(u8"Чат-логгер", ATChatLogger)
 				if elm.checkbox.chat_logger.v then
 					if accept_load_clog then
@@ -5318,6 +5348,7 @@ function imgui.OnDrawFrame()
 								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 								wait(500)
 								sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								wait(500)
 								sampSendChat("/iban " .. control_recon_playerid .. " 7 Использование читерского скрипта/ПО")
 								end)
 							end
@@ -5326,6 +5357,7 @@ function imgui.OnDrawFrame()
 								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 								wait(500)
 								sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								wait(500)
 								sampSendChat("/ban " .. control_recon_playerid .. " 7 Плагиат ника администратора.")
 								end)
 							end
@@ -5334,6 +5366,7 @@ function imgui.OnDrawFrame()
 								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 								wait(500)
 								sampSendChat("/ans ".. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								wait(500)
 								sampSendChat("/ban " .. control_recon_playerid .. " 7 Ник, содержащий нецензурную лексику")
 								end)
 							end
@@ -5342,6 +5375,7 @@ function imgui.OnDrawFrame()
 								sampSendChat("/ans " .. control_recon_playerid .. " Уважаемый игрок, вы нарушали правила сервера, и если вы..")
 								wait(500)
 								sampSendChat("/ans " .. control_recon_playerid .. " ..не согласны с наказанием, напишите жалобу на форум https://forumrds.ru")
+								wait(500)
 								sampSendChat("/ban " .. control_recon_playerid .. " 3 Оскорбление/Унижение/Мат в хелпере")
 								end)
 							end
