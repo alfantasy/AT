@@ -1306,7 +1306,7 @@ function sampev.onServerMessage(color, text)
 			sampSendChat("/ans ") 
 			sampSendDialogResponse(2348, 1, 0)
 			sampSendDialogResponse(2349, 1, 0)
-			sampSendDialogResponse(2350, 1, 1)
+			sampSendDialogResponse(2350, 1, 0)
 			wait(200)
 		end
 		return true
@@ -1873,7 +1873,7 @@ function main()
 				sampSendChat("/ans ")
 				sampSendDialogResponse(2348, 1, 0)
 				sampSendDialogResponse(2349, 1, 0)
-				sampSendDialogResponse(2350, 1, 1)
+				sampSendDialogResponse(2350, 1, 0)
 				wait(200)
 			end)
 		end
