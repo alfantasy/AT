@@ -1302,12 +1302,14 @@ function sampev.onServerMessage(color, text)
 	if check_string == 'Жалоба' and elm.checkbox.push_report.v then
 		showNotification("[AT - Уведомление]", "Поступил новый репорт.")
 		if elm.checkbox.auto_take_report.v then  
-			sampAddChatMessage(tag .. "Автоматически беру пришедший репорт.")
-			sampSendChat("/ans ") 
-			sampSendDialogResponse(2348, 1, 0)
-			sampSendDialogResponse(2349, 1, 0)
-			sampSendDialogResponse(2350, 1, 0)
-			wait(200)
+			lua_thread.create(function()
+				sampAddChatMessage(tag .. "Автоматически беру пришедший репорт.")
+				sampSendChat("/ans ") 
+				sampSendDialogResponse(2348, 1, 0)
+				sampSendDialogResponse(2349, 1, 0)
+				sampSendDialogResponse(2350, 1, 0)
+				wait(200)
+			end)
 		end
 		return true
 	end	
