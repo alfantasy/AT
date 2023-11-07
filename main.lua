@@ -103,7 +103,7 @@ colours = {
 local mcolor -- локальная переменная для регистрации рандомного цвета
 
 local player_info = {} -- инфа о челике
-local text_remenu = { "Очки:", "Здоровье:", "Броня:", "ХП машины:", "Скорость:", "Ping:", "Патроны:", "Выстрелы:", "Время выстрелов:", "Время АФК:", "P.Loss:", "VIP:", "Passive Мод:", "Turbo:", "Коллизия:" }
+local text_remenu = { "Здоровье: ", "Броня: ", "ХП машины: ", "Скорость: ", "Ping: ", "Патроны: ", "Выстрел: ", "Время выстрелов: ", "Время в АФК: ", "P.Loss: ", "VIP: ", "Passive Мод:", "Turbo: ", "Коллизия: "}
 local control_recon_ids = {437, 2056, 144, 145, 146, 2050, 141, 155, 153, 156, 152, 154, 160, 179, 158, 157, 165, 159, 164, 180, 162, 161, 178, 163, 169, 167, 166, 181, 170, 168, 174, 172, 171, 175, 173, 150, 148, 147, 183, 151, 149, 143, 184, 142, 177, 171, 182, 176}
 local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
 local control_recon_playernick -- ник
@@ -5160,27 +5160,27 @@ function imgui.OnDrawFrame()
 						imgui.Text("")
 						imgui.Separator()
 						for key, v in pairs(player_info) do
-							if key == 2 then
-								imgui.Text(u8:encode(text_remenu[2]) .. " " .. player_info[2])
-								imgui.BufferingBar(tonumber(player_info[2])/100, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
+							if key == 1 then
+								imgui.Text(u8:encode(text_remenu[1]) .. " " .. player_info[1])
+								imgui.BufferingBar(tonumber(player_info[1])/100, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
 							end
-							if key == 3 and tonumber(player_info[3]) ~= 0 then
-								imgui.Text(u8:encode(text_remenu[3]) .. " " .. player_info[3])
+							if key == 2 and tonumber(player_info[2]) ~= 0 then
+								imgui.Text(u8:encode(text_remenu[2]) .. " " .. player_info[2])
 								imgui.BufferingBar(tonumber(player_info[3])/100, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
 							end
-							if key == 4 and tonumber(player_info[4]) ~= -1 then
-								imgui.Text(u8:encode(text_remenu[4]) .. " " .. player_info[4])
-								imgui.BufferingBar(tonumber(player_info[4])/1000, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
+							if key == 3 and tonumber(player_info[3]) ~= -1 then
+								imgui.Text(u8:encode(text_remenu[3]) .. " " .. player_info[3])
+								imgui.BufferingBar(tonumber(player_info[3])/1000, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
 							end
-							if key == 5 then
-								imgui.Text(u8:encode(text_remenu[5]) .. " " .. player_info[5])
-								local speed, const = string.match(player_info[5], "(%d+) / (%d+)")
+							if key == 4 then
+								imgui.Text(u8:encode(text_remenu[4]) .. " " .. player_info[4])
+								local speed, const = string.match(player_info[4], "(%d+) / (%d+)")
 								if tonumber(speed) > tonumber(const) then
 									speed = const
 								end
 								imgui.BufferingBar((tonumber(speed)*100/tonumber(const))/100, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
 							end
-							if key ~= 2 and key ~= 3 and key ~= 4 and key ~= 5 then
+							if key ~= 1 and key ~= 2 and key ~= 3 and key ~= 4 then
 								imgui.Text(u8:encode(text_remenu[key]) .. " " .. player_info[key])
 							end
 						end
