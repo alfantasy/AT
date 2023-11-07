@@ -5168,7 +5168,7 @@ function imgui.OnDrawFrame()
 							end
 							if key == 2 and tonumber(player_info[2]) ~= 0 then
 								imgui.Text(u8:encode(text_remenu[2]) .. " " .. player_info[2])
-								imgui.BufferingBar(tonumber(player_info[3])/100, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
+								imgui.BufferingBar(tonumber(player_info[2])/100, imgui.ImVec2(imgui.GetWindowWidth()-10, 10), false)
 							end
 							if key == 3 and tonumber(player_info[3]) ~= -1 then
 								imgui.Text(u8:encode(text_remenu[3]) .. " " .. player_info[3])
