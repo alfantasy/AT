@@ -400,7 +400,7 @@ function sampev.onServerMessage(color, text)
     if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
         if text:find("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)") then 
             local _, _, check_zb_id, check_zb = text:match("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)")
-            if ini.automute_osk.v or ini.automute.rod.v or ini.automute_upom.v or ini.automute_mat.v then  
+            if ini.automute_osk.v or ini.automute_rod.v or ini.automute_upom.v or ini.automute_mat.v then  
                 local osk_text, _ = checkMessage(check_zb, 3)
                 local mat_text, _ = checkMessage(check_zb, 4)
                 local ror_text, _ = checkMessage(check_zb, 1)
