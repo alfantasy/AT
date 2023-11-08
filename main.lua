@@ -1299,20 +1299,22 @@ function sampev.onServerMessage(color, text)
 
 	local check_string = string.match(text, "[^%s]+")
 
-	if check_string == 'Жалоба' and elm.checkbox.push_report.v then
-		showNotification("[AT - Уведомление]", "Поступил новый репорт.")
-		if elm.checkbox.auto_take_report.v then  
-			lua_thread.create(function()
-				sampAddChatMessage(tag .. "Автоматически беру пришедший репорт.")
-				sampSendChat("/ans ") 
-				sampSendDialogResponse(2348, 1, 0)
-				sampSendDialogResponse(2349, 1, 0)
-				sampSendDialogResponse(2350, 1, 0)
-				wait(200)
-			end)
-		end
-		return true
-	end	
+	if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
+		if check_string == 'Жалоба' and elm.checkbox.push_report.v then
+			showNotification("[AT - Уведомление]", "Поступил новый репорт.")
+			if elm.checkbox.auto_take_report.v then  
+				lua_thread.create(function()
+					sampAddChatMessage(tag .. "Автоматически беру пришедший репорт.")
+					sampSendChat("/ans ") 
+					sampSendDialogResponse(2348, 1, 0)
+					sampSendDialogResponse(2349, 1, 0)
+					sampSendDialogResponse(2350, 1, 0)
+					wait(200)
+				end)
+			end
+			return true
+		end	
+	end
 
 	if text == "Вы отключили меню при наблюдении" and elm.checkbox.atrecon.v then
 		sampSendChat("/remenu")
