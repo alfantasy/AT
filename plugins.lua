@@ -6,7 +6,6 @@ local imgui = require 'imgui' -- регистр imgui окон
 local lib_a	= import 'lib/libsfor.lua'
 encoding.default = 'CP1251' -- смена кодировки на CP1251
 u8 = encoding.UTF8 -- переименовка стандтартного режима кодировки UTF8 - u8
-script_properties('work-in-pause')
 ------- Подключение всех нужных библиотек -----------
 
 function showNotification(handle, text_not)
@@ -398,43 +397,45 @@ function sampev.onServerMessage(color, text)
         return true 
     end 
 
-    if text:find("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)") then 
-        local _, _, check_zb_id, check_zb = text:match("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)")
-        if ini.automute_osk.v or ini.automute.rod.v or ini.automute_upom.v or ini.automute_mat.v then  
-            local osk_text, _ = checkMessage(check_zb, 3)
-            local mat_text, _ = checkMessage(check_zb, 4)
-            local ror_text, _ = checkMessage(check_zb, 1)
-            local upom_text, _ = checkMessage(check_zb, 2)
-            if osk_text and ini.automute_osk.v and control_recon == false then  
-                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
-                sampAddChatMessage(tag .. " | " .. check_zb, -1)
-                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
-                sampSendChat("/rmute " .. check_zb_id .. " 400 Оскорбление/Унижение")
-                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Оскорбление/Унижение")
-            end 
-            if mat_text and ini.automute_mat.v and control_recon == false then  
-                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
-                sampAddChatMessage(tag .. " | " .. check_zb, -1)
-                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
-                sampSendChat("/rmute " .. check_zb_id .. " 300 Нецензурная лексика")
-                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Мат")
+    if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
+        if text:find("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)") then 
+            local _, _, check_zb_id, check_zb = text:match("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)")
+            if ini.automute_osk.v or ini.automute.rod.v or ini.automute_upom.v or ini.automute_mat.v then  
+                local osk_text, _ = checkMessage(check_zb, 3)
+                local mat_text, _ = checkMessage(check_zb, 4)
+                local ror_text, _ = checkMessage(check_zb, 1)
+                local upom_text, _ = checkMessage(check_zb, 2)
+                if osk_text and ini.automute_osk.v and control_recon == false then  
+                    sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                    sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                    sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                    sampSendChat("/rmute " .. check_zb_id .. " 400 Оскорбление/Унижение")
+                    showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Оскорбление/Унижение")
+                end 
+                if mat_text and ini.automute_mat.v and control_recon == false then  
+                    sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                    sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                    sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                    sampSendChat("/rmute " .. check_zb_id .. " 300 Нецензурная лексика")
+                    showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Мат")
+                end
+                if ror_text and ini.automute_rod.v and control_recon == false then 
+                    sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                    sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                    sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                    sampSendChat("/rmute " .. check_zb_id .. " 5000 Оскорбление/Унижение родных")
+                    showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Оскорбление родных")
+                end
+                if upom_text and ini.automute_upom.v and control_recon == false then  
+                    sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
+                    sampAddChatMessage(tag .. " | " .. check_zb, -1)
+                    sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
+                    sampSendChat("/rmute " .. check_zb_id .. " 1000 Упоминание сторонних проектов")
+                    showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Упом.стор.проектов")
+                end
             end
-            if ror_text and ini.automute_rod.v and control_recon == false then 
-                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
-                sampAddChatMessage(tag .. " | " .. check_zb, -1)
-                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
-                sampSendChat("/rmute " .. check_zb_id .. " 5000 Оскорбление/Унижение родных")
-                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Оскорбление родных")
-            end
-            if upom_text and ini.automute_upom.v and control_recon == false then  
-                sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка репорта, за которую AT замутил.")
-                sampAddChatMessage(tag .. " | " .. check_zb, -1)
-                sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
-                sampSendChat("/rmute " .. check_zb_id .. " 1000 Упоминание сторонних проектов")
-                showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "\n Замучен по причине: Упом.стор.проектов")
-            end
+            return true  
         end
-        return true  
     end
 
     if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
@@ -1055,9 +1056,12 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
+                    wait(200)
                     sampSendDialogResponse(5344, 1, 0, "Прятки")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Прятки" успешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 	
                 lua_thread.create(function()
@@ -1069,13 +1073,19 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Прятки")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Прятки" успешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             end
         end
         if imgui.Button(u8'Правила МП "Прятки"') then
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            wait(500)
-            sampSendChat("/mess 6 Правила знаем, значит у вас есть минута, чтобы спрятаться")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Также запрещено пользоваться /anim и /jp")
+                wait(500)
+                sampSendChat("/mess 6 Правила знаем, значит у вас есть минута, чтобы спрятаться")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Король дигла"') then
@@ -1095,9 +1105,12 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(16068, 1, 0, "0")
                     sampSendDialogResponse(16066, 0, 0)
                     sampSendDialogResponse(5343, 1, 0)
+                    wait(200)
                     sampSendDialogResponse(5344, 1, 0, "КД")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Король дигла" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 
                 lua_thread.create(function()
@@ -1109,12 +1122,17 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "КД")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Король дигла" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)	
             end
         end
         if imgui.Button(u8'Правила МП "Король дигла"') then
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            sampSendChat("/mess 6 Я буду вызывать двоих игроков, после начну отсчет от пяти секунд.")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Я буду вызывать двоих игроков, после начну отсчет от пяти секунд.")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Русская рулетка"') then
@@ -1137,6 +1155,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "РР")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Русская рулетка" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 
                 lua_thread.create(function()
@@ -1148,13 +1168,17 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "РР")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Русская рулетка" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)	
             end	
         end
         if imgui.Button(u8'Правила МП "Русская рулетка"') then
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            wait(500)
-            sampSendChat("/mess 6 Я буду действовать с помощью команды /try - убил. Удачно - убиты. Неудачно - живы.")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Я буду действовать с помощью команды /try - убил. Удачно - убиты. Неудачно - живы.")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Поливалка"') then
@@ -1177,6 +1201,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Поливалка")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем комадны")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Поливалка" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 
                 lua_thread.create(function()
@@ -1188,15 +1214,19 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Поливалка")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем комадны")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Поливалка" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)	
             end	
         end
         if imgui.Button(u8'Правила МП "Поливалка"') then
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            wait(500)
-            sampSendChat("/mess 6 Я буду использовать Swat Tank, и буду сбивать вас с выбранного места.")
-            wait(500)
-            sampSendChat("/mess 6 Последний, кто остается - победитель.")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Я буду использовать Swat Tank, и буду сбивать вас с выбранного места.")
+                wait(500)
+                sampSendChat("/mess 6 Последний, кто остается - победитель.")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Крылья смерти"') then
@@ -1219,6 +1249,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Крылья смерти")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Крылья смерти" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 
                 lua_thread.create(function()
@@ -1230,31 +1262,39 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Крылья смерти")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Крылья смерти" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             end		
         end
         if imgui.Button(u8'Правила МП "Крылья смерти"') then
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            wait(500)
-            sampSendChat("/mess 6 Я буду использовать самолет Shamal, а ваша задача залезть на крылья")
-            wait(500)
-            sampSendChat("/mess 6 Ваша последующая задача не упасть, а я буду выполнять трюки.")
-            wait(500)
-            sampSendChat("/mess 6 Тот, кто останется последним на самолете - победитель")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Я буду использовать самолет Shamal, а ваша задача залезть на крылья")
+                wait(500)
+                sampSendChat("/mess 6 Ваша последующая задача не упасть, а я буду выполнять трюки.")
+                wait(500)
+                sampSendChat("/mess 6 Тот, кто останется последним на самолете - победитель")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Викторина"') then
-            sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Викторина! Телепорта не будет")
-            wait(500)
-            sampSendChat("/mess 10 Сейчас, я объясню правила игры, и те, кто прочитает правила, мне в /pm +")
-            showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Викторина" \nзапущена\nГотовьте вопросы')
+            lua_thread.create(function()
+                sampSendChat("/mess 10 Уважаемые игроки! Проходит мероприятие: Викторина! Телепорта не будет")
+                wait(500)
+                sampSendChat("/mess 10 Сейчас, я объясню правила игры, и те, кто прочитает правила, мне в /pm +")
+                showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Викторина" \nзапущена\nГотовьте вопросы')
+            end)
         end
         if imgui.Button(u8'Правила МП "Викторина"') then
-            sampSendChat("/mess 6 Я задаю вопрос из любой категории, и жду ответа.")
-            wait(500)
-            sampSendChat("/mess 6 Первый, кто отвечает - получает один балл")
-            wait(500)
-            sampSendChat("/mess 6 Всего баллов - 5. Готовность отправляем мне в /pm знаком +")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Я задаю вопрос из любой категории, и жду ответа.")
+                wait(500)
+                sampSendChat("/mess 6 Первый, кто отвечает - получает один балл")
+                wait(500)
+                sampSendChat("/mess 6 Всего баллов - 5. Готовность отправляем мне в /pm знаком +")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Живи или умри') then  
@@ -1277,6 +1317,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "ЖилиУ")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Живи или умри" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 
                 lua_thread.create(function()
@@ -1288,17 +1330,21 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "ЖилиУ")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Живи или умри" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)	
             end	
         end
         if imgui.Button(u8'Правила МП "Живи или умри"') then  
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            wait(500)
-            sampSendChat("/mess 6 Я буду использовать комбайн. Моя задача - давить вас")
-            wait(500)
-            sampSendChat("/mess 6 Ваша задача - разбегаться в крыше, и выживать.")
-            wait(500)
-            sampSendChat("/mess 6 Тот, кто будет последним - победитель")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Я буду использовать комбайн. Моя задача - давить вас")
+                wait(500)
+                sampSendChat("/mess 6 Ваша задача - разбегаться в крыше, и выживать.")
+                wait(500)
+                sampSendChat("/mess 6 Тот, кто будет последним - победитель")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Развлечение"') then  
@@ -1321,6 +1367,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Развлекательное МП")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Развлечение" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 
                 lua_thread.create(function()
@@ -1332,15 +1380,19 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Развлекательное МП")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Развлечение" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             end	
         end
         if imgui.Button(u8'Правила МП "Развлечение"') then  
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
-            wait(500)
-            sampSendChat("/mess 6 Я вам ставлю любые объекты, ставите бумбокс. В течении 10 минут..")
-            wait(500)
-            sampSendChat("/mess 6 ...вы свободно веселитесь! Цель самого мероприятия - собрать сервер!")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s и баги. ДМ запрещено.")
+                wait(500)
+                sampSendChat("/mess 6 Я вам ставлю любые объекты, ставите бумбокс. В течении 10 минут..")
+                wait(500)
+                sampSendChat("/mess 6 ...вы свободно веселитесь! Цель самого мероприятия - собрать сервер!")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Поле чудес"') then  
@@ -1352,13 +1404,15 @@ function EXPORTS.ActiveMP()
             end)
         end
         if imgui.Button(u8'Правила МП "Поле чудес"') then
-            sampSendChat("/mess 6 Я загадываю слово, говорю его примерное значение")  
-            wait(500)
-            sampSendChat("/mess 6 Ваша задача - угадать слово, открывать буквы")
-            wait(500)
-            sampSendChat("/mess 6 Тот, кто отгадает слово - победитель")
-            wait(500)
-            sampSendChat("/mess 6 Одна буква = один балл. Один балл - 1кк виртов.")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Я загадываю слово, говорю его примерное значение")  
+                wait(500)
+                sampSendChat("/mess 6 Ваша задача - угадать слово, открывать буквы")
+                wait(500)
+                sampSendChat("/mess 6 Тот, кто отгадает слово - победитель")
+                wait(500)
+                sampSendChat("/mess 6 Одна буква = один балл. Один балл - 1кк виртов.")
+            end)
         end
         imgui.Separator()
         if imgui.Button(u8'Мероприятие "Догони админа"') then 
@@ -1381,6 +1435,8 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Догони админа")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Догони админа" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             else 	
                 lua_thread.create(function()
@@ -1392,15 +1448,19 @@ function EXPORTS.ActiveMP()
                     sampSendDialogResponse(5344, 1, 0, "Догони админа")
                     sampSendChat("/mess 10 Активнее /tpmp, делаем строй и ожидаем команды")
                     showNotification("{87CEEB}[AdminTool]", 'Мероприятие "Догони админа" \nуспешно создано\nТелепортация открыта')
+                    wait(200)
+                    sampCloseCurrentDialogWithButton(0)
                 end)
             end	
         end	
         if imgui.Button(u8'Правила МП "Догони админа"') then 
-            sampSendChat('/mess 6 Правила: ДМ, любые баги, /s, /r, /fly - запрещено.')
-            wait(500)
-            sampSendChat('/mess 6 Вам необходимо догнать админа, сбить его и ударить кулаком')
-            wait(500)
-            sampSendChat('/mess 6 Игрок, сделавший это первым - побеждает. Use only motocycles')
+            lua_thread.create(function()
+                sampSendChat('/mess 6 Правила: ДМ, любые баги, /s, /r, /fly - запрещено.')
+                wait(500)
+                sampSendChat('/mess 6 Вам необходимо догнать админа, сбить его и ударить кулаком')
+                wait(500)
+                sampSendChat('/mess 6 Игрок, сделавший это первым - побеждает. Догоняем онли на мотоциклах')
+            end)
         end	
     imgui.EndPopup()
     end	
@@ -1436,6 +1496,8 @@ function EXPORTS.ActiveMP()
             sampSendDialogResponse(5344, 1, 0, u8:decode(ini.open_mp.v))
             sampSendChat("/mess 10 Чтобы попасть на мероприятие, введите /tpmp")
             showNotification("AdminTool - MP", "Мероприятие было создано.")
+            wait(200)
+            sampCloseCurrentDialogWithButton(0)
         end
         imgui.SameLine()
         if imgui.Button(u8"Вывести свои правила") then  
@@ -1450,11 +1512,13 @@ function EXPORTS.ActiveMP()
         end 
         imgui.Separator()
         if imgui.Button(u8'Стандарт.правила') then  
-            sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s, баги, /flycar")
-            wait(500)
-            sampSendChat("/mess 6 Следуем командам администратора, ДМ запрещено, если..")
-            wait(500)
-            sampSendChat("/mess 6 ..это не предусмотрено мероприятием. Начинаем!")
+            lua_thread.create(function()
+                sampSendChat("/mess 6 Правила: Нельзя использовать /passive, /fly, /r - /s, баги, /flycar")
+                wait(500)
+                sampSendChat("/mess 6 Следуем командам администратора, ДМ запрещено, если..")
+                wait(500)
+                sampSendChat("/mess 6 ..это не предусмотрено мероприятием. Начинаем!")
+            end)
         end
         imgui.EndChild()
         if imgui.Button(u8'Закрыть') then  
@@ -1468,9 +1532,11 @@ function EXPORTS.ActiveMP()
         end
         imgui.SameLine()
         if imgui.Button(u8"Призыв к телепортации") then  
-            sampSendChat("/mess 10 Дорогие игроки, телепорт все ещё открыт! /tpmp")
-            wait(500)
-            sampSendChat("/mess 10 Успейте, до начала мероприятия!")
+            lua_thread.create(function()
+                sampSendChat("/mess 10 Дорогие игроки, телепорт все ещё открыт! /tpmp")
+                wait(500)
+                sampSendChat("/mess 10 Успейте, до начала мероприятия!")
+            end)
         end
         imgui.Separator()
         imgui.Text(u8"Выдача приза:")

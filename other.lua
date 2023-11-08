@@ -1,4 +1,3 @@
-script_properties('work-in-pause')
 require "lib.moonloader" -- подключение основной библиотеки mooloader
 local ffi = require "ffi" -- cпец структура
 local vkeys = require "vkeys" -- регистр для кнопок
