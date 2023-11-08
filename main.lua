@@ -121,8 +121,8 @@ local chat_logger_text = { } -- текст логгера
 local text_ru = { }
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 10 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "13.5" -- текстовая версия
+local script_version = 11 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "13.6" -- текстовая версия
 local script_path = getWorkingDirectory() .. "main.lua"
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
 local report_path = getWorkingDirectory() .. "reports.lua"
