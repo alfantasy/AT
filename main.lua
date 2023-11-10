@@ -121,8 +121,8 @@ local chat_logger_text = { } -- текст логгера
 local text_ru = { }
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 11 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "13.6" -- текстовая версия
+local script_version = 12 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "13.6.1" -- текстовая версия
 local script_path = getWorkingDirectory() .. "main.lua"
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
 local report_path = getWorkingDirectory() .. "reports.lua"
@@ -1307,12 +1307,10 @@ function sampev.onServerMessage(color, text)
 					sampAddChatMessage(tag .. "Автоматически беру пришедший репорт.")
 					sampSendChat("/ans ") 
 					sampSendDialogResponse(2348, 1, 0)
-					sampSendDialogResponse(2349, 1, 0)
-					sampSendDialogResponse(2350, 1, 0)
 					wait(200)
 				end)
 			end
-			return true
+			-- return true
 		end	
 	end
 
@@ -1876,8 +1874,6 @@ function main()
 			lua_thread.create(function()
 				sampSendChat("/ans ")
 				sampSendDialogResponse(2348, 1, 0)
-				sampSendDialogResponse(2349, 1, 0)
-				sampSendDialogResponse(2350, 1, 0)
 				wait(200)
 			end)
 		end
@@ -3337,7 +3333,7 @@ function cmd_as(arg)
 end
 
 function cmd_ru(arg)
-	sampSendChat("/rmute " .. arg .. " 5 " .. "  Mistake/Ошибка")
+	sampSendChat("/unrmute " .. arg)
 	sampSendChat("/ans " .. arg .. " Извиняемся за ошибку, наказание снято. Приятной игры.")
 end
 ------ Функции, используемые в вспомогательных случаях -------

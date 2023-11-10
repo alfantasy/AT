@@ -234,17 +234,23 @@ function checkMessage(msg, arg)
     elseif arg == 3 then  
         if msg ~= nil then  
             for i, ph in ipairs(onscene_2) do  
-                if string.find(msg, ph, 1, true) then  
-                    return true, ph  
-                end  
+                nmsg = string.split(msg, " ")
+                for j, word in ipairs(nmsg) do  
+                    if ph == string.rlower(word) then
+                        return true, ph  
+                    end  
+                end
             end  
         end  
     elseif arg == 4 then  
         if msg ~= nil then  
             for i, ph in ipairs(onscene) do  
-                if string.find(msg, ph, 1, true) then  
-                    return true, ph  
-                end  
+                nmsg = string.split(msg, " ")
+                for j, word in ipairs(nmsg) do  
+                    if ph == string.rlower(word) then
+                        return true, ph  
+                    end  
+                end
             end  
         end
     end
@@ -400,6 +406,7 @@ function sampev.onServerMessage(color, text)
     if not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then
         if text:find("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)") then 
             local _, _, check_zb_id, check_zb = text:match("Жалоба (.+) | {AFAFAF}(.+)%[(%d+)%]: (.+)")
+            sampAddChatMessage(tag .. " Есть жалоба: " .. sampGetPlayerNickname(tonumber(check_zb_id)) .. "[" .. check_zb_id .."]: " .. check_zb)
             if ini.automute_osk.v or ini.automute_rod.v or ini.automute_upom.v or ini.automute_mat.v then  
                 local osk_text, _ = checkMessage(check_zb, 3)
                 local mat_text, _ = checkMessage(check_zb, 4)
