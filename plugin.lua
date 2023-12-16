@@ -596,7 +596,7 @@ function drawReports()
 				if render_faq.chat_lines[i] == nil then  
 					render_faq.chat_lines[i] = " "
 				end 
-				renderFontDrawText(font_ac, render_faq.chat_lines[i], render_faq.X, render_faq.Y+(lem.int.adminFont.v+4)*(render_dchat.lines.v - i), 0xFF9999FF)
+				renderFontDrawText(font_ac, render_faq.chat_lines[i], render_faq.X, render_faq.Y+(lem.int.adminFont.v+4)*(render_faq.lines.v - i)+6, 0xFF9999FF)
 			end
 		end 
 		wait(1)
@@ -610,7 +610,7 @@ function drawSMS()
 				if render_sms.chat_lines[i] == nil then  
 					render_sms.chat_lines[i] = " "
 				end 
-				renderFontDrawText(font_ac, render_sms.chat_lines[i], render_sms.X, render_sms.Y+(lem.int.adminFont.v+4)*(render_dchat.lines.v - i), 0xFF9999FF)
+				renderFontDrawText(font_ac, render_sms.chat_lines[i], render_sms.X, render_sms.Y+(lem.int.adminFont.v+4)*(render_sms.lines.v - i)+6, 0xFF9999FF)
 			end 
 		end
 		wait(1)

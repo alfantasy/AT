@@ -103,7 +103,7 @@ colours = {
 local mcolor -- локальная переменная для регистрации рандомного цвета
 
 local player_info = {} -- инфа о челике
-local text_remenu = { "Здоровье: ", "Броня: ", "ХП машины: ", "Скорость: ", "Ping: ", "Патроны: ", "Выстрел: ", "Время выстрелов: ", "Время в АФК: ", "P.Loss: ", "VIP: ", "Passive Мод:", "Turbo: ", "Коллизия: "}
+local text_remenu = { "Здоровье: ", "Броня: ", "ХП машины: ", "Скорость: ", "Ping: ", "Патроны: ", "Выстрел: ", "Вр.выстрелов: ", "Время в АФК: ", "P.Loss: ", "VIP: ", "Passive Мод:", "Turbo: ", "Коллизия: "}
 local control_recon_ids = {437, 2056, 144, 145, 146, 2050, 141, 155, 153, 156, 152, 154, 160, 179, 158, 157, 165, 159, 164, 180, 162, 161, 178, 163, 169, 167, 166, 181, 170, 168, 174, 172, 171, 175, 173, 150, 148, 147, 183, 151, 149, 143, 184, 142, 177, 171, 182, 176}
 local control_recon_playerid = -1 -- контролируемая переменная за ид игрока
 local control_recon_playernick -- ник
@@ -121,8 +121,8 @@ local chat_logger_text = { } -- текст логгера
 local text_ru = { }
 local accept_load_clog = false -- принятие переменной логгера
 
-local script_version = 12 -- основная версия, перехватываемая сайтом и скриптом
-local script_version_text = "13.6.1" -- текстовая версия
+local script_version = 13 -- основная версия, перехватываемая сайтом и скриптом
+local script_version_text = "13.6.2" -- текстовая версия
 local script_path = getWorkingDirectory() .. "main.lua"
 local script_url = "https://raw.githubusercontent.com/alfantasy/AT/main/main.lua" 
 local report_path = getWorkingDirectory() .. "reports.lua"
@@ -1801,7 +1801,6 @@ function main()
 
 		if isKeyDown(strToIdKeys(ATcfg.keys.ATRecon)) and (sampIsChatInputActive() == false) and ATToolsMenu.v == false then  
 			lua_thread.create(function()
-				wait(1000)
 				sampSetChatInputEnabled(true)
 				sampSetChatInputText("/re " )
 			end)
@@ -1830,6 +1829,7 @@ function main()
 			wait(100)
 			local c = math.floor(sampGetPlayerCount(false) / 10)
 			sampSendDialogResponse(1098, 1, c - 1)
+			wait(1)
 			sampCloseCurrentDialogWithButton(0)
 			wait(650)
 		end
@@ -3734,6 +3734,7 @@ function drawOnline()
 			wait(100)
 			local c = math.floor(sampGetPlayerCount(false) / 10)
 			sampSendDialogResponse(1098, 1, c - 1)
+			wait(1)
 			sampCloseCurrentDialogWithButton(0)
 			wait(650)
 		end
@@ -5156,7 +5157,7 @@ function imgui.OnDrawFrame()
 							setClipboardText(control_recon_playernick)
 						end	
 						imgui.SameLine()
-						imgui.Text(u8"Игрок: \n" .. recon_nick .. "[" .. recon_id .. "]") 
+						imgui.Text(u8"Игрок: \n" .. recon_nick .. "[" .. recon_id .. "]")
 						imgui.Text("")
 						imgui.Separator()
 						for key, v in pairs(player_info) do

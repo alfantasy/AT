@@ -484,14 +484,14 @@ function sampev.onServerMessage(color, text)
                     end
                 end
             end
-            if hasForbiddenText and ini.automute_rod.v and control_recon == false then 
+            if hasForbiddenText and ini.automute_rod.v and control_recon == false and not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground() then 
                 sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка, за которую AT замутил.")
                 sampAddChatMessage(tag .. " | " .. text, -1)
                 sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
                 sampSendChat("/mute " .. check_osk_id .. " 5000 Оскорбление/Унижение родных")
                 showNotification("AutoMute", "Ник нарушителя: " .. sampGetPlayerNickname(tonumber(check_osk_id)) .. "\n Замучен по причине: Оскорбление родных")
             end
-            if hasForbiddenText_upom and ini.automute_upom.v and control_recon == false then  
+            if hasForbiddenText_upom and ini.automute_upom.v and control_recon == false and not isGamePaused() and not isPauseMenuActive() and isGameWindowForeground()then  
                 sampAddChatMessage(tag .. " Внимание! Сработал AutoMute! Ниже строчка, за которую AT замутил.")
                 sampAddChatMessage(tag .. " | " .. text, -1)
                 sampAddChatMessage(tag .. " ================ AdminTool Loop Automute ==================")
@@ -507,6 +507,14 @@ end
 function main()
     while not isSampAvailable() do wait(0) end
 	
+    if not io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "r") then  
+        file = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", "w")
+        for _, v in ipairs(ph_rod) do 
+            file:write(v)
+        end
+        file:close()
+    end
+
     local file_read_rod, c_line_rod = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\rod.txt", 'r'), 1
 
     if file_read_rod ~= nil then  
@@ -559,6 +567,14 @@ function main()
 			sampAddChatMessage(tag .. " Фразы \"" .. string.rlower(param) .. "\" нет в списке фраз оскорблений родных")
 		end
 	end)
+
+    if not io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "r") then  
+        file = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "w")
+        for _, v in ipairs(ph_upom) do 
+            file:write(v)
+        end
+        file:close()
+    end
 
     local file_read_upom, c_line_upom = io.open(getWorkingDirectory() .. "\\config\\AdminTool\\AutoMute\\upom.txt", "r"), -1
 
@@ -1567,6 +1583,7 @@ end
 
 function EXPORTS.up_automute()
     imgui.Text(u8"Здесь можно отредактировать файлы автомута без взаимодействия с командой.")
+    imgui.Text(u8"Метод позволяет добавить слова в ОДИН файл. \nУ него нет возможности добавления в несколько файлов одновременно")
     imgui.Checkbox(u8'Добавить/Удалить слово в списке мата', automute_settings.input_mute)
     imgui.SameLine() 
     if imgui.Button(u8"Просмотр файла ##1") then  
