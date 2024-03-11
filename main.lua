@@ -1659,7 +1659,7 @@ function main()
 		end
 
 		if isKeyDown(VK_R) and (sampIsChatInputActive() == false) and (sampIsDialogActive() == false) and control_recon and recon_to_player then
-			sampSendClickTextdraw(163)
+			sampSendClickTextdraw(198)
 			if elm.checkbox.keysync.v then 
 				lua_thread.create(function()
 					wait(1000)
@@ -4775,7 +4775,7 @@ function imgui.OnDrawFrame()
 					end
 					imgui.SameLine()
 					if imgui.Button(u8"Обновить") then	
-						sampSendClickTextdraw(163)
+						sampSendClickTextdraw(198)
 						if elm.checkbox.keysync.v then 
 							lua_thread.create(function()
 								wait(1)
