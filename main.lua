@@ -3290,17 +3290,26 @@ function textSplit(str, delim, plain)
 end
 
 function sampev.onTextDrawSetString(id, text)
-	if id == 2056 and elm.checkbox.atrecon.v then
+	if (id == 2056 or id == 2059) and elm.checkbox.atrecon.v then
 		player_info = textSplit(text, "~n~")
 	end
 end
 
 function sampev.onShowTextDraw(id, data)
 	if elm.checkbox.atrecon.v then 
-		for _, i in pairs(control_recon_ids) do 
-			if id == i then  
-				return false 
-			end
+		-- for _, i in pairs(control_recon_ids) do 
+		-- 	if id == i then  
+		-- 		return false 
+		-- 	end
+		-- end
+		if id >= 183 and id <= 226 then  
+			return false 
+		end  
+		if data.text:find('~g~::Health:~n~') then  
+			return false  
+		end  
+		if id == 2052 or id == 2059 then  
+			return false  
 		end
 	end
 end
