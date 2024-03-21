@@ -3296,13 +3296,14 @@ function sampev.onTextDrawSetString(id, text)
 end
 
 function sampev.onShowTextDraw(id, data)
+	sampAddChatMessage(data.text, -1)
 	if elm.checkbox.atrecon.v then 
 		-- for _, i in pairs(control_recon_ids) do 
 		-- 	if id == i then  
 		-- 		return false 
 		-- 	end
 		-- end
-		if id >= 183 and id <= 226 then  
+		if id >= 193 and id <= 236 then  
 			return false 
 		end  
 		if data.text:find('~g~::Health:~n~') then  
